@@ -21,5 +21,3 @@ concurrency:
 jobs:
   zizmor:
     uses: statamic/.github/.github/workflows/zizmor.yml@e3d400517635cf59651be73f5e5c4d23af8a98e2
-    permissions:
-      contents: read
