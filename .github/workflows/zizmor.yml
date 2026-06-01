@@ -1,0 +1,23 @@
+name: GitHub Actions Security Analysis
+
+on:
+  push:
+    branches:
+      - main
+      - '*.x'
+    paths:
+      - '.github/**.yml'
+  pull_request:
+    paths:
+      - '.github/**.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  zizmor:
+    uses: statamic/.github/.github/workflows/zizmor.yml@e3d400517635cf59651be73f5e5c4d23af8a98e2
