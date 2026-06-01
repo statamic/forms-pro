@@ -1,17 +1,23 @@
 name: Release
 
-on:
+on: # zizmor: ignore[concurrency-limits]
   push:
     tags:
       - "v*"
 
+permissions: {}
+
 jobs:
-  release:
+  release: # zizmor: ignore[anonymous-definition]
     name: Prepare & Create Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # create GitHub release and upload assets
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
         uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # v2
@@ -30,7 +36,7 @@ jobs:
         run: npm run build
 
       - name: Create zip
-        run: tar -czvf dist.tar.gz dist
+        run: cd resources && tar -czvf dist.tar.gz dist
 
       - name: Get Changelog
         id: changelog
@@ -39,22 +45,15 @@ jobs:
           version: ${{ github.ref }}
 
       - name: Create release
-        id: create_release
-        uses: actions/create-release@0cb9c9b65d5d1901c1f53e5e66eaf4afd303e70e # v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body: ${{ steps.changelog.outputs.text }}
-          prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') }}
-
-      - name: Upload zip to release
-        uses: actions/upload-release-asset@64e5e85fc528f162d7ba7ce2d15a3bb67efb3d80 # v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./resources/dist.tar.gz
-          asset_name: dist.tar.gz
-          asset_content_type: application/tar+gz
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.changelog.outputs.version }}
+          RELEASE_NOTES: ${{ steps.changelog.outputs.text }}
+        run: |
+          PRERELEASE=""
+          if [[ "$RELEASE_VERSION" == *-alpha* || "$RELEASE_VERSION" == *-beta* ]]; then PRERELEASE="--prerelease"; fi
+          gh release create "$RELEASE_VERSION" \
+            --title "$RELEASE_VERSION" \
+            --notes "$RELEASE_NOTES" \
+            $PRERELEASE \
+            ./resources/dist.tar.gz
