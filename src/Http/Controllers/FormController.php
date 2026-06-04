@@ -17,8 +17,7 @@ class FormController extends Controller
     {
         throw_unless($form = Form::find($form), NotFoundHttpException::class);
 
-        $tab = $form->blueprint()->tabs()->first();
-        $blueprint = Blueprint::make("{$form->handle()}_{$tab->handle()}")->setContents(['tabs' => [$tab->contents()]]);
+        $blueprint = $form->blueprint();
         $fields = $blueprint->fields()->preProcess();
 
         return Inertia::render('forms-pro::Form', [
@@ -26,8 +25,9 @@ class FormController extends Controller
             'pages' => $form->blueprint()->tabs()->map(fn (Tab $tab) => [
                 'id' => $tab->handle(),
                 'display' => $tab->contents()['display'],
+                'button_label' => $tab->contents()['button_label'] ?? null,
+                'previous_page_label' => $tab->contents()['previous_page_label'] ?? null,
             ])->values()->all(),
-            'page' => Arr::except($tab->contents(), 'sections'),
             'blueprint' => $blueprint->toPublishArray(),
             'values' => $fields->values(),
             'meta' => $fields->meta(),
