@@ -50,15 +50,7 @@ const submit = () => {
     <div class="py-12">
         <h1 class="font-bold text-3xl mb-10">{{ title }}</h1>
 
-        <ul class="flex flex-row items-center justify-between mb-10">
-            <li
-                v-for="page in pages"
-                :key="page.id"
-                :class="{
-                    'font-bold': page.id === currentPage.id,
-                }"
-            >{{ page.display }}</li>
-        </ul>
+        <p v-if="currentPage.display" class="font-bold mb-10">{{ currentPage.display }}</p>
 
         <PublishContainer
             :blueprint
