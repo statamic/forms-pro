@@ -3,8 +3,7 @@ import { onMounted } from 'vue';
 
 onMounted(() => {
     document.body.classList.add(
-        'bg-gray-50',
-        'dark:bg-gray-900',
+        'bg-white',
         'font-sans',
         'leading-normal',
         'scheme-light',
@@ -15,7 +14,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="relative mx-auto max-w-3xl items-center justify-center">
+    <div class="relative mx-auto max-w-5xl items-center justify-center">
         <slot />
     </div>
 </template>
