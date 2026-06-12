@@ -22,6 +22,13 @@ const currentPage = computed(() => props.pages.find((page) => page.id === curren
 
 const isFirstPage = computed(() => currentPageId.value === props.pages[0].id);
 const isLastPage = computed(() => currentPageId.value === props.pages[props.pages.length - 1].id);
+const allPagesHaveCustomLabels = computed(() => props.pages.every((page) => page.display));
+const titleClasses = computed(() => [
+    'text-center',
+    allPagesHaveCustomLabels.value
+        ? 'text-2xs text-gray-500 uppercase tracking-[0.05em] mb-1'
+        : 'text-3xl leading-[1.25] font-medium antialiased text-center mb-8',
+]);
 
 const previousPage = () => {
     // TODO: Actual, real-life logic here.
@@ -48,9 +55,8 @@ const submit = () => {
     <Head :title="title" />
 
     <div class="py-12">
-        <h1 class="font-bold text-3xl mb-10">{{ title }}</h1>
-
-        <p v-if="currentPage.display" class="font-bold mb-10">{{ currentPage.display }}</p>
+        <h1 :class="titleClasses">{{ title }}</h1>
+        <h2 v-if="currentPage.display" class="text-3xl leading-[1.25] font-medium antialiased text-center mb-8">{{ currentPage.display }}</h2>
 
         <PublishContainer
             :blueprint
