@@ -30,9 +30,12 @@ onMounted(() => {
                 :style="{ width: progressWidth }"
             />
         </div>
-        <p id="progress-bar-label" class="mt-2 text-center text-sm text-gray-500">{{ progress }}%</p>
+        <div class="flex justify-between px-2.5 py-1.5">
+            <div>logo here</div>
+            <p id="progress-bar-label" class="text-center text-[0.8rem] text-gray-600">{{ progress }}% Complete</p>
+        </div>
     </div>
-    <div class="relative mx-auto max-w-5xl items-center justify-center">
+    <div class="relative mx-auto max-w-[62rem] items-center justify-center">
         <slot />
     </div>
 </template>

@@ -54,7 +54,7 @@ const submit = () => {
 <template>
     <Head :title="title" />
 
-    <div class="py-12">
+    <div class="pt-4 pb-12">
         <h1 :class="titleClasses">{{ title }}</h1>
         <h2 v-if="currentPage.display" class="text-3xl leading-[1.25] font-medium antialiased text-center mb-8">{{ currentPage.display }}</h2>
 
