@@ -168,7 +168,7 @@ const backgroundStyle = {
 onMounted(() => {
     document.body.classList.add(
         'bg-white',
-		'dark:bg-gray-900',
+        'dark:bg-gray-900',
         'font-sans',
         'leading-normal',
         'scheme-light',
