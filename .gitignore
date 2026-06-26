@@ -7,4 +7,5 @@ composer.lock
 .phpunit.cache
 /.idea
 /resources/dist
+/resources/dist-frontend
 /.claude
