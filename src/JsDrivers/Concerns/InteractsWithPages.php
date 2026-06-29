@@ -16,7 +16,7 @@ trait InteractsWithPages
 
     private function renderShowPageJs(string $id): string
     {
-        return "currentPage === '{$id}'";
+        return "formsPro.currentPage === '{$id}'";
     }
 
     private function wrapInFormsProComponent(string $data): string

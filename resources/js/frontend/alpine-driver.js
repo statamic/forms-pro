@@ -3,88 +3,94 @@ export default function alpineDriver(data = {}, config = {}) {
 
     return {
         ...data,
-        pages,
-        currentPage: initialPage,
-        submitting: false,
-        errors: {},
-        visited: [initialPage],
-
-        get page() {
-            return this.pages.find(page => page.id === this.currentPage);
-        },
-        get pageIndex() {
-            return this.pages.findIndex(page => page.id === this.currentPage);
-        },
-        get isFirstPage() {
-            return this.pageIndex === 0;
-        },
-        get isFinalPage() {
-            return this.pageIndex === this.pages.length - 1;
-        },
 
         init() {
-            this.$watch('currentPage', () => {
-                this.$el.querySelector('input[name="_page"]').value = this.currentPage;
+            this.$watch('formsPro.currentPage', () => {
+                this.$el.querySelector('input[name="_page"]').value = this.formsPro.currentPage;
             });
         },
 
-        goTo(pageId) {
-            this.errors = {};
-            this.currentPage = pageId;
-        },
+        formsPro: {
+            pages,
+            currentPage: initialPage,
+            submitting: false,
+            errors: {},
+            visited: [initialPage],
 
-        goToPage(pageId) {
-            if (!this.pages.find(page => page.id === pageId) || pageId === this.currentPage) return;
-            if (this.pages.findIndex(page => page.id === pageId) > this.pageIndex) return;
+            get page() {
+                return this.pages.find(page => page.id === this.currentPage);
+            },
 
-            this.goTo(pageId);
-        },
+            get pageIndex() {
+                return this.pages.findIndex(page => page.id === this.currentPage);
+            },
 
-        goToFirstPage() {
-            this.goTo(this.pages[0].id);
-            this.visited = [this.pages[0].id];
-        },
+            get isFirstPage() {
+                return this.pageIndex === 0;
+            },
 
-        goToPreviousPage() {
-            if (this.visited.length <= 1) return;
+            get isFinalPage() {
+                return this.pageIndex === this.pages.length - 1;
+            },
 
-            this.visited.pop();
-            this.goTo(this.visited[this.visited.length - 1]);
-        },
+            goTo(pageId) {
+                this.errors = {};
+                this.currentPage = pageId;
+            },
 
-        async submit(e) {
-            if (this.isFinalPage) return;
+            goToPage(pageId) {
+                if (!this.pages.find(page => page.id === pageId) || pageId === this.currentPage) return;
+                if (this.pages.findIndex(page => page.id === pageId) > this.pageIndex) return;
 
-            e.preventDefault();
+                this.goTo(pageId);
+            },
 
-            this.errors = {};
-            this.submitting = true;
+            goToFirstPage() {
+                this.goTo(this.pages[0].id);
+                this.visited = [this.pages[0].id];
+            },
 
-            try {
-                const form = this.$el.closest('form');
+            goToPreviousPage() {
+                if (this.visited.length <= 1) return;
 
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: new FormData(form),
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        Accept: 'application/json',
-                    },
-                });
+                this.visited.pop();
+                this.goTo(this.visited[this.visited.length - 1]);
+            },
 
-                const result = await response.json();
+            async submit(e) {
+                if (this.isFinalPage) return;
 
-                if (response.ok) {
-                    this.goTo(result.next_page);
-                    this.visited.push(result.next_page);
-                } else {
-                    this.errors = result.error ?? {};
+                e.preventDefault();
+
+                this.errors = {};
+                this.submitting = true;
+
+                try {
+                    const form = e.target.closest('form');
+
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            Accept: 'application/json',
+                        },
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        this.goTo(result.next_page);
+                        this.visited.push(result.next_page);
+                    } else {
+                        this.errors = result.error ?? {};
+                    }
+                } catch (error) {
+                    console.error("Forms Pro: Failed to submit the page:", error);
+                } finally {
+                    this.submitting = false;
                 }
-            } catch (error) {
-                console.error("Forms Pro: Failed to navigate submit the page:", error);
-            } finally {
-                this.submitting = false;
-            }
+            },
         },
     };
 }
