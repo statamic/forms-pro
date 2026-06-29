@@ -2,51 +2,16 @@
 
 namespace Statamic\FormsPro\JsDrivers\Concerns;
 
-use Statamic\FormsPro\MultiPage\Pages;
+use Statamic\Fields\Tab;
 use Statamic\Statamic;
 
 trait InteractsWithPages
 {
-    public function addToFormData($data)
-    {
-        $ids = $this->pageIds();
-
-        return array_merge(parent::addToFormData($data), [
-            'initial_page' => $ids[0] ?? null,
-            'page_ids' => $ids,
-            'validation_url' => $this->validationUrl(),
-            'show_page' => collect($ids)
-                ->mapWithKeys(fn (string $id) => [$id => $this->renderShowPageJs($id)])
-                ->all(),
-        ]);
-    }
-
     public function addToRenderablePageData($page, $data)
     {
         return [
             'show_page' => $this->renderShowPageJs($page->handle()),
         ];
-    }
-
-    private function pageIds(): array
-    {
-        return $this->form->formFields()->pages()->pluck('id')->all();
-    }
-
-    private function pageConfig(): array
-    {
-        $ids = $this->pageIds();
-
-        return [
-            'initialPage' => $ids[0] ?? null,
-            'pageIds' => $ids,
-            'validationUrl' => $this->validationUrl(),
-        ];
-    }
-
-    private function validationUrl(): string
-    {
-        return route('statamic.forms-pro.pages.submit', $this->form->handle());
     }
 
     private function renderShowPageJs(string $id): string
@@ -60,8 +25,24 @@ trait InteractsWithPages
             $data = "{$this->component}({$data})";
         }
 
-        $config = Statamic::modify($this->pageConfig())->toJson()->entities();
+        $config = Statamic::modify($this->getConfig())->toJson()->entities();
 
         return "formsPro({$data}, {$config})";
+    }
+
+    private function getConfig(): array
+    {
+        $pages = $this->form->blueprint()->tabs()
+            ->map(fn (Tab $tab) => [
+                'id' => $tab->handle(),
+                'display' => $tab->display(),
+                'instructions' => $tab->instructions(),
+            ])
+            ->values();
+
+        return [
+            'pages' => $pages,
+            'initialPage' => $pages->first()['id'],
+        ];
     }
 }

@@ -1,50 +1,69 @@
 export default function alpineDriver(data = {}, config = {}) {
-    // - `data` spreads at the root so x-model bindings keep working.
-    // - `config` is kept separate so the page state never depends on a custom
-    //   component forwarding it — `() => ({...})` works just as well.
-    const { initialPage, pageIds, validationUrl } = config;
+    const { pages, initialPage } = config;
 
     return {
         ...data,
+        pages,
         currentPage: initialPage,
-        pageIds,
-        validationUrl,
+        submitting: false,
+        errors: {},
         visited: [initialPage],
-        pageErrors: {},
-        isValidating: false,
 
-        get pageIndex() {
-            return this.pageIds.indexOf(this.currentPage);
+        get page() {
+            return this.pages.find(page => page.id === this.currentPage);
         },
-        get totalPages() {
-            return this.pageIds.length;
+        get pageIndex() {
+            return this.pages.findIndex(page => page.id === this.currentPage);
         },
         get isFirstPage() {
             return this.pageIndex === 0;
         },
-        get isLastPage() {
-            return this.pageIndex === this.pageIds.length - 1;
+        get isFinalPage() {
+            return this.pageIndex === this.pages.length - 1;
         },
 
-        prevPage() {
-            if (this.isFirstPage) return;
-
-            // TODO(forms-pro): pop the real visited stack instead of pageIndex - 1
-            // once branching lands — "previous" is where the user came from. Todo #13.
-            this.goTo(this.pageIds[this.pageIndex - 1]);
-            this.pageErrors = {};
+        init() {
+            this.$watch('currentPage', () => {
+                this.$el.querySelector('input[name="_page"]').value = this.currentPage;
+            });
         },
 
-        async nextPage() {
-            if (this.isValidating || this.isLastPage) return;
+        goTo(pageId) {
+            this.errors = {};
+            this.currentPage = pageId;
+        },
 
-            this.isValidating = true;
-            this.pageErrors = {};
+        goToPage(pageId) {
+            if (!this.pages.find(page => page.id === pageId) || pageId === this.currentPage) return;
+            if (this.pages.findIndex(page => page.id === pageId) > this.pageIndex) return;
+
+            this.goTo(pageId);
+        },
+
+        goToFirstPage() {
+            this.goTo(this.pages[0].id);
+            this.visited = [this.pages[0].id];
+        },
+
+        goToPreviousPage() {
+            if (this.visited.length <= 1) return;
+
+            this.visited.pop();
+            this.goTo(this.visited[this.visited.length - 1]);
+        },
+
+        async submit(e) {
+            if (this.isFinalPage) return;
+
+            e.preventDefault();
+
+            this.errors = {};
+            this.submitting = true;
 
             try {
                 const form = this.$el.closest('form');
 
-                const response = await fetch(`${this.validationUrl}/${this.currentPage}`, {
+                const response = await fetch(form.action, {
                     method: 'POST',
                     body: new FormData(form),
                     headers: {
@@ -59,35 +78,13 @@ export default function alpineDriver(data = {}, config = {}) {
                     this.goTo(result.next_page);
                     this.visited.push(result.next_page);
                 } else {
-                    this.pageErrors = result.errors || {};
-                    this.$dispatch('forms-pro:validation-failed', { errors: this.pageErrors });
+                    this.errors = result.error ?? {};
                 }
             } catch (error) {
-                console.error('Page validation failed:', error);
+                console.error("Forms Pro: Failed to navigate submit the page:", error);
             } finally {
-                this.isValidating = false;
+                this.submitting = false;
             }
-        },
-
-        goToPage(pageId) {
-            if (!this.pageIds.includes(pageId) || pageId === this.currentPage) return;
-
-            // Forward jumps must run through nextPage() to be validated; allow back only.
-            if (this.pageIds.indexOf(pageId) > this.pageIndex) return;
-
-            this.goTo(pageId);
-            this.pageErrors = {};
-        },
-
-        goTo(pageId) {
-            this.$dispatch('forms-pro:page-change', { from: this.currentPage, to: pageId });
-            this.currentPage = pageId;
-        },
-
-        goToFirstPage() {
-            this.visited = [this.pageIds[0]];
-            this.pageErrors = {};
-            this.goTo(this.pageIds[0]);
         },
     };
 }

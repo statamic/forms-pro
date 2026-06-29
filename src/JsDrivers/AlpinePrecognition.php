@@ -17,9 +17,7 @@ class AlpinePrecognition extends BaseAlpinePrecognition
 
     /**
      * Keep core's Precognition `$form('post', ...)` wrapper intact and merge the
-     * page state alongside it inside the `formsPro` component. The
-     * field bindings + as-you-type `@change` validation are inherited untouched;
-     * only the "Next" step (nextPage) hits the hook endpoint for branching.
+     * page state alongside it inside the `formsPro` component.
      */
     protected function renderAlpineXData($xData, $alpineScope)
     {

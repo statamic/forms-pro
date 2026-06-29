@@ -16,7 +16,7 @@ class Alpine extends BaseAlpine
     }
 
     /**
-     * Wrap the field values + page config in the `formsPro` component
+     * Wrap the field values and page config in the `formsPro` component
      * so the form's x-data carries both the field bindings and page state.
      */
     protected function renderAlpineXData($xData, $alpineScope)
