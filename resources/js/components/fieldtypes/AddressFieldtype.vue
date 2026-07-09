@@ -86,7 +86,10 @@ function suggest(value) {
 	}
 
 	timeout = setTimeout(async () => {
-		suggestions.value = await autocompleteProvider.value.suggest(query, autocomplete.value).catch(() => []);
+		autocompleteLoading.value = true;
+		suggestions.value = await autocompleteProvider.value.suggest(query, autocomplete.value)
+			.catch(() => [])
+			.finally(() => autocompleteLoading.value = false);
 		highlightedIndex.value = -1;
 		autocompleteOpen.value = true;
 	}, DEBOUNCE_MS);
