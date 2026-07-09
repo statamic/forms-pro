@@ -163,6 +163,7 @@ onBeforeUnmount(() => clearTimeout(timeout));
 		        <div
 			        v-show="showAutocomplete"
 			        class="shadow-ui-sm z-(--z-index-above) absolute mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-800"
+			        @mousedown.prevent
 		        >
 			        <ul :id="listboxId" role="listbox" class="max-h-[300px] overflow-y-auto p-2">
 				        <li
@@ -173,7 +174,7 @@ onBeforeUnmount(() => clearTimeout(timeout));
 					        :aria-selected="index === highlightedIndex"
 					        :disabled="autocompleteLoading"
 					        class="relative flex w-full cursor-pointer select-none items-center gap-2 overflow-hidden rounded-lg px-2 py-2 text-sm antialiased text-gray-900 hover:bg-gray-100 aria-selected:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 dark:aria-selected:bg-gray-700"
-					        @mousedown.prevent="select(suggestion)"
+					        @mousedown="select(suggestion)"
 				        >
 					        {{ suggestion.label }}
 				        </li>

@@ -18,6 +18,8 @@ export default function attachAutocomplete(el, config) {
 
     const { list, option, attribution } = createList(template, target, provider);
 
+    list.addEventListener('mousedown', (e) => e.preventDefault());
+
     target.setAttribute('role', 'combobox');
     target.setAttribute('aria-expanded', 'false');
     target.setAttribute('aria-controls', list.id);
@@ -58,10 +60,7 @@ export default function attachAutocomplete(el, config) {
             node.id = `${list.id}-option-${index}`;
             node.setAttribute('role', 'option');
             node.setAttribute('aria-selected', 'false');
-            node.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                select(suggestion);
-            });
+            node.addEventListener('mousedown', () => select(suggestion));
 
             (node.querySelector('[data-address-label]') ?? node).textContent = suggestion.label;
 
