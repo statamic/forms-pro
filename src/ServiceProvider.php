@@ -26,6 +26,6 @@ class ServiceProvider extends AddonServiceProvider
 
         $this->publishes([
             $stubsSource => resource_path('views/vendor/forms-pro/forms'),
-        ], 'forms-pro-forms');
+        ], 'forms-pro-fields');
     }
 }
