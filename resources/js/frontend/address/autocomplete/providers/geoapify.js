@@ -1,6 +1,6 @@
 export default function geoapify() {
     return {
-        attribution: 'Powered by <a href="https://www.geoapify.com/" target="_blank" rel="noopener" style="margin-left: 4px">Geoapify</a>',
+        attribution: 'Powered by <a href="https://www.geoapify.com/" target="_blank" rel="noopener">Geoapify</a>',
 
         async suggest(query, { key }) {
             const params = new URLSearchParams({

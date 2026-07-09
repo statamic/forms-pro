@@ -175,7 +175,6 @@ onBeforeUnmount(() => clearTimeout(timeout));
 					        :id="`${listboxId}-option-${index}`"
 					        role="option"
 					        :aria-selected="index === highlightedIndex"
-					        :disabled="autocompleteLoading"
 					        class="relative flex w-full cursor-pointer select-none items-center gap-2 overflow-hidden rounded-lg px-2 py-2 text-sm antialiased text-gray-900 hover:bg-gray-100 aria-selected:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 dark:aria-selected:bg-gray-700"
 					        @mousedown="select(suggestion)"
 				        >
@@ -183,7 +182,7 @@ onBeforeUnmount(() => clearTimeout(timeout));
 				        </li>
 			        </ul>
 			        <div
-				        class="flex items-center bg-body-bg border-t border-gray-200 px-4 py-2.5 text-xs text-gray-500 dark:border-white/10 dark:text-gray-400"
+				        class="flex items-center gap-1 bg-body-bg border-t border-gray-200 px-4 py-2.5 text-xs text-gray-500 dark:border-white/10 dark:text-gray-400"
 				        v-html="autocompleteProvider?.attribution"
 			        />
 		        </div>
