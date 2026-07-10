@@ -2,7 +2,9 @@
   "private": true,
   "scripts": {
     "dev": "rm -rf resources/dist/build && vite",
-    "build": "vite build"
+    "build": "vite build",
+    "frontend-dev": "vite -c vite-frontend.config.js",
+    "frontend-build": "vite build -c vite-frontend.config.js"
   },
   "devDependencies": {
     "@statamic/cms": "file:./vendor/statamic/cms/resources/dist-package",

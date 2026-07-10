@@ -14,4 +14,11 @@ class ServiceProvider extends AddonServiceProvider
         'publicDirectory' => 'resources/dist',
         'hotFile' => __DIR__.'/../resources/dist/hot',
     ];
+
+    public function bootAddon()
+    {
+        $this->publishes([
+            __DIR__.'/../resources/dist-frontend' => public_path('vendor/forms-pro/frontend'),
+        ], 'forms-pro-frontend');
+    }
 }
