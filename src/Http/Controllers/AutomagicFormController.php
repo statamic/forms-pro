@@ -9,22 +9,24 @@ use Statamic\Facades\Blueprint;
 use Statamic\Facades\Form;
 use Statamic\Fields\Tab;
 use Statamic\Http\Controllers\Controller;
+use Statamic\Http\Middleware\CP\HandleInertiaRequests;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
 
 use function Statamic\trans as __;
 
-class FormController extends Controller
+class AutomagicFormController extends Controller
 {
     public function index(Request $request, $form)
     {
         throw_unless($form = Form::find($form), NotFoundHttpException::class);
+        throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
 
         $blueprint = $form->blueprint();
         $fields = $blueprint->fields()->preProcess();
         $formPages = $form->formFields()->pages()->keyBy(fn (array $page) => $page['id'] ?? 'main');
 
-        return Inertia::render('forms-pro::Form', [
+        return Inertia::render('forms-pro::AutomagicForm', [
             'title' => $form->title(),
             'pages' => $form->blueprint()->tabs()->map(fn (Tab $tab) => [
                 'id' => $tab->handle(),
@@ -36,6 +38,14 @@ class FormController extends Controller
             'values' => $fields->values(),
             'meta' => $fields->meta(),
         ]);
+    }
+
+    public function store(Request $request, $form)
+    {
+        throw_unless($form = Form::find($form), NotFoundHttpException::class);
+        throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
+
+        // TODO
     }
 
     /**
