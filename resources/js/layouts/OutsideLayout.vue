@@ -206,7 +206,7 @@ onMounted(() => {
                 <p id="progress-bar-label" class="text-center text-[0.8rem] text-gray-600">{{ progress }}% Complete</p>
             </div>
         </div>
-        <div class="relative z-10 mx-auto max-w-[55rem] items-center justify-center">
+        <div class="relative mx-auto max-w-[55rem] items-center justify-center">
             <slot />
         </div>
     </div>
