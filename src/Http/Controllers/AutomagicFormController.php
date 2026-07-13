@@ -4,12 +4,13 @@ namespace Statamic\FormsPro\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Statamic\Contracts\Forms\Submission;
+use Statamic\Contracts\Forms\Form;
 use Statamic\Exceptions\NotFoundHttpException;
-use Statamic\Facades\Blueprint;
-use Statamic\Facades\Form;
+use Statamic\Facades;
 use Statamic\Fields\Tab;
+use Statamic\Forms\SubmitForm;
 use Statamic\Http\Controllers\Controller;
-use Statamic\Http\Middleware\CP\HandleInertiaRequests;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
 
@@ -17,35 +18,95 @@ use function Statamic\trans as __;
 
 class AutomagicFormController extends Controller
 {
-    public function index(Request $request, $form)
+    public function index(Request $request, string $form, ?string $page = null)
     {
-        throw_unless($form = Form::find($form), NotFoundHttpException::class);
+        throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
+        throw_unless($currentPage = $this->currentPage($form, $page), NotFoundHttpException::class);
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
+
+        $currentPageId = Arr::get($currentPage, 'id');
+        $previousPage = $this->previousPage($form, $currentPageId);
 
         $blueprint = $form->blueprint();
         $fields = $blueprint->fields()->preProcess();
         $formPages = $form->formFields()->pages()->keyBy(fn (array $page) => $page['id'] ?? 'main');
 
+        if ($partialSubmission = $this->getPartialSubmission($form)) {
+            $fields = $fields->addValues($partialSubmission->data()->all());
+        }
+
+        $pages = $form->blueprint()->tabs()->map(fn (Tab $tab) => [
+            'id' => $tab->handle(),
+            'display' => $this->customTabDisplay($tab, $formPages->get($tab->handle(), [])),
+            'button_label' => $tab->contents()['button_label'] ?? null,
+            'previous_page_label' => $tab->contents()['previous_page_label'] ?? null,
+        ])->values();
+
         return Inertia::render('forms-pro::AutomagicForm', [
+            'action' => route('statamic.forms-pro.form.store', ['form' => $form->handle(), 'page' => $currentPageId]),
+            'previousPageUrl' => $previousPage ? route('statamic.forms-pro.form.index', ['form' => $form->handle(), 'page' => $previousPage['id']]) : null,
             'title' => $form->title(),
-            'pages' => $form->blueprint()->tabs()->map(fn (Tab $tab) => [
-                'id' => $tab->handle(),
-                'display' => $this->customTabDisplay($tab, $formPages->get($tab->handle(), [])),
-                'button_label' => $tab->contents()['button_label'] ?? null,
-                'previous_page_label' => $tab->contents()['previous_page_label'] ?? null,
-            ])->values()->all(),
+            'pages' => $pages,
+            'currentPage' => $pages->where('id', $currentPageId)->first(),
             'blueprint' => $blueprint->toPublishArray(),
             'values' => $fields->values(),
             'meta' => $fields->meta(),
         ]);
     }
 
-    public function store(Request $request, $form)
+    public function store(Request $request, string $form, string $page, SubmitForm $action)
     {
-        throw_unless($form = Form::find($form), NotFoundHttpException::class);
+        throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
+        throw_unless($currentPage = $this->currentPage($form, $page), NotFoundHttpException::class);
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
 
-        // TODO
+        $action->form($form);
+        $action->page(Arr::get($currentPage, 'id'));
+
+        if ($form->hasMultiplePages() && $partialSubmission = $this->getPartialSubmission($form)) {
+            $action->resume($partialSubmission);
+        }
+
+        $result = $action->submit($request->all(), $request->allFiles());
+
+        $result->isFinalized()
+            ? $this->forgetPartialSubmission($form)
+            : $this->setPartialSubmission($form, $result->submission);
+
+        if ($result->isFinalized()) {
+            $request->session()->flash('success', 'Form submitted!');
+        }
+
+        return [
+            'redirect' => route('statamic.forms-pro.form.index', [
+                'form' => $form->handle(),
+                'page' => $result->nextPage,
+            ]),
+        ];
+    }
+
+    private function currentPage(Form $form, ?string $page = null): ?array
+    {
+        $pages = $form->formFields()->pages();
+
+        if ($page) {
+            return $pages->where('id', $page)->first();
+        }
+
+        return $pages->first();
+    }
+
+    private function previousPage(Form $form, string $currentPage): ?array
+    {
+        $pages = $form->formFields()->pages();
+
+        if ($pages->first()['id'] === $currentPage) {
+            return null;
+        }
+
+        $previousPageIndex = $pages->search(fn ($page) => $page['id'] === $currentPage) - 1;
+
+        return $pages->get($previousPageIndex);
     }
 
     /**
@@ -70,5 +131,27 @@ class AutomagicFormController extends Controller
         $defaultDisplay = __(Str::humanize($tab->handle()));
 
         return $display !== $defaultDisplay ? $display : null;
+    }
+
+    private function setPartialSubmission($form, $submission): void
+    {
+        session()->put("form.{$form->handle()}.partial_submission", $submission->id());
+    }
+
+    private function getPartialSubmission($form): ?Submission
+    {
+        $id = session()->get("form.{$form->handle()}.partial_submission");
+        $submission = $form->submission($id);
+
+        if ($submission && ! $submission->isPartial()) {
+            return null;
+        }
+
+        return $submission;
+    }
+
+    private function forgetPartialSubmission($form): void
+    {
+        session()->forget("form.{$form->handle()}.partial_submission");
     }
 }
