@@ -1,15 +1,4 @@
 <script setup>
-import { computed, onMounted } from 'vue';
-
-const props = defineProps({
-    progress: {
-        type: Number,
-        default: 20,
-    },
-});
-
-const progressWidth = computed(() => `${props.progress}%`);
-
 // Architect
 // const pattern = {
 //     image: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='199' viewBox='0 0 100 199'%3E%3Cg fill='%23dddddd' fill-opacity='0.4'%3E%3Cpath d='M0 199V0h1v1.99L100 199h-1.12L1 4.22V199H0zM100 2h-.12l-1-2H100v2z'%3E%3C/path%3E%3C/g%3E%3C/svg%3E")`,
@@ -166,19 +155,8 @@ const pattern = {
 };
 
 const patternStyle = {
-    '--pattern-bg': pattern.image
+    '--pattern-bg': pattern.image,
 };
-
-onMounted(() => {
-    document.body.classList.add(
-        'bg-white',
-        'dark:bg-gray-900',
-        'font-sans',
-        'leading-normal',
-        'scheme-light',
-        'outside'
-    );
-});
 </script>
 
 <style>
@@ -193,21 +171,10 @@ onMounted(() => {
         class="relative min-h-screen before:pointer-events-none before:absolute before:inset-0 before:z-0 before:content-[''] before:bg-[image:var(--pattern-bg)]"
         :style="patternStyle"
     >
-        <div class="relative z-10 w-full">
-            <div class="h-1.5 w-full bg-gray-200 dark:bg-gray-950">
-                <div
-                    id="progress-bar"
-                    class="h-full rounded-r-full bg-indigo-600 transition-[width] duration-300 ease-out"
-                    :style="{ width: progressWidth }"
-                />
-            </div>
-            <div class="flex justify-between px-2.5 py-1.5">
-                <div>logo here</div>
-                <p id="progress-bar-label" class="text-center text-[0.8rem] text-gray-600">{{ progress }}% Complete</p>
-            </div>
+        <div class="fixed inset-x-0 top-1.5 z-20 px-2.5 py-1.5">
+            <div>logo here</div>
         </div>
-        <div class="relative mx-auto max-w-[55rem] items-center justify-center">
-            <slot />
-        </div>
+
+        <slot />
     </div>
 </template>

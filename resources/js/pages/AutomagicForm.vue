@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { router, Head } from '@statamic/cms/inertia';
 import { PublishContainer, PublishSections, TabProvider, Button } from '@statamic/cms/ui';
-import OutsideLayout from '../layouts/OutsideLayout.vue';
-import { ref, computed, useTemplateRef, nextTick } from 'vue';
+import AutomagicFormLayout from '../layouts/AutomagicFormLayout.vue';
+import { ref, computed, useTemplateRef, nextTick, onMounted } from 'vue';
 import axios from "axios";
 
-defineOptions({ layout: OutsideLayout });
+defineOptions({ layout: AutomagicFormLayout });
 
 type Page = {
 	id: string;
@@ -23,6 +23,7 @@ const props = defineProps<{
     blueprint: object;
     values: object;
     meta: object;
+    progress?: number;
 }>();
 
 const errors = ref<object>({});
@@ -40,6 +41,7 @@ const titleClasses = computed<array[string]>(() => [
         ? 'text-2xs text-gray-500 uppercase tracking-[0.05em] mb-1'
         : 'text-3xl leading-[1.25] font-medium antialiased text-center mb-8',
 ]);
+const progressWidth = computed<string>(() => `${props.progress ?? 20}%`);
 
 const submit = () => {
 	loading.value = true;
@@ -54,50 +56,75 @@ const submit = () => {
 		})
 		.finally(() => loading.value = false);
 };
+
+onMounted(() => {
+	document.body.classList.add(
+		'bg-white',
+		'dark:bg-gray-900',
+		'font-sans',
+		'leading-normal',
+		'scheme-light',
+		'outside'
+	);
+});
 </script>
 
 <template>
     <Head :title="__(title)" />
 
-    <div :key="currentPage.id" class="pt-4 pb-12">
-        <h1 :class="titleClasses">{{ __(title) }}</h1>
-        <h2 v-if="currentPage.display" class="text-3xl leading-[1.25] font-medium antialiased text-center mb-8">{{ __(currentPage.display) }}</h2>
+    <div class="fixed inset-x-0 top-0 z-20 h-1.5 w-full bg-gray-200 dark:bg-gray-950">
+        <div
+            id="progress-bar"
+            class="h-full rounded-r-full bg-indigo-600 transition-[width] duration-300 ease-out"
+            :style="{ width: progressWidth }"
+        />
+    </div>
 
-        <PublishContainer
-	        ref="container"
-            :blueprint
-            :meta
-	        :errors
-	        :read-only="loading"
-            v-model="values"
-        >
-	        <template v-for="tab in blueprint.tabs" :key="tab.handle">
-		        <div v-show="tab.handle === currentPage.id">
-			        <TabProvider :tab>
-				        <PublishSections />
-			        </TabProvider>
-		        </div>
-	        </template>
-        </PublishContainer>
+    <div class="fixed inset-x-0 top-1.5 z-20 flex justify-end px-2.5 py-1.5">
+        <p id="progress-bar-label" class="text-center text-[0.8rem] text-gray-600">{{ progress ?? 20 }}% Complete</p>
+    </div>
 
-        <div class="mt-10 flex justify-center gap-2.5">
-            <Button
-                v-if="!isFirstPage && currentPage.previous_page_label"
-                :href="previousPageUrl"
-                :disabled="loading"
-                variant="filled"
-                icon="chevron-left"
-                class="ps-3"
-                :text="__(currentPage.previous_page_label)"
-            />
-            <Button
-                variant="primary"
-                class="border-0! dark:border-0! ring-0! shadow-none!"
-                style="--theme-color-primary: var(--theme-color-gray-950)"
-                :disabled="loading"
-                :text="currentPage.button_label ?? (isLastPage ? __('Submit') : __('Next Page'))"
-                @click="submit"
-            />
+    <div class="relative mx-auto max-w-[55rem] items-center justify-center">
+        <div :key="currentPage.id" class="pt-12 pb-12">
+            <h1 :class="titleClasses">{{ __(title) }}</h1>
+            <h2 v-if="currentPage.display" class="text-3xl leading-[1.25] font-medium antialiased text-center mb-8">{{ __(currentPage.display) }}</h2>
+
+            <PublishContainer
+                ref="container"
+                :blueprint
+                :meta
+                :errors
+                :read-only="loading"
+                v-model="values"
+            >
+                <template v-for="tab in blueprint.tabs" :key="tab.handle">
+                    <div v-show="tab.handle === currentPage.id">
+                        <TabProvider :tab>
+                            <PublishSections />
+                        </TabProvider>
+                    </div>
+                </template>
+            </PublishContainer>
+
+            <div class="mt-10 flex justify-center gap-2.5">
+                <Button
+                    v-if="!isFirstPage && currentPage.previous_page_label"
+                    :href="previousPageUrl"
+                    :disabled="loading"
+                    variant="filled"
+                    icon="chevron-left"
+                    class="ps-3"
+                    :text="__(currentPage.previous_page_label)"
+                />
+                <Button
+                    variant="primary"
+                    class="border-0! dark:border-0! ring-0! shadow-none!"
+                    style="--theme-color-primary: var(--theme-color-gray-950)"
+                    :disabled="loading"
+                    :text="currentPage.button_label ?? (isLastPage ? __('Submit') : __('Next Page'))"
+                    @click="submit"
+                />
+            </div>
         </div>
     </div>
 </template>
