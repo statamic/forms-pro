@@ -82,14 +82,6 @@ const submit = () => {
 let submitBinding;
 
 onMounted(() => {
-	document.body.classList.add(
-		'bg-white',
-		'dark:bg-gray-900',
-		'font-sans',
-		'leading-normal',
-		'scheme-light',
-		'outside'
-	);
 	submitBinding = Statamic.$keys.bindGlobal('mod+enter', (e) => {
 		e.preventDefault();
 		if (! loading.value) submit();

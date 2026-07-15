@@ -161,6 +161,15 @@ const patternStyle = {
 };
 
 onMounted(() => {
+    document.body.classList.add(
+        'bg-white',
+        'dark:bg-gray-900',
+        'font-sans',
+        'leading-normal',
+        'scheme-light',
+        'outside'
+    );
+
     document.head
         .querySelectorAll('link[rel~="icon"], link[rel="apple-touch-icon"]')
         .forEach((link) => link.remove());
