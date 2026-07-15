@@ -43,10 +43,32 @@ const titleClasses = computed<array[string]>(() => [
 ]);
 const progressWidth = computed<string>(() => `${props.progress ?? 20}%`);
 
+const appendToFormData = (formData: FormData, key: string, value: unknown): void => {
+	if (value === null || value === undefined) return;
+
+	if (value instanceof File) {
+		formData.append(key, value);
+	} else if (Array.isArray(value)) {
+		value.forEach(item => appendToFormData(formData, `${key}[]`, item));
+	} else if (typeof value === 'object') {
+		Object.entries(value).forEach(([subKey, subValue]) => appendToFormData(formData, `${key}[${subKey}]`, subValue));
+	} else {
+		formData.append(key, String(value));
+	}
+};
+
+const toFormData = (values: object): FormData => {
+	const formData = new FormData();
+
+	Object.entries(values).forEach(([key, value]) => appendToFormData(formData, key, value));
+
+	return formData;
+};
+
 const submit = () => {
 	loading.value = true;
 
-	axios.post(props.action, values.value)
+	axios.post(props.action, toFormData(values.value))
 		.then(response => {
 			container.value.clearDirtyState();
 			nextTick(() => router.visit(response.data.redirect));
