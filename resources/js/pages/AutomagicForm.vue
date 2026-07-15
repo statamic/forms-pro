@@ -111,6 +111,7 @@ onMounted(() => {
                     v-if="!isFirstPage && currentPage.previous_page_label"
                     :href="previousPageUrl"
                     :disabled="loading"
+                    :loading="loading"
                     variant="filled"
                     icon="chevron-left"
                     class="ps-3"
@@ -121,6 +122,7 @@ onMounted(() => {
                     class="border-0! dark:border-0! ring-0! shadow-none!"
                     style="--theme-color-primary: var(--theme-color-gray-950)"
                     :disabled="loading"
+                    :loading="loading"
                     :text="currentPage.button_label ?? (isLastPage ? __('Submit') : __('Next Page'))"
                     @click="submit"
                 />
