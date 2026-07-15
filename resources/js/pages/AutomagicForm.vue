@@ -2,7 +2,7 @@
 import { router, Head } from '@statamic/cms/inertia';
 import { PublishContainer, PublishSections, TabProvider, Button } from '@statamic/cms/ui';
 import AutomagicFormLayout from '../layouts/AutomagicFormLayout.vue';
-import { ref, computed, useTemplateRef, nextTick, onMounted } from 'vue';
+import { ref, computed, useTemplateRef, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import axios from "axios";
 
 defineOptions({ layout: AutomagicFormLayout });
@@ -79,6 +79,8 @@ const submit = () => {
 		.finally(() => loading.value = false);
 };
 
+let submitBinding;
+
 onMounted(() => {
 	document.body.classList.add(
 		'bg-white',
@@ -88,7 +90,13 @@ onMounted(() => {
 		'scheme-light',
 		'outside'
 	);
+	submitBinding = Statamic.$keys.bindGlobal('mod+enter', (e) => {
+		e.preventDefault();
+		if (! loading.value) submit();
+	});
 });
+
+onBeforeUnmount(() => submitBinding?.destroy());
 </script>
 
 <template>
