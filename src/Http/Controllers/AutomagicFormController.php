@@ -12,7 +12,6 @@ use Statamic\Fields\Tab;
 use Statamic\Forms\SubmitForm;
 use Statamic\Http\Controllers\Controller;
 use Statamic\Support\Arr;
-use Statamic\Support\Str;
 
 use function Statamic\trans as __;
 
@@ -37,7 +36,7 @@ class AutomagicFormController extends Controller
 
         $pages = $form->blueprint()->tabs()->map(fn (Tab $tab) => [
             'id' => $tab->handle(),
-            'display' => $this->customTabDisplay($tab, $formPages->get($tab->handle(), [])),
+            'display' => $formPages->get($tab->handle(), [])['display'] ?? null,
             'button_label' => $tab->contents()['button_label'] ?? null,
             'previous_page_label' => $tab->contents()['previous_page_label'] ?? null,
         ])->values();
@@ -145,30 +144,6 @@ class AutomagicFormController extends Controller
         $previousPageIndex = $pages->search(fn ($page) => $page['id'] === $currentPage) - 1;
 
         return $pages->get($previousPageIndex);
-    }
-
-    /**
-     * Only return a page title when the editor has set a custom label.
-     *
-     * Pages without a display in the form YAML get a default "Page X of Y"
-     * label when the blueprint is built. Tab handles like "page_1_of_4" can
-     * also be humanized to the same text, so we ignore those defaults too.
-     */
-    private function customTabDisplay(Tab $tab, array $page): ?string
-    {
-        if (! array_key_exists('display', $page)) {
-            return null;
-        }
-
-        $display = Arr::get($tab->contents(), 'display');
-
-        if (! $display) {
-            return null;
-        }
-
-        $defaultDisplay = __(Str::humanize($tab->handle()));
-
-        return $display !== $defaultDisplay ? $display : null;
     }
 
     private function setPartialSubmission($form, $submission): void
