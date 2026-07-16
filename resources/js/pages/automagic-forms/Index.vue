@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { router, Head } from '../../../../../cms/packages/cms/types/bootstrap/cms/inertia';
-import { PublishContainer, PublishSections, TabProvider, Button } from '../../../../../cms/packages/cms/types/bootstrap/cms/ui';
+import { router, Head } from '@statamic/cms/inertia';
+import { PublishContainer, PublishSections, TabProvider, Button } from '@statamic/cms/ui';
 import AutomagicFormLayout from '../../layouts/AutomagicFormLayout.vue';
 import { ref, computed, useTemplateRef, nextTick, watch, onMounted, onBeforeUnmount } from 'vue';
 import axios from "axios";
