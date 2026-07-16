@@ -175,7 +175,6 @@ onBeforeUnmount(() => {
                 :blueprint
                 :meta
                 :errors
-                :read-only="loading"
                 v-model="values"
             >
                 <template v-for="tab in blueprint.tabs" :key="tab.handle">
