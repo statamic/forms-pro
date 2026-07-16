@@ -42,7 +42,7 @@ class AutomagicFormController extends Controller
             'previous_page_label' => $tab->contents()['previous_page_label'] ?? null,
         ])->values();
 
-        return Inertia::render('forms-pro::AutomagicForm', [
+        return Inertia::render('forms-pro::AutomagicForm/Index', [
             'action' => route('statamic.forms-pro.form.store', ['form' => $form->handle(), 'page' => $currentPageId]),
             'previousPageUrl' => $previousPage ? route('statamic.forms-pro.form.index', ['form' => $form->handle(), 'page' => $previousPage['id']]) : null,
             'title' => $form->title(),
@@ -104,7 +104,7 @@ class AutomagicFormController extends Controller
             return redirect()->route('statamic.forms-pro.form.index', ['form' => $form->handle()]);
         }
 
-        return Inertia::render('forms-pro::AutomagicFormSuccess', [
+        return Inertia::render('forms-pro::AutomagicForm/Success', [
             'title' => $form->title(),
             'heading' => $form->get('automagic_form_success_heading', __('forms-pro::messages.automagic_form_success_heading_default')),
             'message' => $form->get('automagic_form_success_message', __('forms-pro::messages.automagic_form_success_message_default')),

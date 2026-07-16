@@ -32,7 +32,7 @@ class AutomagicFormTest extends TestCase
         $this
             ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('component', 'forms-pro::AutomagicForm')
+            ->assertJsonPath('component', 'forms-pro::AutomagicForm/Index')
             ->assertJsonPath('props.title', 'Contact')
             ->assertJsonPath('props.currentPage.id', 'main')
             ->assertJsonPath('props.action', route('statamic.forms-pro.form.store', ['form' => 'contact', 'page' => 'main']))
@@ -273,7 +273,7 @@ class AutomagicFormTest extends TestCase
             ->withSession(['automagic_form_submitted' => true])
             ->inertia(route('statamic.forms-pro.form.success', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('component', 'forms-pro::AutomagicFormSuccess')
+            ->assertJsonPath('component', 'forms-pro::AutomagicForm/Success')
             ->assertJsonPath('props.title', 'Contact')
             ->assertJsonPath('props.heading', 'Nice one!')
             ->assertJsonPath('props.message', 'We got your submission.')

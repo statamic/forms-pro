@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Head } from '@statamic/cms/inertia';
-import { Button } from '@statamic/cms/ui';
-import AutomagicFormLayout from '../layouts/AutomagicFormLayout.vue';
+import { Head } from '../../../../../cms/packages/cms/types/bootstrap/cms/inertia';
+import { Button } from '../../../../../cms/packages/cms/types/bootstrap/cms/ui';
+import AutomagicFormLayout from '../../layouts/AutomagicFormLayout.vue';
 
 defineOptions({ layout: AutomagicFormLayout });
 
