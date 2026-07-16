@@ -10,6 +10,7 @@ Route::prefix('{form}')
     ->controller(AutomagicFormController::class)
     ->middleware(HandleInertiaRequests::class)
     ->group(function () {
+        Route::get('/success', 'submitted')->name('success');
         Route::get('/{page?}', 'index')->name('index');
         Route::post('/{page}', 'store')->middleware(HandleFormPrecognitiveRequests::class)->name('store');
     });

@@ -80,7 +80,11 @@ class AutomagicFormController extends Controller
             : $this->setPartialSubmission($form, $result->submission);
 
         if ($result->isFinalized()) {
-            $request->session()->flash('success', 'Form submitted!');
+            $request->session()->flash('automagic_form_submitted', true);
+
+            return [
+                'redirect' => route('statamic.forms-pro.form.success', ['form' => $form->handle()]),
+            ];
         }
 
         return [
@@ -89,6 +93,25 @@ class AutomagicFormController extends Controller
                 'page' => $result->nextPage,
             ]),
         ];
+    }
+
+    public function submitted(Request $request, string $form)
+    {
+        throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
+        throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
+
+        if (! $request->session()->get('automagic_form_submitted')) {
+            return redirect()->route('statamic.forms-pro.form.index', ['form' => $form->handle()]);
+        }
+
+        return Inertia::render('forms-pro::AutomagicFormSuccess', [
+            'title' => $form->title(),
+            'heading' => $form->get('automagic_form_success_heading', __('forms-pro::messages.automagic_form_success_heading_default')),
+            'message' => $form->get('automagic_form_success_message', __('forms-pro::messages.automagic_form_success_message_default')),
+            'showReset' => (bool) $form->get('automagic_form_show_reset'),
+            'resetLabel' => $form->get('automagic_form_reset_label', __('forms-pro::messages.automagic_form_reset_label_default')),
+            'resetUrl' => route('statamic.forms-pro.form.index', ['form' => $form->handle()]),
+        ]);
     }
 
     private function precognitiveFields(Request $request): ?array

@@ -35,6 +35,34 @@ class ServiceProvider extends AddonServiceProvider
                     'type' => 'automagic_form_url',
                     'display' => __('forms-pro::messages.automagic_form_url'),
                     'instructions' => __('forms-pro::messages.automagic_form_url_instructions'),
+                    'if' => ['automagic_form' => true],
+                ],
+                'automagic_form_success_heading' => [
+                    'type' => 'text',
+                    'display' => __('forms-pro::messages.automagic_form_success_heading'),
+                    'instructions' => __('forms-pro::messages.automagic_form_success_heading_instructions'),
+                    'placeholder' => __('forms-pro::messages.automagic_form_success_heading_default'),
+                    'if' => ['automagic_form' => true],
+                ],
+                'automagic_form_success_message' => [
+                    'type' => 'textarea',
+                    'display' => __('forms-pro::messages.automagic_form_success_message'),
+                    'instructions' => __('forms-pro::messages.automagic_form_success_message_instructions'),
+                    'placeholder' => __('forms-pro::messages.automagic_form_success_message_default'),
+                    'if' => ['automagic_form' => true],
+                ],
+                'automagic_form_show_reset' => [
+                    'type' => 'toggle',
+                    'display' => __('forms-pro::messages.automagic_form_show_reset'),
+                    'instructions' => __('forms-pro::messages.automagic_form_show_reset_instructions'),
+                    'if' => ['automagic_form' => true],
+                ],
+                'automagic_form_reset_label' => [
+                    'type' => 'text',
+                    'display' => __('forms-pro::messages.automagic_form_reset_label'),
+                    'instructions' => __('forms-pro::messages.automagic_form_reset_label_instructions'),
+                    'placeholder' => __('forms-pro::messages.automagic_form_reset_label_default'),
+                    'if' => ['automagic_form_show_reset' => true],
                 ],
             ]
         );

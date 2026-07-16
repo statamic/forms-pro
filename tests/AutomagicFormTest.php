@@ -106,7 +106,8 @@ class AutomagicFormTest extends TestCase
                 'email' => 'han@example.com',
             ])
             ->assertOk()
-            ->assertJsonPath('redirect', route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => null]));
+            ->assertJsonPath('redirect', route('statamic.forms-pro.form.success', ['form' => 'contact']))
+            ->assertSessionHas('automagic_form_submitted', true);
 
         $submission = $form->submissions()->first();
 
@@ -213,7 +214,8 @@ class AutomagicFormTest extends TestCase
                 'email' => 'han@example.com',
             ])
             ->assertOk()
-            ->assertJsonPath('redirect', route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => null]));
+            ->assertJsonPath('redirect', route('statamic.forms-pro.form.success', ['form' => 'contact']))
+            ->assertSessionHas('automagic_form_submitted', true);
 
         $submission = $form->submissions()->first();
 
@@ -252,6 +254,75 @@ class AutomagicFormTest extends TestCase
                 'name' => 'Han Solo',
                 'email' => 'han@example.com',
             ])
+            ->assertNotFound();
+    }
+
+    #[Test]
+    public function it_renders_the_success_page_after_submitting()
+    {
+        $form = $this->createForm();
+
+        $form
+            ->set('automagic_form_success_heading', 'Nice one!')
+            ->set('automagic_form_success_message', 'We got your submission.')
+            ->set('automagic_form_show_reset', true)
+            ->set('automagic_form_reset_label', 'Start over')
+            ->save();
+
+        $this
+            ->withSession(['automagic_form_submitted' => true])
+            ->inertia(route('statamic.forms-pro.form.success', ['form' => 'contact']))
+            ->assertOk()
+            ->assertJsonPath('component', 'forms-pro::AutomagicFormSuccess')
+            ->assertJsonPath('props.title', 'Contact')
+            ->assertJsonPath('props.heading', 'Nice one!')
+            ->assertJsonPath('props.message', 'We got your submission.')
+            ->assertJsonPath('props.showReset', true)
+            ->assertJsonPath('props.resetLabel', 'Start over')
+            ->assertJsonPath('props.resetUrl', route('statamic.forms-pro.form.index', ['form' => 'contact']));
+    }
+
+    #[Test]
+    public function it_falls_back_to_default_copy_when_not_configured()
+    {
+        $this->createForm();
+
+        $this
+            ->withSession(['automagic_form_submitted' => true])
+            ->inertia(route('statamic.forms-pro.form.success', ['form' => 'contact']))
+            ->assertOk()
+            ->assertJsonPath('props.heading', 'Thank you!')
+            ->assertJsonPath('props.message', 'Your submission has been received.')
+            ->assertJsonPath('props.showReset', false)
+            ->assertJsonPath('props.resetLabel', 'Fill out the form again');
+    }
+
+    #[Test]
+    public function it_redirects_to_the_form_when_the_success_page_is_visited_without_submitting()
+    {
+        $this->createForm();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.success', ['form' => 'contact']))
+            ->assertRedirect(route('statamic.forms-pro.form.index', ['form' => 'contact']));
+    }
+
+    #[Test]
+    public function it_404s_when_the_success_page_form_does_not_exist()
+    {
+        $this
+            ->inertia(route('statamic.forms-pro.form.success', ['form' => 'unknown']))
+            ->assertNotFound();
+    }
+
+    #[Test]
+    public function it_404s_when_the_success_page_is_not_an_automagic_form()
+    {
+        $this->createForm(automagic: false);
+
+        $this
+            ->withSession(['automagic_form_submitted' => true])
+            ->inertia(route('statamic.forms-pro.form.success', ['form' => 'contact']))
             ->assertNotFound();
     }
 
