@@ -133,6 +133,53 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_validates_a_precognitive_request_without_submitting()
+    {
+        $form = $this->createForm();
+
+        $this
+            ->postJson(route('statamic.forms-pro.form.store', ['form' => 'contact', 'page' => 'main']), [
+                'name' => 'Han Solo',
+                'email' => 'han@example.com',
+            ], ['Precognition' => 'true'])
+            ->assertNoContent()
+            ->assertHeader('Precognition-Success', 'true');
+
+        $this->assertCount(0, $form->submissions());
+    }
+
+    #[Test]
+    public function it_returns_validation_errors_for_a_precognitive_request()
+    {
+        $form = $this->createForm();
+
+        $this
+            ->postJson(route('statamic.forms-pro.form.store', ['form' => 'contact', 'page' => 'main']), [
+                'name' => '',
+                'email' => 'not-an-email',
+            ], ['Precognition' => 'true'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['name', 'email']);
+
+        $this->assertCount(0, $form->submissions());
+    }
+
+    #[Test]
+    public function it_only_validates_the_requested_fields_for_a_precognitive_request()
+    {
+        $this->createForm();
+
+        $this
+            ->postJson(route('statamic.forms-pro.form.store', ['form' => 'contact', 'page' => 'main']), [
+                'name' => '',
+                'email' => 'not-an-email',
+            ], ['Precognition' => 'true', 'Precognition-Validate-Only' => 'email'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('email')
+            ->assertJsonMissingValidationErrors('name');
+    }
+
+    #[Test]
     public function it_advances_to_the_next_page_without_finalizing()
     {
         $form = $this->createMultiPageForm();

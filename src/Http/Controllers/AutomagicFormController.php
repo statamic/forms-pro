@@ -4,8 +4,8 @@ namespace Statamic\FormsPro\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Statamic\Contracts\Forms\Submission;
 use Statamic\Contracts\Forms\Form;
+use Statamic\Contracts\Forms\Submission;
 use Statamic\Exceptions\NotFoundHttpException;
 use Statamic\Facades;
 use Statamic\Fields\Tab;
@@ -67,6 +67,12 @@ class AutomagicFormController extends Controller
             $action->resume($partialSubmission);
         }
 
+        if ($request->isPrecognitive()) {
+            $action->validate($request->all(), $request->allFiles(), only: $this->precognitiveFields($request));
+
+            return response()->noContent(headers: ['Precognition-Success' => 'true']);
+        }
+
         $result = $action->submit($request->all(), $request->allFiles());
 
         $result->isFinalized()
@@ -83,6 +89,15 @@ class AutomagicFormController extends Controller
                 'page' => $result->nextPage,
             ]),
         ];
+    }
+
+    private function precognitiveFields(Request $request): ?array
+    {
+        if (! $request->headers->has('Precognition-Validate-Only')) {
+            return null;
+        }
+
+        return explode(',', $request->header('Precognition-Validate-Only'));
     }
 
     private function currentPage(Form $form, ?string $page = null): ?array

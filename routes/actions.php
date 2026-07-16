@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Statamic\FormsPro\Http\Controllers\AutomagicFormController;
 use Statamic\FormsPro\Http\Middleware\HandleInertiaRequests;
+use Statamic\Http\Middleware\HandleFormPrecognitiveRequests;
 
 Route::prefix('{form}')
     ->name('forms-pro.form.')
@@ -10,5 +11,5 @@ Route::prefix('{form}')
     ->middleware(HandleInertiaRequests::class)
     ->group(function () {
         Route::get('/{page?}', 'index')->name('index');
-        Route::post('/{page}', 'store')->name('store');
+        Route::post('/{page}', 'store')->middleware(HandleFormPrecognitiveRequests::class)->name('store');
     });

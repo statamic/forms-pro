@@ -2,7 +2,7 @@
 import { router, Head } from '@statamic/cms/inertia';
 import { PublishContainer, PublishSections, TabProvider, Button } from '@statamic/cms/ui';
 import AutomagicFormLayout from '../layouts/AutomagicFormLayout.vue';
-import { ref, computed, useTemplateRef, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, useTemplateRef, nextTick, watch, onMounted, onBeforeUnmount } from 'vue';
 import axios from "axios";
 
 defineOptions({ layout: AutomagicFormLayout });
@@ -32,16 +32,25 @@ const meta = ref<object>(props.meta);
 const values = ref<object>(props.values);
 const container = useTemplateRef<InstanceType<typeof PublishContainer>>('container');
 
+const progressWidth = computed<string>(() => `${props.progress ?? 20}%`);
 const isFirstPage = computed<boolean>(() => props.currentPage.id === props.pages[0].id);
 const isLastPage = computed<boolean>(() => props.currentPage.id === props.pages[props.pages.length - 1].id);
 const allPagesHaveCustomLabels = computed<boolean>(() => props.pages.every((page: Page) => page.display));
+
 const titleClasses = computed<array[string]>(() => [
     'text-center',
     allPagesHaveCustomLabels.value
         ? 'text-2xs text-gray-500 uppercase tracking-[0.05em] mb-1'
         : 'text-3xl leading-[1.25] font-medium antialiased text-center mb-8',
 ]);
-const progressWidth = computed<string>(() => `${props.progress ?? 20}%`);
+
+const fileFields = computed<string[]>(() =>
+	props.blueprint.tabs
+		.flatMap(tab => tab.sections)
+		.flatMap(section => section.fields)
+		.filter(field => ['assets', 'files', 'form_upload'].includes(field.type))
+		.map(field => field.handle),
+);
 
 const appendToFormData = (formData: FormData, key: string, value: unknown): void => {
 	if (value === null || value === undefined) return;
@@ -79,6 +88,52 @@ const submit = () => {
 		.finally(() => loading.value = false);
 };
 
+const clearErrorsFor = (fields: string[]): void => {
+	errors.value = Object.fromEntries(
+		Object.entries(errors.value).filter(([key]) => !fields.some(field => key === field || key.startsWith(`${field}.`))),
+	);
+};
+
+let validationTimeout: ReturnType<typeof setTimeout>;
+let validationController: AbortController;
+
+const validate = (fields: string[]): void => {
+	validationController?.abort();
+	validationController = new AbortController();
+
+	const payload = Object.fromEntries(Object.entries(values.value).filter(([handle]) => !fileFields.value.includes(handle)));
+
+	axios.post(props.action, payload, {
+		headers: {
+			Precognition: true,
+			'Precognition-Validate-Only': fields.join(','),
+		},
+		signal: validationController.signal,
+	})
+		.then(() => clearErrorsFor(fields))
+		.catch(error => {
+			if (axios.isCancel(error) || error.response?.status !== 422) return;
+
+			clearErrorsFor(fields);
+			errors.value = { ...errors.value, ...error.response.data.errors };
+		});
+};
+
+const snapshot = Object.fromEntries(Object.entries(props.values).map(([handle, value]) => [handle, JSON.stringify(value)]));
+
+watch(values, (current) => {
+	const changed = Object.keys(current).filter(
+		handle => ! fileFields.value.includes(handle) && JSON.stringify(current[handle]) !== snapshot[handle],
+	);
+
+	if (! changed.length) return;
+
+	changed.forEach(handle => snapshot[handle] = JSON.stringify(current[handle]));
+
+	clearTimeout(validationTimeout);
+	validationTimeout = setTimeout(() => validate(changed), 400);
+}, { deep: true });
+
 let submitBinding;
 
 onMounted(() => {
@@ -88,7 +143,11 @@ onMounted(() => {
 	});
 });
 
-onBeforeUnmount(() => submitBinding?.destroy());
+onBeforeUnmount(() => {
+	submitBinding?.destroy();
+	clearTimeout(validationTimeout);
+	validationController?.abort();
+});
 </script>
 
 <template>
