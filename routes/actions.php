@@ -11,6 +11,7 @@ Route::prefix('{form}')
     ->middleware(HandleInertiaRequests::class)
     ->group(function () {
         Route::get('/success', 'submitted')->name('success');
+        Route::get('/restricted', 'restricted')->name('restricted');
         Route::get('/{page?}', 'index')->name('index');
         Route::post('/{page}', 'store')->middleware(HandleFormPrecognitiveRequests::class)->name('store');
     });

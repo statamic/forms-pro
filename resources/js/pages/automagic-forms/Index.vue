@@ -83,6 +83,12 @@ const submit = () => {
 			nextTick(() => router.visit(response.data.redirect));
 		})
 		.catch(error => {
+			if (error.response?.status === 403) {
+				container.value.clearDirtyState();
+				nextTick(() => router.visit(error.response.data.redirect));
+				return;
+			}
+
 			errors.value = error.response.data.errors;
 		})
 		.finally(() => loading.value = false);

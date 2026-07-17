@@ -25,6 +25,10 @@ class AutomagicFormController extends Controller
         throw_unless($currentPage = $this->currentPage($form, $page), NotFoundHttpException::class);
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
 
+        if ($form->restricted()) {
+            return redirect()->route('statamic.forms-pro.form.restricted', ['form' => $form->handle()]);
+        }
+
         $currentPageId = Arr::get($currentPage, 'id');
         $partialSubmission = $this->getPartialSubmission($form);
 
@@ -69,6 +73,12 @@ class AutomagicFormController extends Controller
         throw_unless($currentPage = $this->currentPage($form, $page), NotFoundHttpException::class);
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
 
+        if ($form->restricted()) {
+            return response()->json([
+                'redirect' => route('statamic.forms-pro.form.restricted', ['form' => $form->handle()]),
+            ], 403);
+        }
+
         $action->form($form);
         $action->page(Arr::get($currentPage, 'id'));
 
@@ -102,6 +112,22 @@ class AutomagicFormController extends Controller
                 'page' => $result->nextPage,
             ]),
         ];
+    }
+
+    public function restricted(Request $request, string $form)
+    {
+        throw_unless(config('forms-pro.automagic_forms.enabled'), NotFoundHttpException::class);
+        throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
+        throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
+
+        if (! $form->restricted()) {
+            return redirect()->route('statamic.forms-pro.form.index', ['form' => $form->handle()]);
+        }
+
+        return Inertia::render('forms-pro::AutomagicForm/Restricted', [
+            'title' => $form->title(),
+            'message' => $form->restrictionMessage(),
+        ]);
     }
 
     public function submitted(Request $request, string $form)

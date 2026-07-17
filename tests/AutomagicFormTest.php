@@ -263,6 +263,70 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_redirects_to_the_restricted_page_when_the_form_is_restricted()
+    {
+        $this->createForm()->set('require_login', true)->save();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact']))
+            ->assertRedirect(route('statamic.forms-pro.form.restricted', ['form' => 'contact']));
+    }
+
+    #[Test]
+    public function it_renders_the_restriction_message()
+    {
+        $this->createForm()->set('require_login', true)->save();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.restricted', ['form' => 'contact']))
+            ->assertOk()
+            ->assertJsonPath('component', 'forms-pro::AutomagicForm/Restricted')
+            ->assertJsonPath('props.title', 'Contact')
+            ->assertJsonPath('props.message', 'You must be logged in to submit this form.');
+    }
+
+    #[Test]
+    public function it_renders_a_custom_restriction_message()
+    {
+        $this->createForm()
+            ->set('require_login', true)
+            ->set('require_login_message', 'Please sign in first.')
+            ->save();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.restricted', ['form' => 'contact']))
+            ->assertOk()
+            ->assertJsonPath('props.message', 'Please sign in first.');
+    }
+
+    #[Test]
+    public function it_redirects_to_the_form_when_the_restricted_page_is_visited_and_the_form_is_not_restricted()
+    {
+        $this->createForm();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.restricted', ['form' => 'contact']))
+            ->assertRedirect(route('statamic.forms-pro.form.index', ['form' => 'contact']));
+    }
+
+    #[Test]
+    public function it_forbids_submitting_a_restricted_form()
+    {
+        $form = $this->createForm();
+        $form->set('require_login', true)->save();
+
+        $this
+            ->postJson(route('statamic.forms-pro.form.store', ['form' => 'contact', 'page' => 'main']), [
+                'name' => 'Han Solo',
+                'email' => 'han@example.com',
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('redirect', route('statamic.forms-pro.form.restricted', ['form' => 'contact']));
+
+        $this->assertNull($form->submissions()->first());
+    }
+
+    #[Test]
     public function it_submits_the_form()
     {
         $form = $this->createForm();
