@@ -1,0 +1,57 @@
+<div
+    data-forms-pro-address
+    data-labels="{{ address_labels | entities }}"
+    {{ if autocomplete }}data-autocomplete="{{ autocomplete | entities }}"{{ /if }}
+    {{ if js_driver }}{{ js_attributes }}{{ /if }}
+>
+    {{ address_fields }}
+        <div data-address-field="{{ address_handle }}">
+            <label for="{{ id }}">{{ display }}</label>
+            {{ if address_handle == 'country' }}
+                <select
+                    id="{{ id }}"
+                    name="{{ name }}"
+                    autocomplete="country"
+                    data-address-input="country"
+                    {{ if js_driver | contains:alpine }}x-model="{{ handle }}"{{ /if }}
+                    {{ if validate | contains:required }}required{{ /if }}
+                    {{ if error }}aria-invalid="true" aria-describedby="{{ id }}-error"{{ /if }}
+                >
+                    <option value=""></option>
+                    {{ countries }}
+                        <option value="{{ code }}" {{ if code == value }}selected{{ /if }}>{{ name }}</option>
+                    {{ /countries }}
+                </select>
+            {{ else }}
+                <input
+                    type="text"
+                    id="{{ id }}"
+                    name="{{ name }}"
+                    value="{{ value }}"
+                    autocomplete="{{ html_autocomplete }}"
+                    data-address-input="{{ address_handle }}"
+                    {{ if js_driver | contains:alpine }}x-model="{{ handle }}"{{ /if }}
+                    {{ if validate | contains:required }}required{{ /if }}
+                    {{ if error }}aria-invalid="true" aria-describedby="{{ id }}-error"{{ /if }}
+                >
+            {{ /if }}
+            {{ if error }}
+                <p id="{{ id }}-error" data-address-error>{{ error }}</p>
+            {{ /if }}
+        </div>
+    {{ /address_fields }}
+
+    {{ if autocomplete }}
+        {{#
+            The autocomplete dropdown. Cloned after the "Line 1" input is focused.
+            - `data-address-option` is an individual suggestion.
+            - `data-address-attribution` displays attribution for Google Maps or Geoapify.
+        #}}
+        <template data-address-suggestions>
+            <ul>
+                <li data-address-option><span data-address-label></span></li>
+                <li data-address-attribution></li>
+            </ul>
+        </template>
+    {{ /if }}
+</div>
