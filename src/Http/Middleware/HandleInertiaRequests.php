@@ -49,8 +49,12 @@ class HandleInertiaRequests extends \Statamic\Http\Middleware\CP\HandleInertiaRe
         ];
     }
 
-    private function logoUrl(string $path): ?string
+    private function logoUrl(?string $path): ?string
     {
+        if (! $path) {
+            return null;
+        }
+
         $container = AssetContainer::all()->first();
 
         return $container?->asset($path)?->url();
