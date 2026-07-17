@@ -25,14 +25,20 @@ class AutomagicFormController extends Controller
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
 
         $currentPageId = Arr::get($currentPage, 'id');
-        $previousPage = $this->previousPage($form, $currentPageId);
+        $partialSubmission = $this->getPartialSubmission($form);
+
+        if (! $partialSubmission && $currentPageId !== Arr::get($form->formFields()->pages()->first(), 'id')) {
+            return redirect()->route('statamic.forms-pro.form.index', ['form' => $form->handle()]);
+        }
 
         $blueprint = $form->blueprint();
         $fields = $blueprint->fields()->preProcess();
+        $data = $partialSubmission?->data()->all() ?? [];
+        $previousPage = $this->previousPage($form, $currentPageId, $data);
         $formPages = $form->formFields()->pages()->keyBy(fn (array $page) => $page['id'] ?? 'main');
 
-        if ($partialSubmission = $this->getPartialSubmission($form)) {
-            $fields = $fields->addValues($partialSubmission->data()->all());
+        if ($partialSubmission) {
+            $fields = $fields->addValues($data);
         }
 
         $pages = $form->blueprint()->tabs()->map(fn (Tab $tab) => [
@@ -48,7 +54,7 @@ class AutomagicFormController extends Controller
             'title' => $form->title(),
             'pages' => $pages,
             'currentPage' => $pages->where('id', $currentPageId)->first(),
-            'progress' => $this->progress($form, $currentPageId, $partialSubmission?->data()->all() ?? []),
+            'progress' => $this->progress($form, $currentPageId, $data),
             'blueprint' => $blueprint->toPublishArray(),
             'values' => $fields->values(),
             'meta' => $fields->meta(),
@@ -135,17 +141,22 @@ class AutomagicFormController extends Controller
         return $pages->first();
     }
 
-    private function previousPage(Form $form, string $currentPage): ?array
+    private function previousPage(Form $form, string $currentPage, array $data): ?array
     {
-        $pages = $form->formFields()->pages();
+        $path = (new PageLogic($form))->pathTo($data, $currentPage);
 
-        if ($pages->first()['id'] === $currentPage) {
+        // The current page comes from the URL, so the logic may not route to it at all.
+        if (end($path) !== $currentPage) {
             return null;
         }
 
-        $previousPageIndex = $pages->search(fn ($page) => $page['id'] === $currentPage) - 1;
+        array_pop($path);
 
-        return $pages->get($previousPageIndex);
+        if (! $previousPageId = end($path)) {
+            return null;
+        }
+
+        return $form->formFields()->pages()->where('id', $previousPageId)->first();
     }
 
     private function progress(Form $form, string $currentPage, array $data): ?int

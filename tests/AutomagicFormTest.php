@@ -100,9 +100,13 @@ class AutomagicFormTest extends TestCase
     #[Test]
     public function it_renders_a_later_page_with_a_link_back_to_the_previous_one()
     {
-        $this->createMultiPageForm();
+        $form = $this->createMultiPageForm();
+
+        $submission = $form->makeSubmission();
+        $submission->data(['name' => 'Han Solo'])->asPartial()->save();
 
         $this
+            ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
             ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => 'page_2']))
             ->assertOk()
             ->assertJsonPath('props.currentPage.id', 'page_2')
@@ -110,12 +114,78 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_links_back_to_the_page_the_logic_routed_from_rather_than_the_previous_one()
+    {
+        $form = $this->createBranchingForm();
+
+        $submission = $form->makeSubmission();
+        $submission->data(['name' => 'skip'])->asPartial()->save();
+
+        $this
+            ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => 'page_3']))
+            ->assertOk()
+            ->assertJsonPath('props.previousPageUrl', route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => 'page_1']));
+    }
+
+    #[Test]
+    public function it_does_not_link_back_from_a_page_the_page_logic_skips_over()
+    {
+        $form = $this->createBranchingForm();
+
+        $submission = $form->makeSubmission();
+        $submission->data(['name' => 'skip'])->asPartial()->save();
+
+        $this
+            ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => 'page_2']))
+            ->assertOk()
+            ->assertJsonPath('props.previousPageUrl', null);
+    }
+
+    #[Test]
+    public function it_redirects_to_the_first_page_when_visiting_a_later_page_without_a_partial_submission()
+    {
+        $this->createMultiPageForm();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => 'page_2']))
+            ->assertRedirect(route('statamic.forms-pro.form.index', ['form' => 'contact']));
+    }
+
+    #[Test]
+    public function it_renders_the_first_page_without_a_partial_submission()
+    {
+        $this->createMultiPageForm();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => 'page_1']))
+            ->assertOk()
+            ->assertJsonPath('props.currentPage.id', 'page_1');
+    }
+
+    #[Test]
+    public function it_renders_a_single_page_form_without_a_partial_submission()
+    {
+        $this->createForm();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => 'main']))
+            ->assertOk()
+            ->assertJsonPath('props.currentPage.id', 'main');
+    }
+
+    #[Test]
     #[DataProvider('progressProvider')]
     public function it_includes_the_progress_through_the_pages(string $page, int $progress)
     {
-        $this->createThreePageForm();
+        $form = $this->createThreePageForm();
+
+        $submission = $form->makeSubmission();
+        $submission->data(['name' => 'Han Solo'])->asPartial()->save();
 
         $this
+            ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
             ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => $page]))
             ->assertOk()
             ->assertJsonPath('props.progress', $progress);
