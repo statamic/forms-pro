@@ -13,6 +13,7 @@ export default function attachAutocomplete(el, config) {
     const provider = createProvider();
 
     let timeout = null;
+    let requestId = 0;
     let activeIndex = -1;
     let suggestions = [];
 
@@ -94,7 +95,12 @@ export default function attachAutocomplete(el, config) {
         }
 
         timeout = setTimeout(async () => {
-            suggestions = await provider.suggest(query, config).catch(() => []);
+            const id = ++requestId;
+            const results = await provider.suggest(query, config).catch(() => []);
+
+            if (id !== requestId) return;
+
+            suggestions = results;
             render();
             highlight(-1);
         }, DEBOUNCE_MS);

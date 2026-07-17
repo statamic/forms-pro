@@ -21,6 +21,7 @@ const autocompleteOpen = ref(false);
 const autocompleteLoading = ref(false);
 
 let timeout = null;
+let requestId = 0;
 
 const listboxId = computed(() => `${props.id}-line_1-suggestions`);
 const autocomplete = computed(() => props.meta.autocomplete ?? null);
@@ -86,10 +87,15 @@ function suggest(value) {
 	}
 
 	timeout = setTimeout(async () => {
+		const id = ++requestId;
 		autocompleteLoading.value = true;
-		suggestions.value = await autocompleteProvider.value.suggest(query, autocomplete.value)
-			.catch(() => [])
-			.finally(() => autocompleteLoading.value = false);
+
+		const results = await autocompleteProvider.value.suggest(query, autocomplete.value).catch(() => []);
+
+		if (id !== requestId) return;
+
+		suggestions.value = results;
+		autocompleteLoading.value = false;
 		highlightedIndex.value = -1;
 		autocompleteOpen.value = true;
 	}, DEBOUNCE_MS);
