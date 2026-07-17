@@ -24,5 +24,13 @@ class ServiceProvider extends AddonServiceProvider
         $this->publishes([
             __DIR__.'/../resources/dist-frontend' => public_path('vendor/forms-pro/frontend'),
         ], 'forms-pro-frontend');
+
+        $stubsSource = config('statamic.templates.language', 'antlers') === 'blade'
+            ? __DIR__.'/../resources/views/forms/blade'
+            : __DIR__.'/../resources/views/forms/antlers';
+
+        $this->publishes([
+            $stubsSource => resource_path('views/vendor/forms-pro/forms'),
+        ], 'forms-pro-fields');
     }
 }
