@@ -59,6 +59,8 @@ const appendToFormData = (formData: FormData, key: string, value: unknown): void
 		value.forEach(item => appendToFormData(formData, `${key}[]`, item));
 	} else if (typeof value === 'object') {
 		Object.entries(value).forEach(([subKey, subValue]) => appendToFormData(formData, `${key}[${subKey}]`, subValue));
+	} else if (typeof value === 'boolean') {
+		formData.append(key, value ? '1' : '0');
 	} else {
 		formData.append(key, String(value));
 	}
