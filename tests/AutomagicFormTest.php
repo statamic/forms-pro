@@ -39,6 +39,18 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_404s_when_automagic_forms_is_disabled()
+    {
+        config()->set('forms-pro.automagic_forms.enabled', false);
+
+        $this->createForm();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact']))
+            ->assertNotFound();
+    }
+
+    #[Test]
     public function it_404s_when_the_form_does_not_exist()
     {
         $this
@@ -57,7 +69,7 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
-    public function it_404s_when_the_form_is_not_an_automagic_form()
+    public function it_404s_when_the_form_doesnt_have_automagic_enabled()
     {
         $this->createForm(automagic: false);
 
@@ -382,6 +394,21 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_404s_when_submitting_a_form_when_automagic_forms_is_disabled()
+    {
+        config()->set('forms-pro.automagic_forms.enabled', false);
+
+        $this->createForm();
+
+        $this
+            ->postJson(route('statamic.forms-pro.form.store', ['form' => 'contact', 'page' => 'main']), [
+                'name' => 'Han Solo',
+                'email' => 'han@example.com',
+            ])
+            ->assertNotFound();
+    }
+
+    #[Test]
     public function it_404s_when_submitting_a_form_that_does_not_exist()
     {
         $this
@@ -400,7 +427,7 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
-    public function it_404s_when_submitting_a_form_that_is_not_an_automagic_form()
+    public function it_404s_when_submitting_a_form_that_doesnt_have_automagic_enabled()
     {
         $this->createForm(automagic: false);
 
@@ -463,6 +490,19 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_404s_on_the_success_page_when_automagic_forms_is_disabled()
+    {
+        config()->set('forms-pro.automagic_forms.enabled', false);
+
+        $this->createForm();
+
+        $this
+            ->withSession(['automagic_form_submitted' => true])
+            ->inertia(route('statamic.forms-pro.form.success', ['form' => 'contact']))
+            ->assertNotFound();
+    }
+
+    #[Test]
     public function it_404s_when_the_success_page_form_does_not_exist()
     {
         $this
@@ -471,7 +511,7 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
-    public function it_404s_when_the_success_page_is_not_an_automagic_form()
+    public function it_404s_when_the_success_page_form_doesnt_have_automagic_enabled()
     {
         $this->createForm(automagic: false);
 

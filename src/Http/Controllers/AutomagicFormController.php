@@ -20,6 +20,7 @@ class AutomagicFormController extends Controller
 {
     public function index(Request $request, string $form, ?string $page = null)
     {
+        throw_unless(config('forms-pro.automagic_forms.enabled'), NotFoundHttpException::class);
         throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
         throw_unless($currentPage = $this->currentPage($form, $page), NotFoundHttpException::class);
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
@@ -63,6 +64,7 @@ class AutomagicFormController extends Controller
 
     public function store(Request $request, string $form, string $page, SubmitForm $action)
     {
+        throw_unless(config('forms-pro.automagic_forms.enabled'), NotFoundHttpException::class);
         throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
         throw_unless($currentPage = $this->currentPage($form, $page), NotFoundHttpException::class);
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
@@ -104,6 +106,7 @@ class AutomagicFormController extends Controller
 
     public function submitted(Request $request, string $form)
     {
+        throw_unless(config('forms-pro.automagic_forms.enabled'), NotFoundHttpException::class);
         throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
 

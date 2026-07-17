@@ -23,8 +23,15 @@ class ServiceProvider extends AddonServiceProvider
             __DIR__.'/../resources/dist-frontend' => public_path('vendor/forms-pro/frontend'),
         ], 'forms-pro-frontend');
 
-        $this->registerSettingsBlueprint(Settings::blueprint());
+        if (config('forms-pro.automagic_forms.enabled')) {
+            $this->registerSettingsBlueprint(Settings::blueprint());
 
+            $this->bootAutomagicForms();
+        }
+    }
+
+    private function bootAutomagicForms(): void
+    {
         Form::appendConfigFields(
             handles: '*',
             display: 'Automagic Forms',
