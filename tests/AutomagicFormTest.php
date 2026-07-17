@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Events\SubmissionFinalized;
 use Statamic\Facades;
-use Statamic\Facades\User;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
 
 class AutomagicFormTest extends TestCase
@@ -21,8 +20,6 @@ class AutomagicFormTest extends TestCase
         parent::setUp();
 
         Facades\Form::all()->each->delete();
-
-        $this->actingAs(User::make()->save());
     }
 
     #[Test]
