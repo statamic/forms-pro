@@ -3,6 +3,7 @@
 namespace Statamic\FormsPro;
 
 use Statamic\Facades\Form;
+use Statamic\Fieldtypes\Link;
 use Statamic\Providers\AddonServiceProvider;
 
 class ServiceProvider extends AddonServiceProvider
@@ -68,5 +69,7 @@ class ServiceProvider extends AddonServiceProvider
                 ],
             ]
         );
+
+        Link::extend('form', FormLinkType::class);
     }
 }
