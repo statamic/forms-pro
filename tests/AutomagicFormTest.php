@@ -4,6 +4,7 @@ namespace Tests;
 
 use Event;
 use Illuminate\Testing\TestResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Events\SubmissionFinalized;
@@ -93,6 +94,77 @@ class AutomagicFormTest extends TestCase
             ->assertOk()
             ->assertJsonPath('props.currentPage.id', 'page_2')
             ->assertJsonPath('props.previousPageUrl', route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => 'page_1']));
+    }
+
+    #[Test]
+    #[DataProvider('progressProvider')]
+    public function it_includes_the_progress_through_the_pages(string $page, int $progress)
+    {
+        $this->createThreePageForm();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => $page]))
+            ->assertOk()
+            ->assertJsonPath('props.progress', $progress);
+    }
+
+    public static function progressProvider(): array
+    {
+        return [
+            'first page' => ['page_1', 25],
+            'middle page' => ['page_2', 50],
+            'last page' => ['page_3', 75],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('branchingProgressProvider')]
+    public function it_bases_the_progress_on_the_pages_the_page_logic_will_route_to(string $page, int $progress)
+    {
+        $form = $this->createBranchingForm();
+
+        $submission = $form->makeSubmission();
+        $submission->data(['name' => 'skip'])->asPartial()->save();
+
+        $this
+            ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => $page]))
+            ->assertOk()
+            ->assertJsonPath('props.progress', $progress);
+    }
+
+    public static function branchingProgressProvider(): array
+    {
+        return [
+            'first page of two' => ['page_1', 33],
+            'last page of two' => ['page_3', 67],
+        ];
+    }
+
+    #[Test]
+    public function it_does_not_include_any_progress_for_a_single_page_form()
+    {
+        $this->createForm();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact']))
+            ->assertOk()
+            ->assertJsonPath('props.progress', null);
+    }
+
+    #[Test]
+    public function it_does_not_include_any_progress_for_a_page_the_page_logic_skips_over()
+    {
+        $form = $this->createBranchingForm();
+
+        $submission = $form->makeSubmission();
+        $submission->data(['name' => 'skip'])->asPartial()->save();
+
+        $this
+            ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact', 'page' => 'page_2']))
+            ->assertOk()
+            ->assertJsonPath('props.progress', null);
     }
 
     #[Test]
@@ -356,6 +428,53 @@ class AutomagicFormTest extends TestCase
                     ]]]],
                     ['id' => 'page_2', 'sections' => [['fields' => [
                         ['handle' => 'email', 'field' => ['type' => 'text', 'validate' => ['required', 'email']]],
+                    ]]]],
+                ],
+            ]))->save();
+    }
+
+    private function createThreePageForm(): Form
+    {
+        return tap(Facades\Form::make('contact')
+            ->title('Contact')
+            ->set('automagic_form', true)
+            ->formFields([
+                'pages' => [
+                    ['id' => 'page_1', 'sections' => [['fields' => [
+                        ['handle' => 'name', 'field' => ['type' => 'text']],
+                    ]]]],
+                    ['id' => 'page_2', 'sections' => [['fields' => [
+                        ['handle' => 'email', 'field' => ['type' => 'text']],
+                    ]]]],
+                    ['id' => 'page_3', 'sections' => [['fields' => [
+                        ['handle' => 'message', 'field' => ['type' => 'text']],
+                    ]]]],
+                ],
+            ]))->save();
+    }
+
+    private function createBranchingForm(): Form
+    {
+        return tap(Facades\Form::make('contact')
+            ->title('Contact')
+            ->set('automagic_form', true)
+            ->formFields([
+                'pages' => [
+                    [
+                        'id' => 'page_1',
+                        'rules' => [[
+                            'conditions' => [['field' => 'name', 'operator' => 'equals', 'value' => 'skip']],
+                            'destination' => 'page_3',
+                        ]],
+                        'sections' => [['fields' => [
+                            ['handle' => 'name', 'field' => ['type' => 'text']],
+                        ]]],
+                    ],
+                    ['id' => 'page_2', 'sections' => [['fields' => [
+                        ['handle' => 'email', 'field' => ['type' => 'text']],
+                    ]]]],
+                    ['id' => 'page_3', 'sections' => [['fields' => [
+                        ['handle' => 'message', 'field' => ['type' => 'text']],
                     ]]]],
                 ],
             ]))->save();

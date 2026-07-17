@@ -20,10 +20,10 @@ const props = defineProps<{
     title: string;
     pages: array<Page>;
 	currentPage?: Page;
+	progress?: number;
     blueprint: object;
     values: object;
     meta: object;
-    progress?: number;
 }>();
 
 const errors = ref<object>({});
@@ -32,7 +32,7 @@ const meta = ref<object>(props.meta);
 const values = ref<object>(props.values);
 const container = useTemplateRef<InstanceType<typeof PublishContainer>>('container');
 
-const progressWidth = computed<string>(() => `${props.progress ?? 20}%`);
+const progressWidth = computed<string>(() => `${props.progress}%`);
 const isFirstPage = computed<boolean>(() => props.currentPage.id === props.pages[0].id);
 const isLastPage = computed<boolean>(() => props.currentPage.id === props.pages[props.pages.length - 1].id);
 const allPagesHaveCustomLabels = computed<boolean>(() => props.pages.every((page: Page) => page.display));
@@ -160,10 +160,12 @@ onBeforeUnmount(() => {
             :style="{ width: progressWidth }"
         />
     </div>
+    <template v-if="progress !== null">
 
     <div class="fixed inset-x-0 top-1.5 z-20 flex justify-end px-2.5 py-1.5">
         <p id="progress-bar-label" class="text-center text-[0.8rem] text-gray-600">{{ progress ?? 20 }}% Complete</p>
     </div>
+    </template>
 
     <div class="relative mx-auto max-w-[55rem] items-center justify-center">
         <div :key="currentPage.id" class="pt-12 pb-12">

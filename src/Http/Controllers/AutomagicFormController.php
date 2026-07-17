@@ -9,6 +9,7 @@ use Statamic\Contracts\Forms\Submission;
 use Statamic\Exceptions\NotFoundHttpException;
 use Statamic\Facades;
 use Statamic\Fields\Tab;
+use Statamic\Forms\Logic\PageLogic;
 use Statamic\Forms\SubmitForm;
 use Statamic\Http\Controllers\Controller;
 use Statamic\Support\Arr;
@@ -47,6 +48,7 @@ class AutomagicFormController extends Controller
             'title' => $form->title(),
             'pages' => $pages,
             'currentPage' => $pages->where('id', $currentPageId)->first(),
+            'progress' => $this->progress($form, $currentPageId, $partialSubmission?->data()->all() ?? []),
             'blueprint' => $blueprint->toPublishArray(),
             'values' => $fields->values(),
             'meta' => $fields->meta(),
@@ -144,6 +146,19 @@ class AutomagicFormController extends Controller
         $previousPageIndex = $pages->search(fn ($page) => $page['id'] === $currentPage) - 1;
 
         return $pages->get($previousPageIndex);
+    }
+
+    private function progress(Form $form, string $currentPage, array $data): ?int
+    {
+        $path = (new PageLogic($form))->path($data);
+        $currentPageIndex = array_search($currentPage, $path, true);
+
+        // The current page comes from the URL, so the logic may not route to it at all.
+        if ($currentPageIndex === false || count($path) === 1) {
+            return null;
+        }
+
+        return (int) round(($currentPageIndex + 1) / (count($path) + 1) * 100);
     }
 
     private function setPartialSubmission($form, $submission): void
