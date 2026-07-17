@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Events\SubmissionFinalized;
 use Statamic\Facades;
+use Statamic\Facades\Addon;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
 
 class AutomagicFormTest extends TestCase
@@ -63,6 +64,21 @@ class AutomagicFormTest extends TestCase
         $this
             ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact']))
             ->assertNotFound();
+    }
+
+    #[Test]
+    public function it_renders_with_appearance_settings()
+    {
+        $this->createForm();
+
+        Addon::get('statamic/forms-pro')->settings()->set(['brand_color' => '#bada55', 'background' => 'bamboo'])->save();
+
+        $this
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact']))
+            ->assertOk()
+            ->assertJsonPath('props.settings.brandColor', '#bada55')
+            ->assertJsonPath('props.settings.background', 'bamboo')
+            ->assertJsonPath('props.settings.logo', null);
     }
 
     #[Test]

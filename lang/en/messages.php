@@ -1,8 +1,17 @@
 <?php
 
 return [
-    'automagic_form' => 'Enable Automagic Form',
-    'automagic_form_instructions' => "Generates a shareable URL for this form, so you don't need to build a page for it.",
+    'appearance' => 'Appearance',
+    'appearance_instructions' => 'Customise how your Automagic Forms look to the people filling them out.',
+    'appearance_logo' => 'Logo',
+    'appearance_logo_instructions' => 'Shown in the top left corner of every Automagic Form.',
+    'appearance_brand_color' => 'Brand Color',
+    'appearance_brand_color_instructions' => 'Overrides the colour used for buttons and the progress bar. Leave blank to use the default colours.',
+    'appearance_background' => 'Background',
+    'appearance_background_instructions' => 'The background pattern shown behind every Automagic Form.',
+    'automagic_forms' => 'Automagic Forms',
+    'enable_automagic_form' => 'Enable Automagic Form',
+    'enable_automagic_form_instructions' => "Generates a shareable URL for this form, so you don't need to build a page for it.",
     'automagic_form_url' => 'Automagic Form URL',
     'automagic_form_url_instructions' => "The URL for this form. Share it with anyone you'd like to fill it out.",
     'automagic_form_success_heading' => 'Success Heading',
@@ -16,4 +25,5 @@ return [
     'automagic_form_reset_label' => 'Fill out again button label',
     'automagic_form_reset_label_instructions' => 'The label for the button that restarts the form.',
     'automagic_form_reset_label_default' => 'Fill out the form again',
+    'automagic_form_progress' => ':progress% complete',
 ];

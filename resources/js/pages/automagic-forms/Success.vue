@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@statamic/cms/inertia';
 import { Button } from '@statamic/cms/ui';
-import AutomagicFormLayout from '../../layouts/AutomagicFormLayout.vue';
+import AutomagicFormLayout from './Layout.vue';
 
 defineOptions({ layout: AutomagicFormLayout });
 
@@ -28,7 +28,7 @@ defineProps<{
                     :href="resetUrl"
                     variant="primary"
                     class="border-0! dark:border-0! ring-0! shadow-none!"
-                    style="--theme-color-primary: var(--theme-color-gray-950)"
+                    style="--theme-color-primary: var(--automagic-brand, var(--theme-color-gray-950))"
                     :text="__(resetLabel)"
                 />
             </div>
