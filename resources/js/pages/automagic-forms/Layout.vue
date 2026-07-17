@@ -63,8 +63,8 @@ onMounted(() => {
         </template>
 
         <div class="fixed inset-x-0 top-1.5 z-20 px-2.5 py-1.5">
-            <a v-if="settings.logoUrl" :href="site.url" target="_blank" rel="noopener">
-                <img id="logo" :src="settings.logoUrl" :alt="site.name" class="max-h-8 w-auto" />
+            <a v-if="settings.logoUrl" :href="site.url" target="_blank" rel="noopener" class="inline-block">
+                <img id="logo" :src="settings.logoUrl" :alt="site.name" class="h-8 w-auto" />
             </a>
         </div>
 
