@@ -39,10 +39,10 @@ export default function alpineDriver(data = {}, config = {}) {
             },
 
             goToPage(pageId) {
-                if (!this.pages.find(page => page.id === pageId) || pageId === this.currentPage) return;
-                if (this.pages.findIndex(page => page.id === pageId) > this.pageIndex) return;
+                if (pageId === this.currentPage || !this.visited.includes(pageId)) return;
 
                 this.goTo(pageId);
+                this.visited = this.visited.slice(0, this.visited.indexOf(pageId) + 1);
             },
 
             goToFirstPage() {
