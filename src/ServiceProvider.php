@@ -14,6 +14,11 @@ class ServiceProvider extends AddonServiceProvider
         'hotFile' => __DIR__.'/../resources/dist/hot',
     ];
 
+    protected $formJsDrivers = [
+        JsDrivers\Alpine::class,
+        JsDrivers\AlpinePrecognition::class,
+    ];
+
     public function bootAddon()
     {
         $this->publishes([

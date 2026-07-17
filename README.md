@@ -4,9 +4,12 @@
 
 ## Features
 
-- One
-- Two
-- Three
+- Multi-page forms
+    - Control page logic in a list or edit rules in a tree view
+- Dedicated form pages
+- Unique form instances per entry
+- Additional fieldtypes & connections
+- Enhanced spam prevention
 
 ## Installation
 
@@ -16,10 +19,8 @@ You can install the Forms Pro addon via Composer:
 composer require statamic/forms-pro
 ```
 
-You can find the Forms Pro addon in the Control Panel under `...`.
+You can now use Forms Pro's features when building and configuring forms in the Control Panel.
 
-<!-- statamic:hide -->
 ## Documentation
 
-Read the docs on the [Statamic Marketplace](https://statamic.com/addons/statamic/forms-pro/docs) or contribute to it [here on GitHub](DOCUMENTATION.md).
-<!-- /statamic:hide -->
+Read the docs on the [Statamic documentation](https://statamic.dev/frontend/forms).
