@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
                 v-model="values"
             >
                 <template v-for="tab in blueprint.tabs" :key="tab.handle">
-                    <div v-show="tab.handle === currentPage.id">
+                    <div v-if="tab.handle === currentPage.id">
                         <TabProvider :tab>
                             <PublishSections />
                         </TabProvider>
