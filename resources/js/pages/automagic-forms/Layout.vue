@@ -2,13 +2,27 @@
 import { computed, onMounted } from 'vue';
 import { findBackground } from './backgrounds';
 
+type Site = {
+	name: string;
+	handle: string;
+	url: string;
+	lang: string;
+	direction: string;
+}
+
+type Settings = {
+	logoUrl?: string;
+	brandColor?: string;
+	background?: string;
+}
+
 const props = defineProps<{
-	site: object;
-	settings: object;
+	site: Site;
+	settings: Settings;
 	progress?: number;
 }>();
 
-const background = computed<string|null>(() => findBackground(props.settings.background));
+const background = computed(() => findBackground(props.settings.background));
 
 const styles = computed(() => ({
     '--pattern-bg': background.value?.image ?? 'none',

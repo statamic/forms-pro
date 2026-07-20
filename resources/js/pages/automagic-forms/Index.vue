@@ -18,7 +18,7 @@ const props = defineProps<{
 	action: string;
 	previousPageUrl?: string;
     title: string;
-    pages: array<Page>;
+    pages: Page[];
 	currentPage?: Page;
     blueprint: object;
     values: object;
@@ -35,7 +35,7 @@ const isFirstPage = computed<boolean>(() => props.currentPage.id === props.pages
 const isLastPage = computed<boolean>(() => props.currentPage.id === props.pages[props.pages.length - 1].id);
 const allPagesHaveCustomLabels = computed<boolean>(() => props.pages.every((page: Page) => page.display));
 
-const titleClasses = computed<array[string]>(() => [
+const titleClasses = computed<string[]>(() => [
     'text-center',
     allPagesHaveCustomLabels.value
         ? 'text-2xs text-gray-500 uppercase tracking-[0.05em] mb-1'
