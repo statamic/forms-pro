@@ -83,13 +83,20 @@ const submit = () => {
 			nextTick(() => router.visit(response.data.redirect));
 		})
 		.catch(error => {
-			if (error.response?.status === 403) {
+			const status = error.response?.status;
+
+			if (status === 403) {
 				container.value.clearDirtyState();
 				nextTick(() => router.visit(error.response.data.redirect));
 				return;
 			}
 
-			errors.value = error.response.data.errors;
+			if (status === 422) {
+				errors.value = error.response.data.errors;
+				return;
+			}
+
+			Statamic.$toast.error(__('Something went wrong'));
 		})
 		.finally(() => loading.value = false);
 };
