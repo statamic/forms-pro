@@ -21,7 +21,7 @@ class FormLinkType extends LinkType
             return null;
         }
 
-        return route('statamic.forms-pro.form.store', ['form' => $form->handle()], absolute: false);
+        return route('statamic.forms-pro.form.index', ['form' => $form->handle()], absolute: false);
     }
 
     public function fieldtype(Field $field): ?array
