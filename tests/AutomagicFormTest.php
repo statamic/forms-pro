@@ -90,7 +90,7 @@ class AutomagicFormTest extends TestCase
             ->assertOk()
             ->assertJsonPath('props.settings.brandColor', '#bada55')
             ->assertJsonPath('props.settings.background', 'bamboo')
-            ->assertJsonPath('props.settings.logo', null);
+            ->assertJsonPath('props.settings.logoUrl', null);
     }
 
     #[Test]
