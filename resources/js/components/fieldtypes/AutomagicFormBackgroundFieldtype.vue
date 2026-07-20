@@ -21,7 +21,7 @@ defineExpose(expose);
 			@click="update(background.handle)"
 		>
 			<span
-				class="h-16 w-full bg-white bg-repeat"
+				class="h-16 w-full bg-white dark:bg-gray-800 bg-repeat"
 				:style="{ backgroundImage: background.image ?? 'none' }"
 			/>
 			<span class="truncate border-t border-inherit px-2 py-1.5 text-2xs text-gray-700 dark:text-gray-300">
