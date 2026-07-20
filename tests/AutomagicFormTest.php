@@ -110,6 +110,28 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_preprocesses_existing_values_from_a_partial_submission()
+    {
+        $form = tap(Facades\Form::make('contact')
+            ->title('Contact')
+            ->set('automagic_form', true)
+            ->formFields([
+                'fields' => [
+                    ['handle' => 'when', 'field' => ['type' => 'date']],
+                ],
+            ]))->save();
+
+        $submission = $form->makeSubmission();
+        $submission->data(['when' => '2026-07-20'])->asPartial()->save();
+
+        $this
+            ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
+            ->inertia(route('statamic.forms-pro.form.index', ['form' => 'contact']))
+            ->assertOk()
+            ->assertJsonPath('props.values.when', '2026-07-20T00:00:00.000Z');
+    }
+
+    #[Test]
     public function it_renders_a_later_page_with_a_link_back_to_the_previous_one()
     {
         $form = $this->createMultiPageForm();

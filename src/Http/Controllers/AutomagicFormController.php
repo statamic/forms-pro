@@ -37,14 +37,10 @@ class AutomagicFormController extends Controller
         }
 
         $blueprint = $form->blueprint();
-        $fields = $blueprint->fields()->preProcess();
         $data = $partialSubmission?->data()->all() ?? [];
+        $fields = $blueprint->fields()->addValues($data)->preProcess();
         $previousPage = $this->previousPage($form, $currentPageId, $data);
         $formPages = $form->formFields()->pages()->keyBy(fn (array $page) => $page['id'] ?? 'main');
-
-        if ($partialSubmission) {
-            $fields = $fields->addValues($data);
-        }
 
         $pages = $form->blueprint()->tabs()->map(fn (Tab $tab) => [
             'id' => $tab->handle(),
