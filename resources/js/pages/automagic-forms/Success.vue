@@ -24,7 +24,7 @@ defineProps<{
             <Button
                 :href="resetUrl"
                 variant="primary"
-                class="border-0! dark:border-0! ring-0! shadow-none!"
+                class="border-0! ring-0! shadow-none!"
                 style="--theme-color-primary: var(--automagic-brand, var(--theme-color-gray-950))"
                 :text="__(resetLabel)"
             />

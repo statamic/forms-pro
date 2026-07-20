@@ -30,9 +30,10 @@ const styles = computed(() => ({
 }));
 
 onMounted(() => {
+    document.documentElement.classList.remove('dark');
+
     document.body.classList.add(
         'bg-white',
-        'dark:bg-gray-900',
         'font-sans',
         'leading-normal',
         'scheme-light',
@@ -50,12 +51,6 @@ onMounted(() => {
 });
 </script>
 
-<style>
-.dark [data-background]::before {
-    opacity: 0.035;
-}
-</style>
-
 <template>
     <div
         data-background
@@ -63,7 +58,7 @@ onMounted(() => {
         :style="styles"
     >
 	    <div class="relative z-10 w-full shrink-0">
-		    <div v-if="progress" class="h-1.5 w-full bg-gray-200 dark:bg-gray-950">
+		    <div v-if="progress" class="h-1.5 w-full bg-gray-200">
 			    <div
 				    id="progress-bar"
 				    class="h-full rounded-r-full bg-[var(--automagic-brand,var(--color-indigo-600))] transition-[width] duration-300 ease-out"
