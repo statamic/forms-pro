@@ -17,11 +17,24 @@ class ServiceProvider extends AddonServiceProvider
         'hotFile' => __DIR__.'/../resources/dist/hot',
     ];
 
+    protected $formJsDrivers = [
+        JsDrivers\Alpine::class,
+        JsDrivers\AlpinePrecognition::class,
+    ];
+
     public function bootAddon()
     {
         $this->publishes([
             __DIR__.'/../resources/dist-frontend' => public_path('vendor/forms-pro/frontend'),
         ], 'forms-pro-frontend');
+
+        $stubsSource = config('statamic.templates.language', 'antlers') === 'blade'
+            ? __DIR__.'/../resources/views/forms/blade'
+            : __DIR__.'/../resources/views/forms/antlers';
+
+        $this->publishes([
+            $stubsSource => resource_path('views/vendor/forms-pro/forms'),
+        ], 'forms-pro-fields');
 
         if (config('forms-pro.automagic_forms.enabled')) {
             $this->registerSettingsBlueprint(Settings::blueprint());

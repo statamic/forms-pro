@@ -2,6 +2,26 @@
 
 return [
 
+    'address' => [
+
+        /*
+        |----------------------------------------------------------------------
+        | Address Autocomplete
+        |----------------------------------------------------------------------
+        |
+        | The Address fieldtype can suggest and pre-fill addresses as users type.
+        | To enable it, specify a provider ("google" or "geoapify") and a
+        | publishable API key.
+        |
+        */
+
+        'autocomplete' => [
+            'provider' => env('FORMS_PRO_ADDRESS_AUTOCOMPLETE_PROVIDER'),
+            'key' => env('FORMS_PRO_ADDRESS_AUTOCOMPLETE_KEY'),
+        ],
+
+    ],
+
     'automagic_forms' => [
 
         /*
