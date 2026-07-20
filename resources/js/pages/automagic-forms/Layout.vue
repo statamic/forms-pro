@@ -62,25 +62,23 @@ onMounted(() => {
         class="relative min-h-screen before:pointer-events-none before:absolute before:inset-0 before:z-0 before:content-[''] before:bg-[image:var(--pattern-bg)]"
         :style="styles"
     >
-        <template v-if="progress">
-            <div class="fixed inset-x-0 top-0 z-20 h-1.5 w-full bg-gray-200 dark:bg-gray-950">
-                <div
-                    id="progress-bar"
-                    class="h-full rounded-r-full bg-[var(--automagic-brand,var(--color-indigo-600))] transition-[width] duration-300 ease-out"
-                    :style="{ width: `${progress}%` }"
-                />
-            </div>
-
-            <div class="fixed inset-x-0 top-1.5 z-20 flex justify-end px-2.5 py-1.5">
-                <p id="progress-bar-label" class="text-center text-[0.8rem] text-gray-600">{{ __('forms-pro::messages.automagic_form_progress', { progress }) }}</p>
-            </div>
-        </template>
-
-        <div class="fixed inset-x-0 top-1.5 z-20 px-2.5 py-1.5">
-            <a v-if="settings.logoUrl" :href="site.url" target="_blank" rel="noopener" class="inline-block">
-                <img id="logo" :src="settings.logoUrl" :alt="site.name" class="h-8 w-auto" />
-            </a>
-        </div>
+	    <div class="relative z-10 w-full">
+		    <div v-if="progress" class="h-1.5 w-full bg-gray-200 dark:bg-gray-950">
+			    <div
+				    id="progress-bar"
+				    class="h-full rounded-r-full bg-[var(&#45;&#45;automagic-brand,var(&#45;&#45;color-indigo-600))] transition-[width] duration-300 ease-out"
+				    :style="{ width: `${progress}%` }"
+			    />
+		    </div>
+		    <div class="flex justify-between px-2.5 py-1.5">
+			    <div>
+				    <a v-if="settings.logoUrl" :href="site.url" target="_blank" rel="noopener" class="inline-block">
+					    <img id="logo" :src="settings.logoUrl" :alt="site.name" class="h-8 w-auto" />
+				    </a>
+			    </div>
+			    <p v-if="progress" id="progress-bar-label" class="text-center text-[0.8rem] text-gray-600">{{ __('forms-pro::messages.automagic_form_progress', { progress }) }}</p>
+		    </div>
+	    </div>
 
         <slot />
     </div>
