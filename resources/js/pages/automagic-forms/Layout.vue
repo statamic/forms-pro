@@ -75,7 +75,7 @@ onMounted(() => {
 		    </div>
 	    </div>
 
-        <div class="relative z-10 flex-1">
+        <div class="relative flex-1">
             <slot />
         </div>
     </div>
