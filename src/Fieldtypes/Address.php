@@ -121,6 +121,22 @@ class Address extends Fieldtype
         }
     }
 
+    public function fakeValue(): mixed
+    {
+        $faker = class_exists(\Faker\Factory::class) ? \Faker\Factory::create() : null;
+        $countries = array_keys(static::countryOptions());
+
+        return [
+            'line_1' => $faker?->streetAddress() ?? '123 Fake Street',
+            'line_2' => null,
+            'city' => $faker?->city() ?? 'Faketown',
+            'region' => $faker?->state() ?? 'CA',
+            'postcode' => $faker?->postcode() ?? '90210',
+            'country' => $this->config('default_country')
+                ?? ($countries[array_rand($countries)] ?? 'US'),
+        ];
+    }
+
     public function rules(): array
     {
         return ['array'];
