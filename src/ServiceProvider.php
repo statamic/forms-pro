@@ -4,6 +4,7 @@ namespace Statamic\FormsPro;
 
 use Statamic\Facades\Form;
 use Statamic\Fieldtypes\Link;
+use Statamic\FormsPro\AutomagicForms\AutomagicForms;
 use Statamic\FormsPro\AutomagicForms\FormLinkType;
 use Statamic\Providers\AddonServiceProvider;
 
@@ -37,7 +38,7 @@ class ServiceProvider extends AddonServiceProvider
             $stubsSource => resource_path('views/vendor/forms-pro/forms'),
         ], 'forms-pro-fields');
 
-        if (config('forms-pro.automagic_forms.enabled')) {
+        if (AutomagicForms::enabled()) {
             $this->registerSettingsBlueprint(Settings::blueprint());
 
             $this->bootAutomagicForms();
