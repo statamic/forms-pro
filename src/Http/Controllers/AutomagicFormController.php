@@ -11,9 +11,9 @@ use Statamic\Facades;
 use Statamic\Fields\Tab;
 use Statamic\Forms\Logic\PageLogic;
 use Statamic\Forms\SubmitForm;
+use Statamic\FormsPro\AutomagicForms\AutomagicForms;
 use Statamic\Http\Controllers\Controller;
 use Statamic\Support\Arr;
-
 use function Statamic\trans as __;
 
 class AutomagicFormController extends Controller
@@ -26,14 +26,14 @@ class AutomagicFormController extends Controller
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
 
         if ($form->restricted()) {
-            return redirect()->route('statamic.forms-pro.form.restricted', ['form' => $form->handle()]);
+            return redirect(AutomagicForms::route('restricted', ['form' => $form->handle()]));
         }
 
         $currentPageId = Arr::get($currentPage, 'id');
         $partialSubmission = $this->getPartialSubmission($form);
 
         if (! $partialSubmission && $currentPageId !== Arr::get($form->formFields()->pages()->first(), 'id')) {
-            return redirect()->route('statamic.forms-pro.form.index', ['form' => $form->handle()]);
+            return redirect(AutomagicForms::route('index', ['form' => $form->handle()]));
         }
 
         $blueprint = $form->blueprint();
@@ -50,8 +50,8 @@ class AutomagicFormController extends Controller
         ])->values();
 
         return Inertia::render('forms-pro::AutomagicForm/Index', [
-            'action' => route('statamic.forms-pro.form.store', ['form' => $form->handle(), 'page' => $currentPageId]),
-            'previousPageUrl' => $previousPage ? route('statamic.forms-pro.form.index', ['form' => $form->handle(), 'page' => $previousPage['id']]) : null,
+            'action' => AutomagicForms::route('store', ['form' => $form->handle(), 'page' => $currentPageId]),
+            'previousPageUrl' => $previousPage ? AutomagicForms::route('index', ['form' => $form->handle(), 'page' => $previousPage['id']]) : null,
             'title' => $form->title(),
             'pages' => $pages,
             'currentPage' => $pages->where('id', $currentPageId)->first(),
@@ -71,7 +71,7 @@ class AutomagicFormController extends Controller
 
         if ($form->restricted()) {
             return response()->json([
-                'redirect' => route('statamic.forms-pro.form.restricted', ['form' => $form->handle()]),
+                'redirect' => AutomagicForms::route('restricted', ['form' => $form->handle()]),
             ], 403);
         }
 
@@ -98,12 +98,12 @@ class AutomagicFormController extends Controller
             $request->session()->flash('automagic_form_submitted', true);
 
             return [
-                'redirect' => route('statamic.forms-pro.form.success', ['form' => $form->handle()]),
+                'redirect' => AutomagicForms::route('success', ['form' => $form->handle()]),
             ];
         }
 
         return [
-            'redirect' => route('statamic.forms-pro.form.index', [
+            'redirect' => AutomagicForms::route('index', [
                 'form' => $form->handle(),
                 'page' => $result->nextPage,
             ]),
@@ -117,7 +117,7 @@ class AutomagicFormController extends Controller
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
 
         if (! $form->restricted()) {
-            return redirect()->route('statamic.forms-pro.form.index', ['form' => $form->handle()]);
+            return redirect(AutomagicForms::route('index', ['form' => $form->handle()]));
         }
 
         return Inertia::render('forms-pro::AutomagicForm/Restricted', [
@@ -133,7 +133,7 @@ class AutomagicFormController extends Controller
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
 
         if (! $request->session()->get('automagic_form_submitted')) {
-            return redirect()->route('statamic.forms-pro.form.index', ['form' => $form->handle()]);
+            return redirect(AutomagicForms::route('index', ['form' => $form->handle()]));
         }
 
         return Inertia::render('forms-pro::AutomagicForm/Success', [
@@ -142,7 +142,7 @@ class AutomagicFormController extends Controller
             'message' => $form->get('automagic_form_success_message', __('forms-pro::messages.automagic_form_success_message_default')),
             'showReset' => (bool) $form->get('automagic_form_show_reset'),
             'resetLabel' => $form->get('automagic_form_reset_label', __('forms-pro::messages.automagic_form_reset_label_default')),
-            'resetUrl' => route('statamic.forms-pro.form.index', ['form' => $form->handle()]),
+            'resetUrl' => AutomagicForms::route('index', ['form' => $form->handle()]),
         ]);
     }
 

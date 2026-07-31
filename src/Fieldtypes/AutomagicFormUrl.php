@@ -3,6 +3,7 @@
 namespace Statamic\FormsPro\Fieldtypes;
 
 use Statamic\Fields\Fieldtype;
+use Statamic\FormsPro\AutomagicForms\AutomagicForms;
 
 class AutomagicFormUrl extends Fieldtype
 {
@@ -15,7 +16,7 @@ class AutomagicFormUrl extends Fieldtype
         }
 
         return [
-            'url' => route('statamic.forms-pro.form.index', request()->route('form')->handle()),
+            'url' => AutomagicForms::route('index', ['form' => request()->route('form')->handle()]),
         ];
     }
 }
