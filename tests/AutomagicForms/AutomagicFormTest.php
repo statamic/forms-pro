@@ -40,7 +40,7 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
-    public function it_generates_urls_using_the_route_prefix()
+    public function it_generates_urls_using_the_configured_route()
     {
         $this->createForm();
 

@@ -34,7 +34,7 @@ YAML;
         $app['config']->set('statamic.system.multisite', true);
         $app['config']->set('statamic.editions.pro', true);
         $app['config']->set('forms-pro.automagic_forms.enabled', true);
-        $app['config']->set('forms-pro.automagic_forms.route_prefix', 'get-in-touch');
+        $app['config']->set('forms-pro.automagic_forms.route', 'get-in-touch');
 
         $app['files']->put(resource_path('sites.yaml'), $this->sites);
     }
@@ -68,7 +68,7 @@ YAML;
     }
 
     #[Test]
-    public function it_generates_urls_using_the_configured_prefix()
+    public function it_generates_urls_using_the_configured_route()
     {
         $this->createForm();
 

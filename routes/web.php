@@ -14,7 +14,7 @@ Site::all()->each(function (Statamic\Sites\Site $site) use ($hosts): void {
 
     $prefix = collect([
         trim(URL::makeRelative($site->url()), '/'),
-        config('forms-pro.automagic_forms.route_prefix'),
+        config('forms-pro.automagic_forms.route'),
         '{form}',
     ])->filter()->implode('/');
 

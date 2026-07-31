@@ -39,15 +39,15 @@ return [
 
         /*
         |----------------------------------------------------------------------
-        | Route Prefix
+        | Route
         |----------------------------------------------------------------------
         |
-        | Prefix to be used in Automagic Form URLs.
-        | For example, "forms" will give you URLs like "/forms/contact".
+        | The route prefix to be used for Automagic Form URLs. Eg: "forms"
+        | will give you URLs like "/forms/contact".
         |
         */
 
-        'route_prefix' => 'forms',
+        'route' => 'forms',
 
         /*
         |----------------------------------------------------------------------
