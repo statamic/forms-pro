@@ -4,6 +4,7 @@ namespace Statamic\FormsPro;
 
 use Statamic\Facades\Form;
 use Statamic\Fieldtypes\Link;
+use Statamic\FormsPro\AutomagicForms\FormLinkType;
 use Statamic\Providers\AddonServiceProvider;
 
 class ServiceProvider extends AddonServiceProvider

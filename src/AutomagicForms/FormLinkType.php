@@ -1,7 +1,8 @@
 <?php
 
-namespace Statamic\FormsPro;
+namespace Statamic\FormsPro\AutomagicForms;
 
+use Statamic\Contracts\Data\Localization;
 use Statamic\Facades\Form;
 use Statamic\Fields\Field;
 use Statamic\Fieldtypes\Link\LinkType;
@@ -21,7 +22,9 @@ class FormLinkType extends LinkType
             return null;
         }
 
-        return route('statamic.forms-pro.form.index', ['form' => $form->handle()], absolute: false);
+        $site = $parent instanceof Localization ? $parent->locale() : null;
+
+        return AutomagicForms::route('index', ['form' => $form->handle()], site: $site, absolute: false);
     }
 
     public function fieldtype(Field $field): ?array

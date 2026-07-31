@@ -1,11 +1,12 @@
 <?php
 
-namespace Tests;
+namespace Tests\AutomagicForms;
 
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades;
-use Statamic\FormsPro\FormLinkType;
+use Statamic\FormsPro\AutomagicForms\FormLinkType;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\TestCase;
 
 class FormLinkTypeTest extends TestCase
 {
@@ -24,7 +25,7 @@ class FormLinkTypeTest extends TestCase
         Facades\Form::make('contact')->title('Contact')->save();
 
         $this->assertEquals(
-            route('statamic.forms-pro.form.index', ['form' => 'contact'], absolute: false),
+            route('statamic.forms-pro.form.default.index', ['form' => 'contact'], absolute: false),
             (new FormLinkType)->resolve('contact')
         );
     }
