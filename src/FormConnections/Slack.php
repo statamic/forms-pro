@@ -3,6 +3,7 @@
 namespace Statamic\FormsPro\FormConnections;
 
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
@@ -10,8 +11,8 @@ use Statamic\Forms\Connections\Connection;
 use Statamic\Forms\Connections\ConnectionLogic;
 use Statamic\FormsPro\FormConnections\Slack\SendSlackMessage;
 use Statamic\FormsPro\FormConnections\Slack\SlackClient;
+use Statamic\FormsPro\FormConnections\Slack\SlackRequestException;
 use Statamic\FormsPro\Http\Controllers\CP\SendTestSlackMessageController;
-use Statamic\FormsPro\Http\Controllers\CP\SlackChannelsController;
 use Statamic\FormsPro\Http\Controllers\CP\SlackConnectionController;
 use Statamic\Support\VueComponent;
 
@@ -48,13 +49,32 @@ class Slack extends Connection
 
     public function render(Form $form): VueComponent
     {
+        $slack = app(SlackClient::class);
+
+        try {
+            $channels = $slack->configured() ? $this->channels($slack) : [];
+        } catch (SlackRequestException $e) {
+            $channels = [];
+            $error = $e->errorMessage();
+        }
+
         return VueComponent::render('slack-connection', [
             'action' => cp_route('forms.connect.slack.update', $form->handle()),
-            'channelsUrl' => cp_route('forms.connect.slack.channels', $form->handle()),
             'testUrl' => cp_route('forms.connect.slack.test', $form->handle()),
-            'configured' => app(SlackClient::class)->configured(),
+            'configured' => $slack->configured(),
             'fields' => $this->fields($form),
+            'channels' => $channels,
+            'connectionError' => $error ?? null,
         ]);
+    }
+
+    private function channels(SlackClient $slack): array
+    {
+        return Cache::remember(
+            'forms-pro.slack.channels',
+            now()->addMinutes(5),
+            fn () => $slack->channels()->all()
+        );
     }
 
     private function fields(Form $form): array
@@ -69,7 +89,6 @@ class Slack extends Connection
     public function routes(Router $router): void
     {
         $router->patch('/', [SlackConnectionController::class, 'update'])->name('update');
-        $router->get('/channels', SlackChannelsController::class)->name('channels');
         $router->post('/test', SendTestSlackMessageController::class)->name('test');
     }
 }

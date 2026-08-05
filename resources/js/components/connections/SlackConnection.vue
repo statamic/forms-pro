@@ -11,20 +11,19 @@ const props = defineProps({
     form: Object,
     config: { type: Array, default: () => [] },
     action: String,
-    channelsUrl: String,
     testUrl: String,
     configured: Boolean,
     fields: { type: Array, default: () => [] },
+    channels: { type: Array, default: () => [] },
+    connectionError: String,
 });
 
 const dirtyKey = 'slack-connection';
 
 const errors = ref({});
-const channels = ref([]);
 const saving = ref(false);
 const testing = ref(null);
 const saveBinding = ref(null);
-const connectionError = ref(null);
 
 const notifications = ref(props.config.map((notification) => ({
     enabled: true,
@@ -34,7 +33,7 @@ const notifications = ref(props.config.map((notification) => ({
     conditions: (notification.conditions ?? []).map((condition) => ({ ...condition, _id: uniqid() })),
 })));
 
-const channelOptions = computed(() => channels.value.map((channel) => ({ ...channel, name: `#${channel.name}` })));
+const channelOptions = computed(() => props.channels.map((channel) => ({ ...channel, name: `#${channel.name}` })));
 
 const selectedFields = (notification) => notification.fields ?? props.fields.map((field) => field.handle);
 
@@ -65,7 +64,7 @@ const removeNotification = (notification) =>
 
 const channelSelected = (notification, id) => {
     notification.channel = id;
-    notification.channel_name = channels.value.find((channel) => channel.id === id)?.name;
+    notification.channel_name = props.channels.find((channel) => channel.id === id)?.name;
 };
 
 // TODO: Duplicated from ConnectionLogic.vue. Core doesn't export it, and its copy reads
@@ -97,17 +96,6 @@ const conditionsSummary = (conditions) => {
 const error = (index, handle) => errors.value[`configs.${index}.${handle}`]?.[0];
 const hasError = (index) => Object.keys(errors.value).some((key) => key.startsWith(`configs.${index}.`));
 
-const loadChannels = () => {
-    if (!props.configured) return;
-
-    axios
-        .get(props.channelsUrl)
-        .then(({ data }) => (channels.value = data.channels))
-        .catch((e) => (connectionError.value = e.response?.data?.message ?? __('Something went wrong')));
-};
-
-const reload = () => window.location.reload();
-
 const save = () => {
     if (saving.value) return;
 
@@ -134,8 +122,6 @@ const save = () => {
 watch(notifications, () => Statamic.$dirty.add(dirtyKey), { deep: true });
 
 onMounted(() => {
-    loadChannels();
-
     saveBinding.value = keys.bindGlobal(['mod+s'], (e) => {
         e.preventDefault();
         save();
@@ -160,7 +146,6 @@ onUnmounted(() => {
         <Alert v-if="connectionError" variant="error" class="mb-6">
             <Heading :text="__('forms-pro::messages.slack_connection_unavailable')" />
             <Description :text="connectionError" class="mt-1" />
-            <Button size="sm" icon="sync" class="mt-3" :text="__('Reload')" @click="reload" />
         </Alert>
 
         <Label :text="__('Notifications')" class="mb-2" />
