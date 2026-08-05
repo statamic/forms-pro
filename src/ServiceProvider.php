@@ -2,6 +2,7 @@
 
 namespace Statamic\FormsPro;
 
+use Statamic\FormsPro\FormConnections\Slack\SlackClient;
 use Statamic\Providers\AddonServiceProvider;
 
 class ServiceProvider extends AddonServiceProvider
@@ -32,5 +33,12 @@ class ServiceProvider extends AddonServiceProvider
         $this->publishes([
             $stubsSource => resource_path('views/vendor/forms-pro/forms'),
         ], 'forms-pro-fields');
+
+        $this->bootConnections();
+    }
+
+    private function bootConnections(): void
+    {
+        $this->app->bind(SlackClient::class, fn () => new SlackClient(config('forms-pro.connections.slack.token')));
     }
 }

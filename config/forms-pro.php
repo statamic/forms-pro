@@ -22,4 +22,12 @@ return [
 
     ],
 
+    'connections' => [
+
+        'slack' => [
+            'token' => env('FORMS_PRO_SLACK_TOKEN'),
+        ],
+
+    ],
+
 ];

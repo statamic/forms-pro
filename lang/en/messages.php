@@ -1,0 +1,36 @@
+<?php
+
+return [
+    'slack_connection_channel_instructions' => 'Private channels only appear once the app has been invited to them.',
+    'slack_connection_description' => 'Post submissions to a Slack channel.',
+    'slack_connection_fields_instructions' => 'Leave empty to include every field.',
+    'slack_connection_heading' => 'New :form submission',
+    'slack_connection_delete_confirmation' => 'Are you sure you want to delete this Slack notification?',
+    'slack_connection_include_fields_instructions' => 'Displays the submitted values as a table.',
+    'slack_connection_link_to_submission_instructions' => 'Add a button linking to the submission in the Control Panel.',
+    'slack_connection_unavailable' => 'Couldn\'t reach Slack.',
+    'slack_connection_test_sent' => 'Test message sent.',
+    'slack_connection_truncated' => 'This submission was too long to show in full.',
+    'slack_connection_view_submission' => 'View submission',
+
+    'slack_error_account_inactive' => 'The Slack app has been deactivated in your workspace.',
+    'slack_error_channel_not_found' => 'That channel no longer exists, or it\'s private and the app hasn\'t been invited to it.',
+    'slack_error_invalid_auth' => 'Slack rejected your token. Check the FORMS_PRO_SLACK_TOKEN environment variable.',
+    'slack_error_is_archived' => 'That channel has been archived.',
+    'slack_error_missing_scope' => 'The Slack app is missing a required scope. Reinstall it with the scopes listed in the documentation.',
+    'slack_error_missing_token' => 'No Slack token has been configured. Add one to your FORMS_PRO_SLACK_TOKEN environment variable.',
+    'slack_error_not_in_channel' => 'The app isn\'t in that channel. Invite it with /invite, then try again.',
+    'slack_error_ratelimited' => 'Slack is rate limiting us. Try again in a moment.',
+    'slack_error_restricted_action' => 'The app isn\'t allowed to post in that channel.',
+    'slack_error_token_revoked' => 'The Slack token has been revoked. Reinstall the app and update your FORMS_PRO_SLACK_TOKEN environment variable.',
+    'slack_error_unknown' => 'Slack returned an error: :error',
+
+    'slack_setup_heading' => 'Connect your Slack workspace',
+    'slack_setup_intro' => 'Slack needs to know about your site before it\'ll accept messages. You only need to do this once.',
+    'slack_setup_create_app' => 'Create a Slack app in the workspace you\'d like submissions sent to.',
+    'slack_setup_manifest_toggle' => 'Set it up by hand, or update an existing app',
+    'slack_setup_manifest' => 'Paste this manifest into the app\'s "App Manifest" page.',
+    'slack_setup_install' => 'Choose "Install to Workspace", select the workspace you\'d like to install it into, and click Allow.',
+    'slack_setup_token' => 'Copy the Bot User OAuth Token from the app\'s "OAuth &amp; Permissions" page into your site\'s :file file:',
+    'slack_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once :variable is set, reload this page.',
+];
