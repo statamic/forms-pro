@@ -7,12 +7,12 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
+use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connections\Connection;
 use Statamic\Forms\Connections\ConnectionLogic;
 use Statamic\FormsPro\FormConnections\Slack\SendSlackMessage;
 use Statamic\FormsPro\FormConnections\Slack\SlackClient;
-use Statamic\FormsPro\FormConnections\Slack\SlackRequestException;
-use Statamic\FormsPro\Http\Controllers\CP\SendTestSlackMessageController;
+use Statamic\FormsPro\FormConnections\Slack\SlackException;
 use Statamic\FormsPro\Http\Controllers\CP\SlackConnectionController;
 use Statamic\Support\VueComponent;
 
@@ -50,21 +50,105 @@ class Slack extends Connection
     public function render(Form $form): VueComponent
     {
         $slack = app(SlackClient::class);
+        $isConfigured = filled(config('forms-pro.connections.slack.token'));
 
         try {
-            $channels = $slack->configured() ? $this->channels($slack) : [];
-        } catch (SlackRequestException $e) {
+            $channels = $isConfigured ? $this->channels($slack) : [];
+        } catch (SlackException $e) {
             $channels = [];
-            $error = $e->errorMessage();
+            $apiError = $e->getMessage();
         }
+
+        $fields = static::blueprint($form, $channels)->fields()->preProcess();
 
         return VueComponent::render('slack-connection', [
             'action' => cp_route('forms.connect.slack.update', $form->handle()),
-            'testUrl' => cp_route('forms.connect.slack.test', $form->handle()),
-            'configured' => $slack->configured(),
-            'fields' => $this->fields($form),
-            'channels' => $channels,
-            'connectionError' => $error ?? null,
+            'blueprint' => static::blueprint($form, $channels)->toPublishArray(),
+            'notifications' => collect($form->connections()->get('slack'))
+                ->mapWithKeys(function (array $config) use ($fields): array {
+                    $fields = $fields->addValues($config)->preProcess();
+
+                    return [$config['id'] => [
+                        'values' => $fields->values()->all(),
+                        'meta' => $fields->meta()->all(),
+                    ]];
+                })
+                ->all(),
+            'defaults' => [
+                'values' => $fields->values()->all(),
+                'meta' => $fields->meta()->all(),
+            ],
+            'isConfigured' => $isConfigured,
+            'apiError' => $apiError ?? null,
+        ]);
+    }
+
+    public static function blueprint(Form $form, array $channels = []): \Statamic\Fields\Blueprint
+    {
+        return Blueprint::make()->setContents([
+            'tabs' => [
+                'main' => [
+                    'sections' => [
+                        [
+                            'fields' => [
+                                [
+                                    'handle' => 'channel',
+                                    'field' => [
+                                        'type' => 'select',
+                                        'display' => __('Channel'),
+                                        'instructions' => __('forms-pro::messages.slack_connection_channel_instructions'),
+                                        'options' => collect($channels)->mapWithKeys(fn (array $channel) => [$channel['id'] => '#'.$channel['name']])->all(),
+                                        'validate' => ['required'],
+                                        'searchable' => true,
+                                    ],
+                                ],
+                                // TODO: Replace with autocomplete editor once its merged (https://github.com/statamic/cms/pull/15055)
+                                [
+                                    'handle' => 'heading',
+                                    'field' => [
+                                        'type' => 'text',
+                                        'display' => __('Heading'),
+                                        'validate' => ['max:2000'],
+                                    ],
+                                ],
+                                [
+                                    'handle' => 'link_to_submission',
+                                    'field' => [
+                                        'type' => 'toggle',
+                                        'display' => __('Link to Submission'),
+                                        'instructions' => __('forms-pro::messages.slack_connection_link_to_submission_instructions'),
+                                        'default' => true,
+                                        'width' => 50,
+                                    ],
+                                ],
+                                [
+                                    'handle' => 'include_fields',
+                                    'field' => [
+                                        'type' => 'toggle',
+                                        'display' => __('Include Submitted Fields'),
+                                        'instructions' => __('forms-pro::messages.slack_connection_include_fields_instructions'),
+                                        'default' => true,
+                                        'width' => 50,
+                                    ],
+                                ],
+                                [
+                                    'handle' => 'fields',
+                                    'field' => [
+                                        'type' => 'checkboxes',
+                                        'display' => __('Fields to Include'),
+                                        'instructions' => __('forms-pro::messages.slack_connection_fields_instructions'),
+                                        'options' => $form->formFields()->fields()
+                                            ->reject(fn ($field) => array_intersect($field->fieldtype()->categories(), ['information', 'structure']))
+                                            ->mapWithKeys(fn ($field) => [$field->handle() => __($field->display())])
+                                            ->all(),
+                                        'if' => ['include_fields' => true],
+                                    ],
+                                ],
+                            ]
+                        ]
+                    ]
+                ]
+            ]
         ]);
     }
 
@@ -77,18 +161,8 @@ class Slack extends Connection
         );
     }
 
-    private function fields(Form $form): array
-    {
-        return $form->formFields()->fields()
-            ->reject(fn ($field) => array_intersect($field->fieldtype()->categories(), ['information', 'structure']))
-            ->map(fn ($field) => ['handle' => $field->handle(), 'display' => __($field->display())])
-            ->values()
-            ->all();
-    }
-
     public function routes(Router $router): void
     {
         $router->patch('/', [SlackConnectionController::class, 'update'])->name('update');
-        $router->post('/test', SendTestSlackMessageController::class)->name('test');
     }
 }

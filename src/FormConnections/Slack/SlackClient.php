@@ -7,22 +7,21 @@ use Illuminate\Support\Facades\Http;
 
 class SlackClient
 {
-    public function __construct(private ?string $token) {}
+    private const RETRY_AFTER = 30;
 
-    public function configured(): bool
-    {
-        return filled($this->token);
-    }
+    private const RETRYABLE = ['internal_error', 'fatal_error'];
+
+    public function __construct(private ?string $token) {}
 
     public function postMessage(array $payload): array
     {
         try {
             return $this->call('chat.postMessage', $payload);
-        } catch (SlackRequestException $e) {
+        } catch (SlackException $e) {
             if ($e->error() === 'not_in_channel') {
                 try {
                     $this->join($payload['channel']);
-                } catch (SlackRequestException) {
+                } catch (SlackException) {
                     throw $e;
                 }
 
@@ -67,7 +66,9 @@ class SlackClient
 
     private function call(string $method, array $payload): array
     {
-        throw_unless($this->configured(), SlackRequestException::missingToken());
+        throw_unless($this->token, new SlackException(
+            'The [FORMS_PRO_SLACK_TOKEN] environment variable is required to use the Slack connection.'
+        ));
 
         $response = Http::withToken($this->token)
             ->asJson()
@@ -76,14 +77,28 @@ class SlackClient
             ->post("https://slack.com/api/{$method}", $payload);
 
         if ($response->status() === 429) {
-            throw SlackRequestException::rateLimited((int) $response->header('Retry-After') ?: 30);
+            $retryAfter = (int) $response->header('Retry-After') ?: self::RETRY_AFTER;
+
+            throw new SlackException(
+                message: "Rate limit exceeded. Please try again in {$retryAfter} seconds.",
+                error: 'ratelimited',
+                retryAfter: $retryAfter,
+            );
         }
 
         $response->throw();
 
         $body = $response->json();
 
-        throw_unless($body['ok'] ?? false, SlackRequestException::fromResponse($body));
+        if (! ($body['ok'] ?? false)) {
+            $error = $body['error'] ?? 'unknown_error';
+
+            throw new SlackException(
+                message: "Error from Slack: [{$error}].",
+                error: $error,
+                retryAfter: in_array($error, self::RETRYABLE) ? self::RETRY_AFTER : null,
+            );
+        }
 
         return $body;
     }

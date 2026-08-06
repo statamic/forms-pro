@@ -2,6 +2,9 @@
 
 namespace Tests\FormConnections\Slack;
 
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades\Form;
@@ -15,7 +18,7 @@ class SlackConnectionTest extends TestCase
     use PreventsSavingStacheItemsToDisk;
 
     #[Test]
-    public function it_returns_a_job_per_slack_config()
+    public function it_returns_a_job_per_slack_notification()
     {
         $form = tap(Form::make('test')->connections(['slack' => [
             ['id' => 'abc', 'channel' => 'C0123ABCDEF'],
@@ -31,7 +34,7 @@ class SlackConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_no_jobs_when_the_form_has_no_slack_configs()
+    public function it_returns_no_jobs_when_the_form_has_no_slack_notifications()
     {
         $form = tap(Form::make('test'))->save();
 
@@ -39,7 +42,7 @@ class SlackConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_skips_disabled_configs()
+    public function it_skips_disabled_notifications()
     {
         $form = tap(Form::make('test')->connections(['slack' => [
             ['id' => 'abc', 'channel' => 'C0123ABCDEF', 'enabled' => false],
@@ -54,22 +57,27 @@ class SlackConnectionTest extends TestCase
 
     #[Test]
     #[DataProvider('conditionsProvider')]
-    public function it_filters_configs_using_conditions($conditions, $value, $shouldDispatch)
+    public function it_filters_notifications_using_conditions(array $conditions, string $value, bool $shouldDispatch)
     {
-        $form = tap(Form::make('test')->formFields([
-            'fields' => [
-                ['handle' => 'how_did_you_hear', 'field' => ['type' => 'text']],
-            ],
-        ])->connections(['slack' => [
-            ['id' => 'abc', 'channel' => 'C0123ABCDEF', 'conditions' => $conditions],
-        ]]))->save();
+        $form = tap(Form::make('test')
+            ->formFields([
+                'fields' => [
+                    ['handle' => 'how_did_you_hear', 'field' => ['type' => 'text']],
+                ],
+            ])
+            ->connections([
+                'slack' => [
+                    ['id' => 'abc', 'channel' => 'C0123ABCDEF', 'conditions' => $conditions],
+                ],
+            ]))
+            ->save();
 
         $submission = $form->makeSubmission()->data(['how_did_you_hear' => $value]);
 
         $this->assertCount($shouldDispatch ? 1 : 0, (new Slack)->finalized($submission));
     }
 
-    public static function conditionsProvider()
+    public static function conditionsProvider(): array
     {
         $conditions = [['field' => 'how_did_you_hear', 'operator' => 'equals', 'value' => 'friend', 'join' => 'and']];
 
@@ -81,7 +89,7 @@ class SlackConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_counts_configs()
+    public function it_counts_notifications()
     {
         $form = tap(Form::make('test')->connections(['slack' => [
             ['id' => 'abc', 'channel' => 'C0123ABCDEF'],
@@ -95,6 +103,7 @@ class SlackConnectionTest extends TestCase
     public function it_renders_the_vue_component()
     {
         config(['forms-pro.connections.slack.token' => 'xoxb-token']);
+        Http::fake(['slack.com/*' => Http::response(['ok' => true, 'channels' => []])]);
 
         $form = tap(Form::make('test')->formFields([
             'fields' => [
@@ -107,19 +116,19 @@ class SlackConnectionTest extends TestCase
 
         $this->assertEquals('slack-connection', $component['name']);
         $this->assertEquals(cp_route('forms.connect.slack.update', 'test'), $component['props']['action']);
-        $this->assertEquals(cp_route('forms.connect.slack.channels', 'test'), $component['props']['channelsUrl']);
-        $this->assertEquals(cp_route('forms.connect.slack.test', 'test'), $component['props']['testUrl']);
-        $this->assertTrue($component['props']['configured']);
-        $this->assertEquals([['handle' => 'name', 'display' => 'Full Name']], $component['props']['fields']);
+        $this->assertTrue($component['props']['isConfigured']);
     }
 
     #[Test]
-    public function it_reports_when_no_token_has_been_configured()
+    public function it_determines_if_api_token_is_set_when_rendering_the_vue_component()
     {
         config(['forms-pro.connections.slack.token' => null]);
+        Http::fake();
 
         $form = tap(Form::make('test'))->save();
 
-        $this->assertFalse((new Slack)->render($form)->toArray()['props']['configured']);
+        $this->assertFalse((new Slack)->render($form)->toArray()['props']['isConfigured']);
+
+        Http::assertNothingSent();
     }
 }

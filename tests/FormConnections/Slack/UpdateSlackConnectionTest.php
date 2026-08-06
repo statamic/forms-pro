@@ -43,7 +43,7 @@ class UpdateSlackConnectionTest extends TestCase
         $this
             ->actingAs($this->userWithPermission())
             ->update($form, ['configs' => [
-                ['id' => 'def', 'channel' => 'C0456DEFGHI', 'channel_name' => 'general', 'enabled' => false],
+                ['id' => 'def', 'channel' => 'C0456DEFGHI', 'enabled' => false],
                 ['id' => 'ghi', 'channel' => 'C0789JKLMNO', 'include_fields' => false, 'link_to_submission' => false],
                 ['id' => 'jkl', 'channel' => 'C0123ABCDEF', 'enabled' => true, 'include_fields' => true, 'link_to_submission' => true],
             ]])
@@ -51,7 +51,7 @@ class UpdateSlackConnectionTest extends TestCase
 
         $updated = Form::find('test');
         $this->assertEquals([
-            ['id' => 'def', 'channel' => 'C0456DEFGHI', 'channel_name' => 'general', 'enabled' => false],
+            ['id' => 'def', 'channel' => 'C0456DEFGHI', 'enabled' => false],
             ['id' => 'ghi', 'channel' => 'C0789JKLMNO', 'include_fields' => false, 'link_to_submission' => false],
             ['id' => 'jkl', 'channel' => 'C0123ABCDEF'],
         ], $updated->connections()->get('slack'));
@@ -146,8 +146,6 @@ class UpdateSlackConnectionTest extends TestCase
             'config not an array' => [['configs' => ['nope']], ['configs.0']],
             'config without a channel' => [['configs' => [['enabled' => true]]], ['configs.0.channel']],
             'config with a channel name' => [['configs' => [['channel' => '#enquiries']]], ['configs.0.channel']],
-            'config with a non-boolean include_fields' => [['configs' => [['channel' => 'C0123ABCDEF', 'include_fields' => 'nope']]], ['configs.0.include_fields']],
-            'config with an unknown field' => [['configs' => [['channel' => 'C0123ABCDEF', 'fields' => ['nope']]]], ['configs.0.fields.0']],
         ];
     }
 

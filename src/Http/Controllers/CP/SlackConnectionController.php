@@ -3,11 +3,12 @@
 namespace Statamic\FormsPro\Http\Controllers\CP;
 
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Statamic\Forms\Connections\ConnectionLogic;
+use Statamic\FormsPro\FormConnections\Slack;
 use Statamic\FormsPro\FormConnections\Slack\Rules\SlackChannel;
 use Statamic\Http\Controllers\CP\CpController;
 use Statamic\Support\Arr;
+use Statamic\Support\Str;
 
 class SlackConnectionController extends CpController
 {
@@ -17,21 +18,26 @@ class SlackConnectionController extends CpController
             'configs' => ['present', 'array'],
             'configs.*' => ['array'],
             'configs.*.channel' => ['required', new SlackChannel],
-            'configs.*.channel_name' => ['nullable', 'string'],
-            'configs.*.message' => ['nullable', 'string', 'max:2000'],
-            'configs.*.include_fields' => ['sometimes', 'boolean'],
-            'configs.*.fields' => ['nullable', 'array'],
-            'configs.*.fields.*' => ['string', Rule::in($form->formFields()->fields()->keys())],
-            'configs.*.link_to_submission' => ['sometimes', 'boolean'],
+            'configs.*.heading' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $configs = collect($request->configs)
-            ->map(fn (array $config) => Arr::removeNullValues(array_merge(Arr::except($config, '_id'), [
-                'enabled' => Arr::get($config, 'enabled') === false ? false : null,
-                'include_fields' => Arr::get($config, 'include_fields') === false ? false : null,
-                'link_to_submission' => Arr::get($config, 'link_to_submission') === false ? false : null,
-                'conditions' => ConnectionLogic::normalize(Arr::get($config, 'conditions') ?? []),
-            ])))
+            ->map(function (array $config) use ($form): array {
+                $values = Slack::blueprint($form)->fields()
+                    ->addValues(Arr::except($config, ['_id', 'id', 'enabled', 'conditions']))
+                    ->process()
+                    ->values()
+                    ->all();
+
+                return Arr::removeNullValues([
+                    'id' => Arr::get($config, 'id') ?? Str::random(8),
+                    ...$values,
+                    'enabled' => Arr::get($config, 'enabled') === false ? false : null,
+                    'include_fields' => Arr::get($values, 'include_fields') === false ? false : null,
+                    'link_to_submission' => Arr::get($values, 'link_to_submission') === false ? false : null,
+                    'conditions' => ConnectionLogic::normalize(Arr::get($config, 'conditions') ?? []),
+                ]);
+            })
             ->values()
             ->all();
 

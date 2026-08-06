@@ -17,7 +17,7 @@ use Statamic\Facades\Form;
 use Statamic\Facades\Site;
 use Statamic\FormsPro\FormConnections\Slack\SendSlackMessage;
 use Statamic\FormsPro\FormConnections\Slack\SlackClient;
-use Statamic\FormsPro\FormConnections\Slack\SlackRequestException;
+use Statamic\FormsPro\FormConnections\Slack\SlackException;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
 use Tests\TestCase;
 
@@ -323,7 +323,7 @@ class SendSlackMessageTest extends TestCase
         Http::fake(['slack.com/*' => Http::response(['ok' => false, 'error' => $error])]);
 
         $queueJob = Mockery::mock(Job::class);
-        $queueJob->shouldReceive('fail')->once()->with(Mockery::on(fn (SlackRequestException $e) => $e->error() === $error));
+        $queueJob->shouldReceive('fail')->once()->with(Mockery::on(fn (SlackException $e) => $e->error() === $error));
 
         $this->job($this->form(), ['name' => 'Jack Black'])->setJob($queueJob)->handle(app(SlackClient::class));
 

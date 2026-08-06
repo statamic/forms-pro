@@ -28,8 +28,10 @@ class SendSlackMessage implements ShouldQueue
         $submission = $this->submission->form()->submission($this->submission->id()) ?? $this->submission;
 
         try {
-            $slack->postMessage(new MessageBuilder($submission, $this->site, $this->config)->build());
-        } catch (SlackRequestException $e) {
+            $slack->postMessage(
+                new MessageBuilder($submission, $this->site, $this->config)->build()
+            );
+        } catch (SlackException $e) {
             if ($e->isRetryable()) {
                 $this->release($e->retryAfter());
             } else {

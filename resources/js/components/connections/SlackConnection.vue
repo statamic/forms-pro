@@ -1,109 +1,90 @@
-<script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+<script setup lang="ts">
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { nanoid as uniqid } from 'nanoid';
 import { keys } from '@statamic/cms/api';
-import { ConnectionList, ConnectionLogic } from '@statamic/cms';
-import { Alert, Badge, Button, Checkbox, CheckboxGroup, Combobox, Description, DropdownItem, Field, Heading, Icon, Input, Label, Subheading, Switch } from '@statamic/cms/ui';
+import { ConnectionList, ConnectionLogic, conditionsSummary, deepClone } from '@statamic/cms';
+import { Alert, Badge, Button, Description, Heading, Icon, Label, PublishContainer, PublishFields, PublishFieldsProvider, Subheading } from '@statamic/cms/ui';
 import SlackSetupInstructions from "./SlackSetupInstructions.vue";
 
+interface SlackNotification {
+	id: string;
+	enabled: boolean;
+	conditions: { _id: string; field: string; operator: string; value: string }[];
+	values: object;
+	meta: object;
+}
+
 const props = defineProps({
-    form: Object,
-    config: { type: Array, default: () => [] },
-    action: String,
-    testUrl: String,
-    configured: Boolean,
-    fields: { type: Array, default: () => [] },
-    channels: { type: Array, default: () => [] },
-    connectionError: String,
+	form: Object,
+	config: Array,
+	action: String,
+	blueprint: Object,
+	notifications: Object,
+	defaults: Object,
+	isConfigured: Boolean,
+	apiError: String,
 });
 
 const dirtyKey = 'slack-connection';
 
-const errors = ref({});
-const saving = ref(false);
-const testing = ref(null);
-const saveBinding = ref(null);
+const errors = ref<object>({});
+const saving = ref<boolean>(false);
+const saveBinding = ref<ReturnType<typeof keys.bindGlobal> | null>(null);
 
-const notifications = ref(props.config.map((notification) => ({
-    enabled: true,
-    include_fields: true,
-    link_to_submission: true,
-    ...notification,
-    conditions: (notification.conditions ?? []).map((condition) => ({ ...condition, _id: uniqid() })),
+const notifications = ref<SlackNotification[]>(props.config.map((config: object): SlackNotification => ({
+	id: config.id,
+	enabled: config.enabled ?? true,
+	conditions: (config.conditions ?? []).map((condition: object) => ({ ...condition, _id: uniqid() })),
+	values: props.notifications[config.id]?.values,
+	meta: props.notifications[config.id]?.meta,
 })));
 
-const channelOptions = computed(() => props.channels.map((channel) => ({ ...channel, name: `#${channel.name}` })));
-
-const selectedFields = (notification) => notification.fields ?? props.fields.map((field) => field.handle);
-
-const selectFields = (notification, handles) => {
-    notification.fields = handles.length === props.fields.length ? null : handles;
-};
-
-const addNotification = () => notifications.value.push({
+const addNotification = (): void => notifications.value.push({
     id: uniqid(),
     enabled: true,
-    include_fields: true,
-    link_to_submission: true,
     conditions: [],
+    values: deepClone(props.defaults.values),
+    meta: deepClone(props.defaults.meta),
 });
 
-const duplicateNotification = (notification) => {
+const duplicateNotification = (notification: SlackNotification) => {
     const index = notifications.value.indexOf(notification);
 
     notifications.value.splice(index + 1, 0, {
-        ...notification,
         id: uniqid(),
+        enabled: notification.enabled,
         conditions: notification.conditions.map((condition) => ({ ...condition, _id: uniqid() })),
+        values: deepClone(notification.values),
+        meta: deepClone(notification.meta),
     });
 };
 
-const removeNotification = (notification) =>
-    (notifications.value = notifications.value.filter((item) => item !== notification));
+const removeNotification = (notification: SlackNotification) => (notifications.value = notifications.value.filter((item) => item !== notification));
 
-const channelSelected = (notification, id) => {
-    notification.channel = id;
-    notification.channel_name = props.channels.find((channel) => channel.id === id)?.name;
-};
+const channelName = (notification: SlackNotification): string => props.defaults.meta.channel.options.find((channel) => channel.value === notification.values.channel)?.label;
 
-// TODO: Duplicated from ConnectionLogic.vue. Core doesn't export it, and its copy reads
-// `suggestableFields` from the Inertia page props, which an addon bundle can't reach.
-// Delete this once core exports it and accepts the fields as an argument.
-const conditionsSummary = (conditions) => {
-    const operatorLabels = {
-        equals: __('equals'),
-        not: __('does not equal'),
-        contains: __('contains'),
-        contains_any: __('contains any of'),
-    };
+const hasError = (index: number) => Object.keys(errors.value).some((key) => key.startsWith(`configs.${index}.`));
 
-    const fieldDisplay = (handle) => props.fields.find((field) => field.handle === handle)?.display ?? handle;
+const rowErrors = (index: number) =>
+    Object.entries(errors.value)
+        .filter(([key]) => key.startsWith(`configs.${index}.`))
+        .reduce((fields, [key, messages]) => {
+            const handle = key.replace(`configs.${index}.`, '').split('.')[0];
+            fields[handle] = [...(fields[handle] ?? []), ...messages];
+            return fields;
+        }, {});
 
-    const filtered = (conditions ?? []).filter((condition) => condition.field);
-
-    if (filtered.length === 0) return null;
-
-    return filtered
-        .map((condition, index) => {
-            const prefix = index === 0 ? __('if') : __(condition.join === 'or' ? 'or' : 'and');
-            const operator = operatorLabels[condition.operator] ?? condition.operator;
-            return `${prefix} ${fieldDisplay(condition.field)} ${operator} ${condition.value ?? ''}`.trim();
-        })
-        .join(' ');
-};
-
-const error = (index, handle) => errors.value[`configs.${index}.${handle}`]?.[0];
-const hasError = (index) => Object.keys(errors.value).some((key) => key.startsWith(`configs.${index}.`));
-
-const save = () => {
+const save = (): void => {
     if (saving.value) return;
 
     errors.value = {};
     saving.value = true;
 
     axios
-        .patch(props.action, { configs: notifications.value })
+        .patch(props.action, {
+			configs: notifications.value.map(({ values, meta, ...config }) => ({ ...config, ...values })),
+		})
         .then(() => {
             Statamic.$dirty.remove(dirtyKey);
             Statamic.$toast.success(__('Saved'));
@@ -135,17 +116,17 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <Teleport v-if="configured" to="#form-layout-actions">
+    <Teleport v-if="isConfigured" to="#form-layout-actions">
         <Button variant="primary" :aria-label="__('Save')" :disabled="saving" @click="save">
             <Icon name="save" class="sm:hidden" />
             <span class="hidden sm:inline">{{ __('Save') }}</span>
         </Button>
     </Teleport>
 
-    <div v-if="configured">
-        <Alert v-if="connectionError" variant="error" class="mb-6">
-            <Heading :text="__('forms-pro::messages.slack_connection_unavailable')" />
-            <Description :text="connectionError" class="mt-1" />
+    <div v-if="isConfigured">
+        <Alert v-if="apiError" variant="error" class="mb-6">
+            <Heading :text="__('forms-pro::messages.slack_connection_api_error')" />
+            <Description :text="__(apiError)" class="mt-1" />
         </Alert>
 
         <Label :text="__('Notifications')" class="mb-2" />
@@ -165,10 +146,10 @@ onUnmounted(() => {
             <template #header="{ item: notification, collapsed }">
                 <Badge size="lg" pill color="white" class="px-3 text-gray-950 gap-1">
                     <Icon name="forms-pro::slack" class="size-3.5 me-1" />
-                    {{ notification.channel_name ? `#${notification.channel_name}` : __('New Notification') }}
+                    {{ channelName(notification) ?? __('New Notification') }}
                 </Badge>
                 <Subheading v-show="collapsed" class="overflow-hidden text-ellipsis whitespace-nowrap gap-1.5!">
-                    <span class="truncate">{{ conditionsSummary(notification.conditions) ?? notification.message }}</span>
+                    <span class="truncate">{{ conditionsSummary(notification.conditions) ?? notification.values.heading }}</span>
                 </Subheading>
             </template>
 
@@ -179,69 +160,18 @@ onUnmounted(() => {
                     :if-label="__('Send if...')"
                 >
                     <template #then>
-                        <div class="space-y-6 rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-                            <Field
-                                :label="__('Channel')"
-                                :instructions="__('forms-pro::messages.slack_connection_channel_instructions')"
-                                required
-                                :error="error(index, 'channel')"
+                        <div class="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+                            <PublishContainer
+                                :name="`slack-connection-${notification.id}`"
+                                :blueprint="blueprint"
+                                v-model="notification.values"
+                                :meta="notification.meta"
+                                :errors="rowErrors(index)"
                             >
-                                <Combobox
-                                    searchable
-                                    option-label="name"
-                                    option-value="id"
-                                    :options="channelOptions"
-                                    :model-value="notification.channel"
-                                    :placeholder="__('Select a channel...')"
-                                    @update:model-value="channelSelected(notification, $event)"
-                                />
-                            </Field>
-
-	                        <!-- TODO: Replace with autocomplete editor once its merged (https://github.com/statamic/cms/pull/15055) -->
-                            <Field
-                                :label="__('Heading')"
-                                :error="error(index, 'heading')"
-                            >
-                                <Input v-model="notification.heading" />
-                            </Field>
-
-	                        <div class="flex">
-		                        <Field
-			                        class="w-1/2"
-			                        :label="__('Include Submitted Fields')"
-			                        :instructions="__('forms-pro::messages.slack_connection_include_fields_instructions')"
-		                        >
-			                        <Switch v-model="notification.include_fields" />
-		                        </Field>
-
-		                        <Field
-			                        class="w-1/2"
-			                        :label="__('Link to Submission')"
-			                        :instructions="__('forms-pro::messages.slack_connection_link_to_submission_instructions')"
-		                        >
-			                        <Switch v-model="notification.link_to_submission" />
-		                        </Field>
-	                        </div>
-
-                            <Field
-                                v-if="notification.include_fields"
-                                :label="__('Fields to Include')"
-                                :instructions="__('forms-pro::messages.slack_connection_fields_instructions')"
-                                :error="error(index, 'fields')"
-                            >
-                                <CheckboxGroup
-                                    appearance="chips"
-                                    :model-value="selectedFields(notification)"
-                                    @update:model-value="selectFields(notification, $event)"
-                                >
-                                    <Checkbox
-                                        v-for="field in fields"
-                                        :key="field.handle"
-                                        :value="field.handle"
-                                        :label="field.display"
-                                    />
-                                </CheckboxGroup>
-                            </Field>
+                                <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
+                                    <PublishFields />
+                                </PublishFieldsProvider>
+                            </PublishContainer>
                         </div>
                     </template>
                 </ConnectionLogic>
