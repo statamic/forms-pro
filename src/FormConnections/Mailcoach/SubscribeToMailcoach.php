@@ -64,8 +64,8 @@ class SubscribeToMailcoach implements ShouldQueue
     private function extraAttributes(): array
     {
         return collect(Arr::get($this->config, 'attributes'))
-            ->filter(fn (array $attribute) => filled($attribute['key'] ?? null) && filled($attribute['value'] ?? null))
-            ->mapWithKeys(fn (array $attribute) => [$attribute['key'] => $attribute['value']])
+            ->filter(fn (array $attribute): bool => filled($attribute['key'] ?? null) && filled($attribute['value'] ?? null))
+            ->mapWithKeys(fn (array $attribute): array => [$attribute['key'] => $attribute['value']])
             ->all();
     }
 }

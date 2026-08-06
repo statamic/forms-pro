@@ -1,9 +1,5 @@
 <script setup>
-import {
-	Description,
-	Heading,
-	Input
-} from '@statamic/cms/ui';
+import { Description, Heading } from '@statamic/cms/ui';
 
 const stepNumber = 'mt-px flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300';
 

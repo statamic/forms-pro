@@ -103,7 +103,8 @@ class Mailcoach extends Connection
 
     public static function blueprint(Form $form, array $lists = []): \Statamic\Fields\Blueprint
     {
-        $formFields = static::formFieldOptions($form);
+        $textFields = static::formFieldOptions($form, ['text', 'contact']);
+        $choiceFields = static::formFieldOptions($form, ['choice']);
 
         return Blueprint::make()->setContents([
             'tabs' => [
@@ -118,6 +119,7 @@ class Mailcoach extends Connection
                                         'display' => __('Mailcoach List'),
                                         'instructions' => __('forms-pro::messages.mailcoach_connection_list_instructions'),
                                         'options' => $lists,
+                                        'default' => count($lists) === 1 ? array_key_first($lists) : null,
                                         'validate' => ['required'],
                                         'searchable' => true,
                                     ],
@@ -128,7 +130,7 @@ class Mailcoach extends Connection
                                         'type' => 'select',
                                         'display' => __('Email Address'),
                                         'instructions' => __('forms-pro::messages.mailcoach_connection_email_field_instructions'),
-                                        'options' => $formFields,
+                                        'options' => $textFields,
                                         'validate' => ['required'],
                                     ],
                                 ],
@@ -137,7 +139,7 @@ class Mailcoach extends Connection
                                     'field' => [
                                         'type' => 'select',
                                         'display' => __('First Name'),
-                                        'options' => $formFields,
+                                        'options' => $textFields,
                                         'clearable' => true,
                                         'width' => 50,
                                     ],
@@ -147,7 +149,7 @@ class Mailcoach extends Connection
                                     'field' => [
                                         'type' => 'select',
                                         'display' => __('Last Name'),
-                                        'options' => $formFields,
+                                        'options' => $textFields,
                                         'clearable' => true,
                                         'width' => 50,
                                     ],
@@ -196,7 +198,7 @@ class Mailcoach extends Connection
                                         'type' => 'select',
                                         'display' => __('Consent'),
                                         'instructions' => __('forms-pro::messages.mailcoach_connection_consent_field_instructions'),
-                                        'options' => $formFields,
+                                        'options' => $choiceFields,
                                         'clearable' => true,
                                         'width' => 50,
                                     ],
@@ -219,10 +221,10 @@ class Mailcoach extends Connection
         ]);
     }
 
-    private static function formFieldOptions(Form $form): array
+    private static function formFieldOptions(Form $form, array $categories): array
     {
         return $form->formFields()->fields()
-            ->reject(fn ($field) => array_intersect($field->fieldtype()->categories(), ['information', 'structure']))
+            ->filter(fn ($field) => ! $field->fieldtype()->categories() || array_intersect($field->fieldtype()->categories(), $categories))
             ->mapWithKeys(fn ($field) => [$field->handle() => __($field->display())])
             ->all();
     }

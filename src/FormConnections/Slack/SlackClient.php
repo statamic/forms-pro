@@ -55,7 +55,7 @@ class SlackClient
         } while (filled($cursor));
 
         return $channels
-            ->map(fn (array $channel) => [
+            ->map(fn (array $channel): array => [
                 'id' => $channel['id'],
                 'name' => $channel['name'],
                 'is_private' => $channel['is_private'] ?? false,

@@ -31,7 +31,7 @@ class MailcoachClient
 
         return $lists
             ->sortBy('name')
-            ->mapWithKeys(fn (array $list) => [$list['uuid'] => $list['name']])
+            ->mapWithKeys(fn (array $list): array => [$list['uuid'] => $list['name']])
             ->all();
     }
 

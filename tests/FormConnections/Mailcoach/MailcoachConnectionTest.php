@@ -146,6 +146,72 @@ class MailcoachConnectionTest extends TestCase
         $this->assertEquals([], $props['meta']['list']['options']);
     }
 
+    #[Test]
+    public function it_preselects_the_list_when_theres_only_one()
+    {
+        $this->configureMailcoach();
+
+        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
+            ['uuid' => self::LIST, 'name' => 'Newsletter'],
+        ]])]);
+
+        $props = new Mailcoach()->render($this->form([]))->toArray()['props'];
+
+        $this->assertEquals(self::LIST, $props['values']['list']);
+    }
+
+    #[Test]
+    public function it_doesnt_preselect_a_list_when_there_are_several()
+    {
+        $this->configureMailcoach();
+
+        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
+            ['uuid' => self::LIST, 'name' => 'Newsletter'],
+            ['uuid' => '2f0b3a1c-9d4e-4a6b-8c1d-5e7f9a0b2c3d', 'name' => 'Customers'],
+        ]])]);
+
+        $props = new Mailcoach()->render($this->form([]))->toArray()['props'];
+
+        $this->assertNull($props['values']['list']);
+    }
+
+    #[Test]
+    #[DataProvider('fieldOptionsProvider')]
+    public function it_only_offers_fields_that_suit_each_setting(string $handle, array $expected)
+    {
+        $form = tap(Form::make('test')->formFields([
+            'fields' => [
+                ['handle' => 'email', 'field' => ['type' => 'email']],
+                ['handle' => 'full_name', 'field' => ['type' => 'name']],
+                ['handle' => 'message', 'field' => ['type' => 'long_answer']],
+                ['handle' => 'consent', 'field' => ['type' => 'toggle']],
+                ['handle' => 'interests', 'field' => ['type' => 'checkboxes']],
+                ['handle' => 'cv', 'field' => ['type' => 'upload']],
+                ['handle' => 'rating', 'field' => ['type' => 'star_rating']],
+                ['handle' => 'intro', 'field' => ['type' => 'heading']],
+                ['handle' => 'third_party', 'field' => ['type' => 'text']],
+            ],
+        ]))->save();
+
+        $options = Mailcoach::blueprint($form)->fields()->get($handle)->get('options');
+
+        $this->assertEquals($expected, array_keys($options));
+    }
+
+    public static function fieldOptionsProvider(): array
+    {
+        // "third_party" resolves to the Fallback fieldtype, which declares no categories. The form
+        // builder buckets those as "other", so they're offered everywhere rather than hidden.
+        $text = ['email', 'full_name', 'message', 'third_party'];
+
+        return [
+            'email' => ['email_field', $text],
+            'first name' => ['first_name_field', $text],
+            'last name' => ['last_name_field', $text],
+            'consent' => ['consent_field', ['consent', 'interests', 'third_party']],
+        ];
+    }
+
     private function configureMailcoach(): void
     {
         config([
