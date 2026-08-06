@@ -24,6 +24,10 @@ return [
 
     'connections' => [
 
+        'mailchimp' => [
+            'api_key' => env('FORMS_PRO_MAILCHIMP_API_KEY'),
+        ],
+
         'mailcoach' => [
             'api_url' => env('FORMS_PRO_MAILCOACH_API_URL'),
             'token' => env('FORMS_PRO_MAILCOACH_TOKEN'),

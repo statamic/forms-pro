@@ -1,0 +1,239 @@
+<?php
+
+namespace Tests\FormConnections\Mailchimp;
+
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
+use Statamic\Contracts\Forms\Form as FormContract;
+use Statamic\Facades\Form;
+use Statamic\FormsPro\FormConnections\Mailchimp;
+use Statamic\FormsPro\FormConnections\Mailchimp\SubscribeToMailchimp;
+use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\TestCase;
+
+class MailchimpConnectionTest extends TestCase
+{
+    use PreventsSavingStacheItemsToDisk;
+
+    private const AUDIENCE = 'a1b2c3d4e5';
+
+    #[Test]
+    public function it_returns_a_job_for_the_configured_audience()
+    {
+        $form = $this->form(['list' => self::AUDIENCE, 'email_field' => 'email']);
+
+        $jobs = new Mailchimp()->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
+
+        $this->assertCount(1, $jobs);
+        $this->assertContainsOnlyInstancesOf(SubscribeToMailchimp::class, $jobs);
+        $this->assertEquals(self::AUDIENCE, $jobs[0]->config['list']);
+    }
+
+    #[Test]
+    public function it_returns_no_jobs_when_the_form_isnt_connected_to_mailchimp()
+    {
+        $form = tap(Form::make('test'))->save();
+
+        $this->assertEmpty(new Mailchimp()->finalized($form->makeSubmission()));
+    }
+
+    #[Test]
+    #[DataProvider('incompleteConfigProvider')]
+    public function it_returns_no_jobs_when_the_config_is_incomplete(array $config)
+    {
+        $form = $this->form($config);
+
+        $this->assertEmpty(new Mailchimp()->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
+    }
+
+    public static function incompleteConfigProvider(): array
+    {
+        return [
+            'no audience' => [['email_field' => 'email']],
+            'no email field' => [['list' => self::AUDIENCE]],
+        ];
+    }
+
+    #[Test]
+    public function it_returns_no_jobs_when_the_submission_has_no_email_address()
+    {
+        $form = $this->form(['list' => self::AUDIENCE, 'email_field' => 'email']);
+
+        $this->assertEmpty(new Mailchimp()->finalized($form->makeSubmission()->data(['email' => ''])));
+    }
+
+    #[Test]
+    #[DataProvider('consentProvider')]
+    public function it_only_subscribes_when_consent_has_been_given($value, bool $shouldSubscribe)
+    {
+        $form = $this->form([
+            'list' => self::AUDIENCE,
+            'email_field' => 'email',
+            'consent_field' => 'consent',
+        ]);
+
+        $jobs = new Mailchimp()->finalized($form->makeSubmission()->data([
+            'email' => 'jack@example.com',
+            'consent' => $value,
+        ]));
+
+        $this->assertCount($shouldSubscribe ? 1 : 0, $jobs);
+    }
+
+    public static function consentProvider(): array
+    {
+        return [
+            'checked toggle' => [true, true],
+            'unchecked toggle' => [false, false],
+            'missing value' => [null, false],
+            'checked checkbox' => [['newsletter'], true],
+            'unchecked checkbox' => [[], false],
+            'yes' => ['yes', true],
+            'no' => ['no', false],
+        ];
+    }
+
+    #[Test]
+    public function it_counts_the_connection_once_configured()
+    {
+        $this->assertEquals(0, new Mailchimp()->count(tap(Form::make('test'))->save()));
+        $this->assertEquals(1, new Mailchimp()->count($this->form(['list' => self::AUDIENCE])));
+    }
+
+    #[Test]
+    public function it_renders_the_connection_with_the_available_audiences()
+    {
+        $this->configureMailchimp();
+
+        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
+            ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
+        ]])]);
+
+        $props = new Mailchimp()->render($this->form(['list' => self::AUDIENCE, 'email_field' => 'email']))->toArray()['props'];
+
+        $this->assertTrue($props['isConfigured']);
+        $this->assertNull($props['apiError']);
+        $this->assertEquals(self::AUDIENCE, $props['values']['list']);
+        $this->assertEquals([['value' => self::AUDIENCE, 'label' => 'Newsletter']], $props['meta']['list']['options']);
+    }
+
+    #[Test]
+    public function it_renders_the_setup_instructions_when_mailchimp_hasnt_been_configured()
+    {
+        Http::fake();
+
+        $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
+
+        $this->assertFalse($props['isConfigured']);
+        Http::assertNothingSent();
+    }
+
+    #[Test]
+    public function it_renders_api_errors()
+    {
+        $this->configureMailchimp();
+
+        Http::fake(['us14.api.mailchimp.com/*' => Http::response(null, 401)]);
+
+        $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
+
+        $this->assertTrue($props['isConfigured']);
+        $this->assertStringContainsString('FORMS_PRO_MAILCHIMP_API_KEY', $props['apiError']);
+        $this->assertEquals([], $props['meta']['list']['options']);
+    }
+
+    #[Test]
+    public function it_renders_an_api_error_when_mailchimp_cant_be_reached()
+    {
+        $this->configureMailchimp();
+
+        Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
+
+        $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
+
+        $this->assertStringContainsString('Could not resolve host.', $props['apiError']);
+    }
+
+    #[Test]
+    public function it_preselects_the_audience_when_theres_only_one()
+    {
+        $this->configureMailchimp();
+
+        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
+            ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
+        ]])]);
+
+        $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
+
+        $this->assertEquals(self::AUDIENCE, $props['values']['list']);
+    }
+
+    #[Test]
+    public function it_doesnt_preselect_an_audience_when_there_are_several()
+    {
+        $this->configureMailchimp();
+
+        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
+            ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
+            ['id' => 'f6e5d4c3b2', 'name' => 'Customers'],
+        ]])]);
+
+        $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
+
+        $this->assertNull($props['values']['list']);
+    }
+
+    #[Test]
+    #[DataProvider('fieldOptionsProvider')]
+    public function it_only_offers_fields_that_suit_each_setting(string $handle, array $expected)
+    {
+        $form = tap(Form::make('test')->formFields([
+            'fields' => [
+                ['handle' => 'email', 'field' => ['type' => 'email']],
+                ['handle' => 'full_name', 'field' => ['type' => 'name']],
+                ['handle' => 'message', 'field' => ['type' => 'long_answer']],
+                ['handle' => 'consent', 'field' => ['type' => 'toggle']],
+                ['handle' => 'interests', 'field' => ['type' => 'checkboxes']],
+                ['handle' => 'cv', 'field' => ['type' => 'upload']],
+                ['handle' => 'rating', 'field' => ['type' => 'star_rating']],
+                ['handle' => 'intro', 'field' => ['type' => 'heading']],
+                ['handle' => 'third_party', 'field' => ['type' => 'text']],
+            ],
+        ]))->save();
+
+        $options = Mailchimp::blueprint($form)->fields()->get($handle)->get('options');
+
+        $this->assertEquals($expected, array_keys($options));
+    }
+
+    public static function fieldOptionsProvider(): array
+    {
+        // "third_party" resolves to the Fallback fieldtype, which declares no categories. The form
+        // builder buckets those as "other", so they're offered everywhere rather than hidden.
+        $text = ['email', 'full_name', 'message', 'third_party'];
+
+        return [
+            'email' => ['email_field', $text],
+            'first name' => ['first_name_field', $text],
+            'last name' => ['last_name_field', $text],
+            'consent' => ['consent_field', ['consent', 'interests', 'third_party']],
+        ];
+    }
+
+    private function configureMailchimp(): void
+    {
+        config(['forms-pro.connections.mailchimp.api_key' => 'mailchimp-key-us14']);
+    }
+
+    private function form(array $config): FormContract
+    {
+        return tap(Form::make('test')->formFields([
+            'fields' => [
+                ['handle' => 'email', 'field' => ['type' => 'text']],
+                ['handle' => 'consent', 'field' => ['type' => 'toggle']],
+            ],
+        ])->connections(['mailchimp' => $config]))->save();
+    }
+}

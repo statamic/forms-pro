@@ -2,6 +2,7 @@
 
 namespace Statamic\FormsPro;
 
+use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
 use Statamic\FormsPro\FormConnections\Mailcoach\MailcoachClient;
 use Statamic\FormsPro\FormConnections\Slack\SlackClient;
 use Statamic\Providers\AddonServiceProvider;
@@ -40,11 +41,17 @@ class ServiceProvider extends AddonServiceProvider
 
     private function bootConnections(): void
     {
+        $this->app->bind(MailchimpClient::class, fn () => new MailchimpClient(
+            config('forms-pro.connections.mailchimp.api_key')
+        ));
+
         $this->app->bind(MailcoachClient::class, fn () => new MailcoachClient(
             apiUrl: config('forms-pro.connections.mailcoach.api_url'),
             token: config('forms-pro.connections.mailcoach.token'),
         ));
 
-        $this->app->bind(SlackClient::class, fn () => new SlackClient(config('forms-pro.connections.slack.token')));
+        $this->app->bind(SlackClient::class, fn () => new SlackClient(
+            config('forms-pro.connections.slack.token'))
+        );
     }
 }

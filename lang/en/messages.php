@@ -1,6 +1,23 @@
 <?php
 
 return [
+    'mailchimp_connection_description' => 'Subscribe people to a Mailchimp audience.',
+    'mailchimp_connection_list_instructions' => 'Where subscribers are added.',
+    'mailchimp_connection_email_field_instructions' => 'Submissions without an email address are ignored.',
+    'mailchimp_connection_tags_instructions' => 'Applied to every subscriber. Existing tags are kept.',
+    'mailchimp_connection_merge_fields_instructions' => 'Store extra values on the subscriber. Merge fields are defined on the audience in Mailchimp.',
+    'mailchimp_connection_merge_field_placeholder' => 'Choose a merge field',
+    'mailchimp_connection_merge_field_no_audience' => 'Choose an audience first',
+    'mailchimp_connection_consent_field_instructions' => 'Only subscribe when this field is checked. Leave empty to subscribe on every submission.',
+    'mailchimp_connection_skip_confirmation_instructions' => 'Subscribe people immediately. Otherwise they\'re added as pending, and won\'t receive anything until they confirm by email.',
+    'mailchimp_connection_api_error' => 'Couldn\'t connect to Mailchimp.',
+
+    'mailchimp_setup_heading' => 'Connect your Mailchimp account',
+    'mailchimp_setup_intro' => ' Your site needs an API key before it can send subscribers to Mailchimp. You only need to do this once.',
+    'mailchimp_setup_key' => 'In Mailchimp, go to Account & billing → Extras → API keys and create a key.',
+    'mailchimp_setup_env' => 'Copy it into your site\'s .env file:',
+    'mailchimp_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once the key is set, reload this page.',
+
     'mailcoach_connection_description' => 'Subscribe people to a Mailcoach email list.',
     'mailcoach_connection_list_instructions' => 'Where subscribers are added.',
     'mailcoach_connection_email_field_instructions' => 'Submissions without an email address are ignored.',
