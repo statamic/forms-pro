@@ -24,6 +24,11 @@ return [
 
     'connections' => [
 
+        'mailcoach' => [
+            'api_url' => env('FORMS_PRO_MAILCOACH_API_URL'),
+            'token' => env('FORMS_PRO_MAILCOACH_TOKEN'),
+        ],
+
         'slack' => [
             'token' => env('FORMS_PRO_SLACK_TOKEN'),
         ],

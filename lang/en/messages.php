@@ -1,6 +1,21 @@
 <?php
 
 return [
+    'mailcoach_connection_description' => 'Subscribe people to a Mailcoach email list.',
+    'mailcoach_connection_list_instructions' => 'Where subscribers are added.',
+    'mailcoach_connection_email_field_instructions' => 'Submissions without an email address are ignored.',
+    'mailcoach_connection_tags_instructions' => 'Applied to every subscriber. Existing tags are replaced.',
+    'mailcoach_connection_attributes_instructions' => 'Store extra values on the subscriber.',
+    'mailcoach_connection_consent_field_instructions' => 'Only subscribe when this field is checked. Leave empty to subscribe on every submission.',
+    'mailcoach_connection_skip_confirmation_instructions' => 'Subscribe people immediately, without asking them to confirm. Only applies to lists using double opt-in.',
+    'mailcoach_connection_api_error' => 'Couldn\'t connect to Mailcoach.',
+
+    'mailcoach_setup_heading' => 'Connect your Mailcoach account',
+    'mailcoach_setup_intro' => 'Your site needs an API token before it can send subscribers to Mailcoach.',
+    'mailcoach_setup_token' => 'In Mailcoach, go to Account → API Tokens and create a token. Give it access to all API endpoints — "Send only" tokens can\'t manage subscribers.',
+    'mailcoach_setup_env' => 'Your team\'s API URL is on that same page. Copy it and the new token into your site\'s .env file:',
+    'mailcoach_setup_developer' => 'This step requires access to the server, so you may need a developer to do it for you. Once both variables are set, reload this page.',
+
     'slack_connection_channel_instructions' => 'Private channels only appear once the app has been invited to them.',
     'slack_connection_description' => 'Post submissions to a Slack channel.',
     'slack_connection_fields_instructions' => 'Leave empty to include every field.',
@@ -20,5 +35,5 @@ return [
     'slack_setup_manifest' => 'Paste this manifest into the app\'s "App Manifest" page.',
     'slack_setup_install' => 'Choose "Install to Workspace", select the workspace you\'d like to install it into, and click Allow.',
     'slack_setup_token' => 'Copy the Bot User OAuth Token from the app\'s "OAuth &amp; Permissions" page into your site\'s :file file:',
-    'slack_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once :variable is set, reload this page.',
+    'slack_setup_developer' => 'This step requires access to the server, so you may need a developer to do it for you. Once :variable is set, reload this page.',
 ];
