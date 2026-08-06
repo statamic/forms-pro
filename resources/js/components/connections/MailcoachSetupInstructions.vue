@@ -7,7 +7,7 @@ import {
 
 const stepNumber = 'mt-px flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300';
 
-const envVariables = `FORMS_PRO_MAILCOACH_ENDPOINT=https://your-team.mailcoach.app/api
+const envVariables = `FORMS_PRO_MAILCOACH_API_URL=https://your-team.mailcoach.app/api
 FORMS_PRO_MAILCOACH_TOKEN=mc_yourtoken`;
 </script>
 
