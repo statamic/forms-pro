@@ -124,7 +124,7 @@ onUnmounted(() => {
     </Teleport>
 
     <div v-if="isConfigured">
-        <Alert v-if="apiError" variant="error" class="mb-6">
+        <Alert v-if="apiError" variant="error" icon="alert-warning-exclamation-mark" class="mb-6">
             <Heading :text="__('forms-pro::messages.slack_connection_api_error')" />
             <Description :text="__(apiError)" class="mt-1" />
         </Alert>

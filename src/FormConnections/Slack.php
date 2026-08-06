@@ -144,11 +144,11 @@ class Slack extends Connection
                                         'if' => ['include_fields' => true],
                                     ],
                                 ],
-                            ]
-                        ]
-                    ]
-                ]
-            ]
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ]);
     }
 

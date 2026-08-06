@@ -65,7 +65,7 @@ class MailcoachConnectionTest extends TestCase
 
     #[Test]
     #[DataProvider('consentProvider')]
-    public function it_only_subscribes_when_consent_has_been_given($value, boolean $shouldSubscribe)
+    public function it_only_subscribes_when_consent_has_been_given($value, bool $shouldSubscribe)
     {
         $form = $this->form([
             'list' => self::LIST,

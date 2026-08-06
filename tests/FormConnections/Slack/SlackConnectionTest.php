@@ -2,8 +2,6 @@
 
 namespace Tests\FormConnections\Slack;
 
-use Illuminate\Http\Client\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -120,15 +118,30 @@ class SlackConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_determines_if_api_token_is_set_when_rendering_the_vue_component()
+    public function it_renders_the_setup_instructions_when_mailcoach_hasnt_been_configured()
     {
-        config(['forms-pro.connections.slack.token' => null]);
         Http::fake();
 
         $form = tap(Form::make('test'))->save();
 
-        $this->assertFalse((new Slack)->render($form)->toArray()['props']['isConfigured']);
+        $props = new Slack()->render($form)->toArray()['props'];
 
+        $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
+    }
+
+    #[Test]
+    public function it_renders_api_errors()
+    {
+        config(['forms-pro.connections.slack.token' => 'xoxb-token']);
+        Http::fake(['slack.com/*' => Http::response(['ok' => false, 'error' => 'invalid_auth'])]);
+
+        $form = tap(Form::make('test'))->save();
+
+        $props = new Slack()->render($form)->toArray()['props'];
+
+        $this->assertTrue($props['isConfigured']);
+        $this->assertEquals('Error from Slack: [invalid_auth].', $props['apiError']);
+        $this->assertEquals([], $props['defaults']['meta']['channel']['options']);
     }
 }
