@@ -87,13 +87,15 @@ class Mailcoach extends Connection
             $apiError = $e->getMessage();
         }
 
-        $fields = static::blueprint($form, $lists)->fields()
+        $blueprint = static::blueprint($form, $lists);
+
+        $fields = $blueprint->fields()
             ->addValues($form->connections()->get('mailcoach', []))
             ->preProcess();
 
         return VueComponent::render('mailcoach-connection', [
             'action' => cp_route('forms.connect.mailcoach.update', $form->handle()),
-            'blueprint' => static::blueprint($form, $lists)->toPublishArray(),
+            'blueprint' => $blueprint->toPublishArray(),
             'values' => $fields->values()->all(),
             'meta' => $fields->meta()->all(),
             'isConfigured' => $isConfigured,

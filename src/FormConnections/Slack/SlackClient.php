@@ -86,7 +86,12 @@ class SlackClient
             );
         }
 
-        $response->throw();
+        if ($response->failed()) {
+            throw new SlackException(
+                message: "Slack responded with a [{$response->status()}] status code.",
+                retryAfter: $response->serverError() ? self::RETRY_AFTER : null,
+            );
+        }
 
         $body = $response->json();
 

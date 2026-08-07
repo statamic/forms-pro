@@ -89,13 +89,15 @@ class Mailchimp extends Connection
             $apiError = $e->getMessage();
         }
 
-        $fields = static::blueprint($form, $audiences)->fields()
+        $blueprint = static::blueprint($form, $audiences);
+
+        $fields = $blueprint->fields()
             ->addValues($form->connections()->get('mailchimp', []))
             ->preProcess();
 
         return VueComponent::render('mailchimp-connection', [
             'action' => cp_route('forms.connect.mailchimp.update', $form->handle()),
-            'blueprint' => static::blueprint($form, $audiences)->toPublishArray(),
+            'blueprint' => $blueprint->toPublishArray(),
             'values' => $fields->values()->all(),
             'meta' => $fields->meta()->all(),
             'isConfigured' => $isConfigured,

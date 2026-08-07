@@ -17,10 +17,10 @@ const mergeFields = ref([]);
 const list = computed(() => values.value?.list);
 
 const options = computed(() => {
-	return mergeFields.value.map(({ tag, name }) => ({
-		value: tag,
-		label: name,
-	}));
+    return mergeFields.value.map(({ tag, name }) => ({
+        value: tag,
+        label: name,
+    }));
 });
 
 const placeholder = computed(() => {
@@ -31,20 +31,20 @@ const placeholder = computed(() => {
 });
 
 const fetchMergeFields = () => {
-	mergeFields.value = [];
-	if (!list) return;
-	loading.value = true;
+    mergeFields.value = [];
+    if (!list.value) return;
+    loading.value = true;
 
-	axios.get(props.config.url, { params: { list: list.value } })
-		.then((response) => {
-			mergeFields.value = response.data;
+    axios.get(props.config.url, { params: { list: list.value } })
+        .then((response) => {
+            mergeFields.value = response.data;
 
-			if (props.value && !response.data.some((mergeField) => mergeField.tag === props.value)) {
-				update(null);
-			}
-		})
-		.catch(() => (mergeFields.value = []))
-		.finally(() => (loading.value = false));
+            if (props.value && !response.data.some((mergeField) => mergeField.tag === props.value)) {
+                update(null);
+            }
+        })
+        .catch(() => (mergeFields.value = []))
+        .finally(() => (loading.value = false));
 };
 
 watch(list, fetchMergeFields, { immediate: true });
@@ -62,20 +62,20 @@ watch(list, fetchMergeFields, { immediate: true });
         searchable
         @update:model-value="update"
     >
-	    <template #selected-option="{ option }">
-		    <div v-if="loading" class="flex items-center truncate gap-x-2">
-			    <Icon name="loading" />
-			    {{ __('Loading') }}
-		    </div>
+        <template #selected-option="{ option }">
+            <div v-if="loading" class="flex items-center truncate gap-x-2">
+                <Icon name="loading" />
+                {{ __('Loading') }}
+            </div>
 
-		    <div v-else class="flex items-center truncate">
-			    {{ option.label }} (<code class="hidden-outside rounded-xs text-xs">{{ option.value }}</code>)
-		    </div>
-	    </template>
-	    <template #option="option">
-		    <div class="flex items-center truncate">
+            <div v-else class="flex items-center truncate">
                 {{ option.label }} (<code class="hidden-outside rounded-xs text-xs">{{ option.value }}</code>)
             </div>
-	    </template>
+        </template>
+        <template #option="option">
+            <div class="flex items-center truncate">
+                {{ option.label }} (<code class="hidden-outside rounded-xs text-xs">{{ option.value }}</code>)
+            </div>
+        </template>
     </Combobox>
 </template>

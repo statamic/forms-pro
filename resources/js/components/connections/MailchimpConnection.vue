@@ -6,14 +6,14 @@ import { Alert, Button, Description, Heading, Icon, PublishContainer, PublishFie
 import MailchimpSetupInstructions from './MailchimpSetupInstructions.vue';
 
 const props = defineProps({
-	form: Object,
-	config: Object,
-	action: String,
-	blueprint: Object,
-	values: Object,
-	meta: Object,
-	isConfigured: Boolean,
-	apiError: String,
+    form: Object,
+    config: Object,
+    action: String,
+    blueprint: Object,
+    values: Object,
+    meta: Object,
+    isConfigured: Boolean,
+    apiError: String,
 });
 
 const container = useTemplateRef('container');
@@ -32,7 +32,7 @@ const save = (): void => {
     axios
         .patch(props.action, values.value)
         .then(() => {
-			container.value.clearDirtyState();
+            container.value.clearDirtyState();
             Statamic.$toast.success(__('Saved'));
         })
         .catch((e) => {
@@ -77,5 +77,5 @@ onUnmounted(() => saveBinding.value?.destroy());
         </PublishContainer>
     </div>
 
-	<MailchimpSetupInstructions v-else />
+    <MailchimpSetupInstructions v-else />
 </template>

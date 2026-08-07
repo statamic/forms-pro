@@ -13,7 +13,7 @@ return [
     'mailchimp_connection_api_error' => 'Couldn\'t connect to Mailchimp.',
 
     'mailchimp_setup_heading' => 'Connect your Mailchimp account',
-    'mailchimp_setup_intro' => ' Your site needs an API key before it can send subscribers to Mailchimp. You only need to do this once.',
+    'mailchimp_setup_intro' => 'Your site needs an API key before it can send subscribers to Mailchimp. You only need to do this once.',
     'mailchimp_setup_key' => 'In Mailchimp, go to Account & billing → Extras → API keys and create a key.',
     'mailchimp_setup_env' => 'Copy it into your site\'s .env file:',
     'mailchimp_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once the key is set, reload this page.',
@@ -41,7 +41,6 @@ return [
     'slack_connection_include_fields_instructions' => 'Displays the submitted values as a table.',
     'slack_connection_link_to_submission_instructions' => 'Add a button linking to the submission in the Control Panel.',
     'slack_connection_api_error' => 'Couldn\'t connect to Slack.',
-    'slack_connection_test_sent' => 'Test message sent.',
     'slack_connection_truncated' => 'This submission was too long to show in full.',
     'slack_connection_view_submission' => 'View submission',
 

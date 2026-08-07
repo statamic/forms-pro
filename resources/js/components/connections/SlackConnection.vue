@@ -5,25 +5,25 @@ import { nanoid as uniqid } from 'nanoid';
 import { keys } from '@statamic/cms/api';
 import { ConnectionList, ConnectionLogic, conditionsSummary, deepClone } from '@statamic/cms';
 import { Alert, Badge, Button, Description, Heading, Icon, Label, PublishContainer, PublishFields, PublishFieldsProvider, Subheading } from '@statamic/cms/ui';
-import SlackSetupInstructions from "./SlackSetupInstructions.vue";
+import SlackSetupInstructions from './SlackSetupInstructions.vue';
 
 interface SlackNotification {
-	id: string;
-	enabled: boolean;
-	conditions: { _id: string; field: string; operator: string; value: string }[];
-	values: object;
-	meta: object;
+    id: string;
+    enabled: boolean;
+    conditions: { _id: string; field: string; operator: string; value: string }[];
+    values: object;
+    meta: object;
 }
 
 const props = defineProps({
-	form: Object,
-	config: Array,
-	action: String,
-	blueprint: Object,
-	notifications: Object,
-	defaults: Object,
-	isConfigured: Boolean,
-	apiError: String,
+    form: Object,
+    config: Array,
+    action: String,
+    blueprint: Object,
+    notifications: Object,
+    defaults: Object,
+    isConfigured: Boolean,
+    apiError: String,
 });
 
 const dirtyKey = 'slack-connection';
@@ -33,11 +33,11 @@ const saving = ref<boolean>(false);
 const saveBinding = ref<ReturnType<typeof keys.bindGlobal> | null>(null);
 
 const notifications = ref<SlackNotification[]>(props.config.map((config: object): SlackNotification => ({
-	id: config.id,
-	enabled: config.enabled ?? true,
-	conditions: (config.conditions ?? []).map((condition: object) => ({ ...condition, _id: uniqid() })),
-	values: props.notifications[config.id]?.values,
-	meta: props.notifications[config.id]?.meta,
+    id: config.id,
+    enabled: config.enabled ?? true,
+    conditions: (config.conditions ?? []).map((condition: object) => ({ ...condition, _id: uniqid() })),
+    values: props.notifications[config.id]?.values,
+    meta: props.notifications[config.id]?.meta,
 })));
 
 const addNotification = (): void => notifications.value.push({
@@ -83,8 +83,8 @@ const save = (): void => {
 
     axios
         .patch(props.action, {
-			configs: notifications.value.map(({ values, meta, ...config }) => ({ ...config, ...values })),
-		})
+            configs: notifications.value.map(({ values, meta, ...config }) => ({ ...config, ...values })),
+        })
         .then(() => {
             Statamic.$dirty.remove(dirtyKey);
             Statamic.$toast.success(__('Saved'));
@@ -167,6 +167,7 @@ onUnmounted(() => {
                                 v-model="notification.values"
                                 :meta="notification.meta"
                                 :errors="rowErrors(index)"
+                                :track-dirty-state="false"
                             >
                                 <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
                                     <PublishFields />
@@ -179,5 +180,5 @@ onUnmounted(() => {
         </ConnectionList>
     </div>
 
-	<SlackSetupInstructions v-else />
+    <SlackSetupInstructions v-else />
 </template>

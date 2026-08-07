@@ -4,7 +4,6 @@ namespace Tests\FormConnections\Slack;
 
 use Illuminate\Contracts\Queue\Job;
 use Illuminate\Http\Client\Request;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
@@ -307,13 +306,14 @@ class SendSlackMessageTest extends TestCase
     }
 
     #[Test]
-    public function it_throws_when_slack_is_unavailable()
+    public function it_releases_the_job_when_slack_is_unavailable()
     {
         Http::fake(['slack.com/*' => Http::response(null, 503)]);
 
-        $this->expectException(RequestException::class);
+        $queueJob = Mockery::mock(Job::class);
+        $queueJob->shouldReceive('release')->once()->with(30);
 
-        $this->send($this->form(), ['name' => 'Jack Black']);
+        $this->job($this->form(), ['name' => 'Jack Black'])->setJob($queueJob)->handle(app(SlackClient::class));
     }
 
     #[Test]

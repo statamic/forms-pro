@@ -2,6 +2,7 @@
 
 namespace Statamic\FormsPro\FormConnections;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
@@ -49,21 +50,21 @@ class Slack extends Connection
 
     public function render(Form $form): VueComponent
     {
-        $slack = app(SlackClient::class);
         $isConfigured = filled(config('forms-pro.connections.slack.token'));
 
         try {
-            $channels = $isConfigured ? $this->channels($slack) : [];
-        } catch (SlackException $e) {
+            $channels = $isConfigured ? $this->channels() : [];
+        } catch (ConnectionException|SlackException $e) {
             $channels = [];
             $apiError = $e->getMessage();
         }
 
-        $fields = static::blueprint($form, $channels)->fields()->preProcess();
+        $blueprint = static::blueprint($form, $channels);
+        $fields = $blueprint->fields()->preProcess();
 
         return VueComponent::render('slack-connection', [
             'action' => cp_route('forms.connect.slack.update', $form->handle()),
-            'blueprint' => static::blueprint($form, $channels)->toPublishArray(),
+            'blueprint' => $blueprint->toPublishArray(),
             'notifications' => collect($form->connections()->get('slack'))
                 ->mapWithKeys(function (array $config) use ($fields): array {
                     $fields = $fields->addValues($config)->preProcess();
@@ -152,12 +153,12 @@ class Slack extends Connection
         ]);
     }
 
-    private function channels(SlackClient $slack): array
+    private function channels(): array
     {
         return Cache::remember(
             'forms-pro.slack.channels',
             now()->addMinutes(5),
-            fn () => $slack->channels()->all()
+            fn () => app(SlackClient::class)->channels()->all()
         );
     }
 

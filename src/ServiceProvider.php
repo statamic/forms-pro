@@ -51,7 +51,7 @@ class ServiceProvider extends AddonServiceProvider
         ));
 
         $this->app->bind(SlackClient::class, fn () => new SlackClient(
-            config('forms-pro.connections.slack.token'))
-        );
+            config('forms-pro.connections.slack.token')
+        ));
     }
 }
