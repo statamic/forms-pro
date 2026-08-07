@@ -1,6 +1,6 @@
 <script setup>
 import { Fieldtype } from '@statamic/cms';
-import { Combobox, injectPublishContext } from '@statamic/cms/ui';
+import { Combobox, injectPublishContext, Icon } from '@statamic/cms/ui';
 import axios from 'axios';
 import { computed, ref, watch } from 'vue';
 
@@ -11,15 +11,15 @@ defineExpose(expose);
 
 const { values } = injectPublishContext();
 
-const mergeFields = ref([]);
 const loading = ref(false);
+const mergeFields = ref([]);
 
-const list = computed(() => values.value?.list ?? null);
+const list = computed(() => values.value?.list);
 
 const options = computed(() => {
 	return mergeFields.value.map(({ tag, name }) => ({
 		value: tag,
-		label: `${name} (<code class="hidden-outside rounded-xs text-xs">${tag}</code>)`,
+		label: name,
 	}));
 });
 
@@ -57,8 +57,25 @@ watch(list, fetchMergeFields, { immediate: true });
         :options
         :placeholder
         :label-html="true"
-        :read-only="isReadOnly || !list || loading"
+        :read-only="isReadOnly"
+        :disabled="!list || loading"
         searchable
         @update:model-value="update"
-    />
+    >
+	    <template #selected-option="{ option }">
+		    <div v-if="loading" class="flex items-center truncate gap-x-2">
+			    <Icon name="loading" />
+			    {{ __('Loading') }}
+		    </div>
+
+		    <div v-else class="flex items-center truncate">
+			    {{ option.label }} (<code class="hidden-outside rounded-xs text-xs">{{ option.value }}</code>)
+		    </div>
+	    </template>
+	    <template #option="option">
+		    <div class="flex items-center truncate">
+                {{ option.label }} (<code class="hidden-outside rounded-xs text-xs">{{ option.value }}</code>)
+            </div>
+	    </template>
+    </Combobox>
 </template>

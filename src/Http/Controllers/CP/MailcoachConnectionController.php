@@ -12,19 +12,19 @@ class MailcoachConnectionController extends CpController
 {
     public function update(Request $request, $form): void
     {
-        $formField = Rule::in($form->formFields()->fields()->keys()->all());
+        $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
 
         $request->validate([
             'list' => ['required', 'uuid'],
-            'email_field' => ['required', $formField],
-            'first_name_field' => ['nullable', $formField],
-            'last_name_field' => ['nullable', $formField],
-            'consent_field' => ['nullable', $formField],
+            'email_field' => ['required', $isFormField],
+            'first_name_field' => ['nullable', $isFormField],
+            'last_name_field' => ['nullable', $isFormField],
+            'consent_field' => ['nullable', $isFormField],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string'],
             'attributes' => ['nullable', 'array'],
             'attributes.*.key' => ['required', 'string'],
-            'attributes.*.value' => ['required', 'string'],
+            'attributes.*.value' => ['required', $isFormField],
             'skip_confirmation' => ['boolean'],
         ]);
 

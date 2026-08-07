@@ -51,7 +51,7 @@ class UpdateMailcoachConnectionTest extends TestCase
                 'first_name_field' => 'name',
                 'consent_field' => 'consent',
                 'tags' => ['newsletter'],
-                'attributes' => [['key' => 'full_name', 'value' => '{{ name }}']],
+                'attributes' => [['key' => 'full_name', 'value' => 'name']],
                 'skip_confirmation' => true,
             ])
             ->assertOk();
@@ -63,7 +63,7 @@ class UpdateMailcoachConnectionTest extends TestCase
             'first_name_field' => 'name',
             'consent_field' => 'consent',
             'tags' => ['newsletter'],
-            'attributes' => [['key' => 'full_name', 'value' => '{{ name }}']],
+            'attributes' => [['key' => 'full_name', 'value' => 'name']],
             'skip_confirmation' => true,
         ], $updated->connections()->get('mailcoach'));
         $this->assertEquals([['id' => 'abc', 'url' => 'https://example.com/hook']], $updated->connections()->get('webhook'));
@@ -115,8 +115,12 @@ class UpdateMailcoachConnectionTest extends TestCase
             'unknown email field' => [['list' => self::LIST, 'email_field' => 'nope'], ['email_field']],
             'unknown consent field' => [['list' => self::LIST, 'email_field' => 'email', 'consent_field' => 'nope'], ['consent_field']],
             'attribute without a key' => [
-                ['list' => self::LIST, 'email_field' => 'email', 'attributes' => [['value' => '{{ name }}']]],
+                ['list' => self::LIST, 'email_field' => 'email', 'attributes' => [['value' => 'name']]],
                 ['attributes.0.key'],
+            ],
+            'attribute with an unknown form field' => [
+                ['list' => self::LIST, 'email_field' => 'email', 'attributes' => [['key' => 'full_name', 'value' => 'nope']]],
+                ['attributes.0.value'],
             ],
             'attribute without a value' => [
                 ['list' => self::LIST, 'email_field' => 'email', 'attributes' => [['key' => 'full_name']]],

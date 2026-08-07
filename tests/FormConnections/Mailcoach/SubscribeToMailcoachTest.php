@@ -79,16 +79,16 @@ class SubscribeToMailcoachTest extends TestCase
     public function it_sends_extra_attributes()
     {
         $payload = $this->payload(
-            ['email' => 'jack@example.com'],
+            ['email' => 'jack@example.com', 'company' => 'Statamic', 'interests' => ['news', 'offers']],
             ['attributes' => [
-                ['key' => 'source', 'value' => 'Website'],
-                ['key' => 'plan', 'value' => 'Pro'],
+                ['key' => 'company_name', 'value' => 'company'],
+                ['key' => 'interests', 'value' => 'interests'],
             ]],
         );
 
         $this->assertEquals([
-            'source' => 'Website',
-            'plan' => 'Pro',
+            'company_name' => 'Statamic',
+            'interests' => 'news, offers',
         ], $payload['extra_attributes']);
     }
 
@@ -98,9 +98,31 @@ class SubscribeToMailcoachTest extends TestCase
         $payload = $this->payload(
             ['email' => 'jack@example.com'],
             ['attributes' => [
-                ['key' => '', 'value' => 'Website'],
+                ['key' => '', 'value' => 'company'],
                 ['key' => 'plan', 'value' => ''],
             ]],
+        );
+
+        $this->assertArrayNotHasKey('extra_attributes', $payload);
+    }
+
+    #[Test]
+    public function it_sends_attributes_whose_value_is_zero()
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'company' => '0'],
+            ['attributes' => [['key' => 'company_name', 'value' => 'company']]],
+        );
+
+        $this->assertEquals(['company_name' => '0'], $payload['extra_attributes']);
+    }
+
+    #[Test]
+    public function it_omits_attributes_whose_form_field_was_left_blank()
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'company' => ''],
+            ['attributes' => [['key' => 'company_name', 'value' => 'company']]],
         );
 
         $this->assertArrayNotHasKey('extra_attributes', $payload);

@@ -103,9 +103,6 @@ class Mailcoach extends Connection
 
     public static function blueprint(Form $form, array $lists = []): \Statamic\Fields\Blueprint
     {
-        $textFields = static::formFieldOptions($form, ['text', 'contact']);
-        $choiceFields = static::formFieldOptions($form, ['choice']);
-
         return Blueprint::make()->setContents([
             'tabs' => [
                 'main' => [
@@ -127,19 +124,21 @@ class Mailcoach extends Connection
                                 [
                                     'handle' => 'email_field',
                                     'field' => [
-                                        'type' => 'select',
+                                        'type' => 'form_fields',
                                         'display' => __('Email Address'),
                                         'instructions' => __('forms-pro::messages.mailcoach_connection_email_field_instructions'),
-                                        'options' => $textFields,
+                                        'form' => $form->handle(),
+                                        'categories' => ['text', 'contact', 'other'],
                                         'validate' => ['required'],
                                     ],
                                 ],
                                 [
                                     'handle' => 'first_name_field',
                                     'field' => [
-                                        'type' => 'select',
+                                        'type' => 'form_fields',
                                         'display' => __('First Name'),
-                                        'options' => $textFields,
+                                        'form' => $form->handle(),
+                                        'categories' => ['text', 'contact', 'other'],
                                         'clearable' => true,
                                         'width' => 50,
                                     ],
@@ -147,9 +146,10 @@ class Mailcoach extends Connection
                                 [
                                     'handle' => 'last_name_field',
                                     'field' => [
-                                        'type' => 'select',
+                                        'type' => 'form_fields',
                                         'display' => __('Last Name'),
-                                        'options' => $textFields,
+                                        'form' => $form->handle(),
+                                        'categories' => ['text', 'contact', 'other'],
                                         'clearable' => true,
                                         'width' => 50,
                                     ],
@@ -171,6 +171,7 @@ class Mailcoach extends Connection
                                         'instructions' => __('forms-pro::messages.mailcoach_connection_attributes_instructions'),
                                         'add_row' => __('Add Attribute'),
                                         'fullscreen' => false,
+                                        'reorderable' => false,
                                         'fields' => [
                                             [
                                                 'handle' => 'key',
@@ -178,15 +179,17 @@ class Mailcoach extends Connection
                                                     'type' => 'text',
                                                     'display' => __('Mailcoach Key'),
                                                     'validate' => ['required'],
+                                                    'width' => 50,
                                                 ],
                                             ],
-                                            // TODO: Replace with autocomplete editor once its merged (https://github.com/statamic/cms/pull/15055)
                                             [
                                                 'handle' => 'value',
                                                 'field' => [
-                                                    'type' => 'text',
-                                                    'display' => __('Value'),
+                                                    'type' => 'form_fields',
+                                                    'display' => __('Form Field'),
+                                                    'form' => $form->handle(),
                                                     'validate' => ['required'],
+                                                    'width' => 50,
                                                 ],
                                             ],
                                         ],
@@ -195,10 +198,11 @@ class Mailcoach extends Connection
                                 [
                                     'handle' => 'consent_field',
                                     'field' => [
-                                        'type' => 'select',
+                                        'type' => 'form_fields',
                                         'display' => __('Consent'),
                                         'instructions' => __('forms-pro::messages.mailcoach_connection_consent_field_instructions'),
-                                        'options' => $choiceFields,
+                                        'form' => $form->handle(),
+                                        'categories' => ['choice', 'other'],
                                         'clearable' => true,
                                         'width' => 50,
                                     ],
@@ -219,14 +223,6 @@ class Mailcoach extends Connection
                 ],
             ],
         ]);
-    }
-
-    private static function formFieldOptions(Form $form, array $categories): array
-    {
-        return $form->formFields()->fields()
-            ->filter(fn ($field) => ! $field->fieldtype()->categories() || array_intersect($field->fieldtype()->categories(), $categories))
-            ->mapWithKeys(fn ($field) => [$field->handle() => __($field->display())])
-            ->all();
     }
 
     public function routes(Router $router): void

@@ -12,19 +12,19 @@ class MailchimpConnectionController extends CpController
 {
     public function update(Request $request, $form): void
     {
-        $formField = Rule::in($form->formFields()->fields()->keys()->all());
+        $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
 
         $request->validate([
             'list' => ['required', 'string'],
-            'email_field' => ['required', $formField],
-            'first_name_field' => ['nullable', $formField],
-            'last_name_field' => ['nullable', $formField],
-            'consent_field' => ['nullable', $formField],
+            'email_field' => ['required', $isFormField],
+            'first_name_field' => ['nullable', $isFormField],
+            'last_name_field' => ['nullable', $isFormField],
+            'consent_field' => ['nullable', $isFormField],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string'],
             'merge_fields' => ['nullable', 'array'],
             'merge_fields.*.key' => ['required', 'string', 'regex:/^[A-Z0-9_]+$/', Rule::notIn(Mailchimp::DEDICATED_MERGE_TAGS)],
-            'merge_fields.*.value' => ['required', 'string'],
+            'merge_fields.*.value' => ['required', $isFormField],
             'skip_confirmation' => ['boolean'],
         ]);
 

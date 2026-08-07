@@ -28,7 +28,7 @@ class SubscribeToMailchimp implements ShouldQueue
     public function handle(MailchimpClient $mailchimp): void
     {
         $submission = $this->submission->form()->submission($this->submission->id()) ?? $this->submission;
-        $email = $this->value($submission, 'email_field');
+        $email = $this->value($submission, $this->config['email_field']);
 
         try {
             $mailchimp->subscribe($this->config['list'], $this->member($submission, $email));
@@ -54,28 +54,32 @@ class SubscribeToMailchimp implements ShouldQueue
         ]);
     }
 
-    private function value(Submission $submission, string $key): ?string
+    private function mergeFields(Submission $submission): array
     {
-        if (! ($handle = Arr::get($this->config, $key))) {
+        $mergeFields = collect(Arr::get($this->config, 'merge_fields'))
+            ->mapWithKeys(function (array $mergeField) use ($submission): array {
+                $mergeTag = Str::upper($mergeField['key']);
+
+                return [$mergeTag => $this->value($submission, $mergeField['value'] ?? null)];
+            })
+            ->put('FNAME', $this->value($submission, Arr::get($this->config, 'first_name_field')))
+            ->put('LNAME', $this->value($submission, Arr::get($this->config, 'last_name_field')));
+
+        return Arr::removeNullValues($mergeFields->all());
+    }
+
+    private function value(Submission $submission, ?string $handle): ?string
+    {
+        if (! $handle) {
             return null;
         }
 
         $value = $submission->get($handle);
 
-        return is_scalar($value) ? (string) $value : null;
-    }
-
-    private function mergeFields(Submission $submission): array
-    {
-        $names = collect([
-            'FNAME' => $this->value($submission, 'first_name_field'),
-            'LNAME' => $this->value($submission, 'last_name_field'),
-        ])->filter();
-
-        return collect(Arr::get($this->config, 'merge_fields'))
-            ->filter(fn (array $mergeField): bool => filled($mergeField['key'] ?? null) && filled($mergeField['value'] ?? null))
-            ->mapWithKeys(fn (array $mergeField): array => [Str::upper($mergeField['key']) => $mergeField['value']])
-            ->merge($names)
-            ->all();
+        return match (true) {
+            is_array($value) => implode(', ', Arr::flatten($value)) ?: null,
+            is_scalar($value) => (string) $value,
+            default => null,
+        };
     }
 }

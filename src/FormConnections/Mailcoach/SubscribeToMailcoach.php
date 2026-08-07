@@ -41,31 +41,37 @@ class SubscribeToMailcoach implements ShouldQueue
     private function subscriber(Submission $submission): array
     {
         return Arr::removeNullValues([
-            'email' => $this->value($submission, 'email_field'),
-            'first_name' => $this->value($submission, 'first_name_field'),
-            'last_name' => $this->value($submission, 'last_name_field'),
+            'email' => $this->value($submission, Arr::get($this->config, 'email_field')),
+            'first_name' => $this->value($submission, Arr::get($this->config, 'first_name_field')),
+            'last_name' => $this->value($submission, Arr::get($this->config, 'last_name_field')),
             'tags' => Arr::get($this->config, 'tags') ?: null,
-            'extra_attributes' => $this->extraAttributes(),
+            'extra_attributes' => $this->extraAttributes($submission),
             'skip_confirmation' => Arr::get($this->config, 'skip_confirmation') ? true : null,
         ]);
     }
 
-    private function value(Submission $submission, string $key): ?string
+    private function extraAttributes(Submission $submission): array
     {
-        if (! ($handle = Arr::get($this->config, $key))) {
+        $attributes = collect(Arr::get($this->config, 'attributes'))
+            ->mapWithKeys(function (array $attribute) use ($submission): array {
+                return [$attribute['key'] => $this->value($submission, $attribute['value'] ?? null)];
+            });
+
+        return Arr::removeNullValues($attributes->all());
+    }
+
+    private function value(Submission $submission, ?string $handle): ?string
+    {
+        if (! $handle) {
             return null;
         }
 
         $value = $submission->get($handle);
 
-        return is_scalar($value) ? (string) $value : null;
-    }
-
-    private function extraAttributes(): array
-    {
-        return collect(Arr::get($this->config, 'attributes'))
-            ->filter(fn (array $attribute): bool => filled($attribute['key'] ?? null) && filled($attribute['value'] ?? null))
-            ->mapWithKeys(fn (array $attribute): array => [$attribute['key'] => $attribute['value']])
-            ->all();
+        return match (true) {
+            is_array($value) => implode(', ', Arr::flatten($value)) ?: null,
+            is_scalar($value) => (string) $value,
+            default => null,
+        };
     }
 }

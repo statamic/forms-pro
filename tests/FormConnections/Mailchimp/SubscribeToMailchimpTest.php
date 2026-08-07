@@ -86,19 +86,19 @@ class SubscribeToMailchimpTest extends TestCase
     public function it_sends_configured_merge_fields_alongside_the_names()
     {
         $payload = $this->payload(
-            ['email' => 'jack@example.com', 'first_name' => 'Jack'],
+            ['email' => 'jack@example.com', 'first_name' => 'Jack', 'company' => 'Statamic', 'interests' => ['news', 'offers']],
             [
                 'first_name_field' => 'first_name',
                 'merge_fields' => [
-                    ['key' => 'COMPANY', 'value' => 'Statamic'],
-                    ['key' => 'SOURCE', 'value' => 'Website'],
+                    ['key' => 'COMPANY', 'value' => 'company'],
+                    ['key' => 'INTERESTS', 'value' => 'interests'],
                 ],
             ],
         );
 
         $this->assertEquals([
             'COMPANY' => 'Statamic',
-            'SOURCE' => 'Website',
+            'INTERESTS' => 'news, offers',
             'FNAME' => 'Jack',
         ], $payload['merge_fields']);
     }
@@ -107,6 +107,28 @@ class SubscribeToMailchimpTest extends TestCase
     public function it_omits_merge_fields_when_none_are_mapped()
     {
         $payload = $this->payload(['email' => 'jack@example.com']);
+
+        $this->assertArrayNotHasKey('merge_fields', $payload);
+    }
+
+    #[Test]
+    public function it_sends_merge_fields_whose_value_is_zero()
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'company' => '0'],
+            ['merge_fields' => [['key' => 'COMPANY', 'value' => 'company']]],
+        );
+
+        $this->assertEquals(['COMPANY' => '0'], $payload['merge_fields']);
+    }
+
+    #[Test]
+    public function it_omits_merge_fields_whose_form_field_was_left_blank()
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'company' => ''],
+            ['merge_fields' => [['key' => 'COMPANY', 'value' => 'company']]],
+        );
 
         $this->assertArrayNotHasKey('merge_fields', $payload);
     }
@@ -252,6 +274,8 @@ class SubscribeToMailchimpTest extends TestCase
                 ['handle' => 'email', 'field' => ['type' => 'text']],
                 ['handle' => 'first_name', 'field' => ['type' => 'text']],
                 ['handle' => 'surname', 'field' => ['type' => 'text']],
+                ['handle' => 'company', 'field' => ['type' => 'text']],
+                ['handle' => 'interests', 'field' => ['type' => 'checkboxes']],
             ],
         ]))->save();
     }

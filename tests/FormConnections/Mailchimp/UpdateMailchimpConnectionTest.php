@@ -51,7 +51,7 @@ class UpdateMailchimpConnectionTest extends TestCase
                 'first_name_field' => 'name',
                 'consent_field' => 'consent',
                 'tags' => ['newsletter'],
-                'merge_fields' => [['key' => 'COMPANY', 'value' => 'Statamic']],
+                'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
                 'skip_confirmation' => true,
             ])
             ->assertOk();
@@ -63,7 +63,7 @@ class UpdateMailchimpConnectionTest extends TestCase
             'first_name_field' => 'name',
             'consent_field' => 'consent',
             'tags' => ['newsletter'],
-            'merge_fields' => [['key' => 'COMPANY', 'value' => 'Statamic']],
+            'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
             'skip_confirmation' => true,
         ], $updated->connections()->get('mailchimp'));
         $this->assertEquals([['id' => 'abc', 'url' => 'https://example.com/hook']], $updated->connections()->get('webhook'));
@@ -114,7 +114,7 @@ class UpdateMailchimpConnectionTest extends TestCase
             'unknown email field' => [['list' => self::AUDIENCE, 'email_field' => 'nope'], ['email_field']],
             'unknown consent field' => [['list' => self::AUDIENCE, 'email_field' => 'email', 'consent_field' => 'nope'], ['consent_field']],
             'merge field without a key' => [
-                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['value' => 'Statamic']]],
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['value' => 'name']]],
                 ['merge_fields.0.key'],
             ],
             'merge field without a value' => [
@@ -122,11 +122,15 @@ class UpdateMailchimpConnectionTest extends TestCase
                 ['merge_fields.0.value'],
             ],
             'lowercase merge tag' => [
-                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'company', 'value' => 'Statamic']]],
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'company', 'value' => 'name']]],
                 ['merge_fields.0.key'],
             ],
+            'merge field with an unknown form field' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'COMPANY', 'value' => 'nope']]],
+                ['merge_fields.0.value'],
+            ],
             'merge tag handled by a dedicated field' => [
-                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'FNAME', 'value' => 'Jack']]],
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'FNAME', 'value' => 'name']]],
                 ['merge_fields.0.key'],
             ],
         ];
