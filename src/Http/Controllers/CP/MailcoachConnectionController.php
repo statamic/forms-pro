@@ -23,7 +23,7 @@ class MailcoachConnectionController extends CpController
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string'],
             'attributes' => ['nullable', 'array'],
-            'attributes.*.key' => ['required', 'string'],
+            'attributes.*.key' => ['required', 'string', 'distinct'],
             'attributes.*.value' => ['required', $isFormField],
             'skip_confirmation' => ['boolean'],
         ]);

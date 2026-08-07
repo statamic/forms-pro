@@ -129,6 +129,13 @@ class UpdateMailchimpConnectionTest extends TestCase
                 ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'COMPANY', 'value' => 'nope']]],
                 ['merge_fields.0.value'],
             ],
+            'the same merge tag twice' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [
+                    ['key' => 'COMPANY', 'value' => 'name'],
+                    ['key' => 'COMPANY', 'value' => 'email'],
+                ]],
+                ['merge_fields.0.key', 'merge_fields.1.key'],
+            ],
             'merge tag handled by a dedicated field' => [
                 ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'FNAME', 'value' => 'name']]],
                 ['merge_fields.0.key'],

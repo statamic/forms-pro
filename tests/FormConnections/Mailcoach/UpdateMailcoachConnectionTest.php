@@ -118,6 +118,13 @@ class UpdateMailcoachConnectionTest extends TestCase
                 ['list' => self::LIST, 'email_field' => 'email', 'attributes' => [['value' => 'name']]],
                 ['attributes.0.key'],
             ],
+            'the same attribute key twice' => [
+                ['list' => self::LIST, 'email_field' => 'email', 'attributes' => [
+                    ['key' => 'company', 'value' => 'name'],
+                    ['key' => 'company', 'value' => 'email'],
+                ]],
+                ['attributes.0.key', 'attributes.1.key'],
+            ],
             'attribute with an unknown form field' => [
                 ['list' => self::LIST, 'email_field' => 'email', 'attributes' => [['key' => 'full_name', 'value' => 'nope']]],
                 ['attributes.0.value'],
