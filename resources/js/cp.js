@@ -1,5 +1,7 @@
 import { registerIconSet } from '@statamic/cms/ui';
 import AddressFieldtype from './components/fieldtypes/AddressFieldtype.vue';
+import MailchimpGroupFieldtype from './components/fieldtypes/MailchimpGroupFieldtype.vue';
+import MailchimpGroupOptionFieldtype from './components/fieldtypes/MailchimpGroupOptionFieldtype.vue';
 import MailchimpMarketingPermissionsFieldtype from './components/fieldtypes/MailchimpMarketingPermissionsFieldtype.vue';
 import MailchimpMergeFieldFieldtype from './components/fieldtypes/MailchimpMergeFieldFieldtype.vue';
 import MailchimpConnection from './components/connections/MailchimpConnection.vue';
@@ -10,6 +12,8 @@ registerIconSet('forms-pro', import.meta.glob('../svg/*.svg', { query: '?raw', i
 
 Statamic.booting(() => {
     Statamic.$components.register('address-fieldtype', AddressFieldtype);
+    Statamic.$components.register('mailchimp_group-fieldtype', MailchimpGroupFieldtype);
+    Statamic.$components.register('mailchimp_group_option-fieldtype', MailchimpGroupOptionFieldtype);
     Statamic.$components.register('mailchimp_marketing_permissions-fieldtype', MailchimpMarketingPermissionsFieldtype);
     Statamic.$components.register('mailchimp_merge_field-fieldtype', MailchimpMergeFieldFieldtype);
 

@@ -52,6 +52,7 @@ class UpdateMailchimpConnectionTest extends TestCase
                 'consent_field' => 'consent',
                 'tags' => ['newsletter'],
                 'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
+                'groups' => [['group' => '4e4b2bc6ae', 'field' => 'consent', 'option' => 'news']],
                 'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'consent']],
                 'skip_confirmation' => true,
             ])
@@ -65,6 +66,7 @@ class UpdateMailchimpConnectionTest extends TestCase
             'consent_field' => 'consent',
             'tags' => ['newsletter'],
             'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
+            'groups' => [['group' => '4e4b2bc6ae', 'field' => 'consent', 'option' => 'news']],
             'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'consent']],
             'skip_confirmation' => true,
         ], $updated->connections()->get('mailchimp'));
@@ -143,6 +145,25 @@ class UpdateMailchimpConnectionTest extends TestCase
                 ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'FNAME', 'value' => 'name']]],
                 ['merge_fields.0.key'],
             ],
+            'group without a form field' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'groups' => [['group' => '4e4b2bc6ae']]],
+                ['groups.0.field'],
+            ],
+            'the same group twice' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'groups' => [
+                    ['group' => '4e4b2bc6ae', 'field' => 'consent'],
+                    ['group' => '4e4b2bc6ae', 'field' => 'name'],
+                ]],
+                ['groups.0.group', 'groups.1.group'],
+            ],
+            'group without an option when the form field has some' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'groups' => [['group' => '4e4b2bc6ae', 'field' => 'interests']]],
+                ['groups.0.option'],
+            ],
+            'group with an unknown form field' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'groups' => [['group' => '4e4b2bc6ae', 'field' => 'nope']]],
+                ['groups.0.field'],
+            ],
             'marketing permission without a field' => [
                 ['list' => self::AUDIENCE, 'email_field' => 'email', 'marketing_permissions' => [['permission' => 'd60cef6b1f']]],
                 ['marketing_permissions.0.field'],
@@ -172,6 +193,7 @@ class UpdateMailchimpConnectionTest extends TestCase
                 ['handle' => 'name', 'field' => ['type' => 'text']],
                 ['handle' => 'email', 'field' => ['type' => 'text']],
                 ['handle' => 'consent', 'field' => ['type' => 'toggle']],
+                ['handle' => 'interests', 'field' => ['type' => 'checkboxes', 'options' => ['news' => 'News']]],
             ],
         ])->connections($connections))->save();
     }

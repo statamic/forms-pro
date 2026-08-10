@@ -39,6 +39,27 @@ class MailchimpClient
             ->all();
     }
 
+    public function groups(string $audience): array
+    {
+        return collect($this->call('GET', "lists/{$audience}/interest-categories", ['count' => self::PER_PAGE])['categories'] ?? [])
+            ->sortBy('display_order')
+            ->flatMap(fn (array $category): array => $this->groupsInCategory($audience, $category))
+            ->values()
+            ->all();
+    }
+
+    private function groupsInCategory(string $audience, array $category): array
+    {
+        return collect($this->call('GET', "lists/{$audience}/interest-categories/{$category['id']}/interests", ['count' => self::PER_PAGE])['interests'] ?? [])
+            ->sortBy('display_order')
+            ->map(fn (array $interest): array => [
+                'id' => $interest['id'],
+                'name' => $interest['name'],
+                'category' => $category['title'],
+            ])
+            ->all();
+    }
+
     /**
      * Mailchimp has no endpoint for an audience's marketing permissions. They only
      * appear on members, so we read them off the first handful of contacts.

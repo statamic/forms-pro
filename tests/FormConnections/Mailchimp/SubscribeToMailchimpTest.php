@@ -134,6 +134,50 @@ class SubscribeToMailchimpTest extends TestCase
     }
 
     #[Test]
+    public function it_adds_the_member_to_groups_matching_the_chosen_options()
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'interests' => ['news']],
+            ['groups' => [
+                ['group' => '4e4b2bc6ae', 'field' => 'interests', 'option' => 'news'],
+                ['group' => '3e1e51dbae', 'field' => 'interests', 'option' => 'offers'],
+            ]],
+        );
+
+        $this->assertEquals(['4e4b2bc6ae' => true], $payload['interests']);
+    }
+
+    #[Test]
+    public function it_adds_the_member_to_a_group_when_the_mapped_field_has_no_option()
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'gdpr' => true],
+            ['groups' => [['group' => '4e4b2bc6ae', 'field' => 'gdpr']]],
+        );
+
+        $this->assertEquals(['4e4b2bc6ae' => true], $payload['interests']);
+    }
+
+    #[Test]
+    public function it_never_removes_the_member_from_a_group()
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'interests' => []],
+            ['groups' => [['group' => '4e4b2bc6ae', 'field' => 'interests', 'option' => 'news']]],
+        );
+
+        $this->assertArrayNotHasKey('interests', $payload);
+    }
+
+    #[Test]
+    public function it_omits_groups_when_none_are_mapped()
+    {
+        $payload = $this->payload(['email' => 'jack@example.com']);
+
+        $this->assertArrayNotHasKey('interests', $payload);
+    }
+
+    #[Test]
     #[DataProvider('marketingPermissionProvider')]
     public function it_records_marketing_permissions_from_the_mapped_field(mixed $value, bool $enabled)
     {

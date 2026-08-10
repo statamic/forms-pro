@@ -51,6 +51,7 @@ class SubscribeToMailchimp implements ShouldQueue
             'email_address' => $email,
             'status_if_new' => Arr::get($this->config, 'skip_confirmation') ? 'subscribed' : 'pending',
             'merge_fields' => $this->mergeFields($submission) ?: null,
+            'interests' => $this->groups($submission) ?: null,
             'marketing_permissions' => $this->marketingPermissions($submission) ?: null,
         ]);
     }
@@ -67,6 +68,29 @@ class SubscribeToMailchimp implements ShouldQueue
             ->put('LNAME', $this->value($submission, Arr::get($this->config, 'last_name_field')));
 
         return Arr::removeNullValues($mergeFields->all());
+    }
+
+    private function groups(Submission $submission): array
+    {
+        return collect(Arr::get($this->config, 'groups'))
+            ->filter(fn (array $group): bool => $this->isSelected($submission, $group))
+            ->mapWithKeys(fn (array $group): array => [$group['group'] => true])
+            ->all();
+    }
+
+    private function isSelected(Submission $submission, array $group): bool
+    {
+        if (blank($handle = Arr::get($group, 'field'))) {
+            return false;
+        }
+
+        $value = $submission->get($handle);
+
+        if (blank($option = Arr::get($group, 'option'))) {
+            return $this->isChecked($value);
+        }
+
+        return in_array($option, Arr::wrap($value));
     }
 
     private function marketingPermissions(Submission $submission): array

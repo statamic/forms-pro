@@ -14,6 +14,7 @@ use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
 use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpException;
 use Statamic\FormsPro\FormConnections\Mailchimp\SubscribeToMailchimp;
 use Statamic\FormsPro\Http\Controllers\CP\MailchimpConnectionController;
+use Statamic\FormsPro\Http\Controllers\CP\MailchimpGroupsController;
 use Statamic\FormsPro\Http\Controllers\CP\MailchimpMarketingPermissionsController;
 use Statamic\FormsPro\Http\Controllers\CP\MailchimpMergeFieldsController;
 use Statamic\Support\Arr;
@@ -202,6 +203,50 @@ class Mailchimp extends Connection
                                     ],
                                 ],
                                 [
+                                    'handle' => 'groups',
+                                    'field' => [
+                                        'type' => 'grid',
+                                        'mode' => 'table',
+                                        'display' => __('Groups'),
+                                        'instructions' => __('forms-pro::messages.mailchimp_connection_groups_instructions'),
+                                        'add_row' => __('Add Group'),
+                                        'fullscreen' => false,
+                                        'reorderable' => false,
+                                        'fields' => [
+                                            [
+                                                'handle' => 'group',
+                                                'field' => [
+                                                    'type' => 'mailchimp_group',
+                                                    'display' => __('Group'),
+                                                    'url' => cp_route('forms.connect.mailchimp.groups', $form->handle()),
+                                                    'validate' => ['required'],
+                                                    'width' => 33,
+                                                ],
+                                            ],
+                                            [
+                                                'handle' => 'field',
+                                                'field' => [
+                                                    'type' => 'form_fields',
+                                                    'display' => __('Form Field'),
+                                                    'form' => $form->handle(),
+                                                    'categories' => ['choice', 'other'],
+                                                    'validate' => ['required'],
+                                                    'width' => 33,
+                                                ],
+                                            ],
+                                            [
+                                                'handle' => 'option',
+                                                'field' => [
+                                                    'type' => 'mailchimp_group_option',
+                                                    'display' => __('When'),
+                                                    'form' => $form->handle(),
+                                                    'width' => 33,
+                                                ],
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                                [
                                     'handle' => 'marketing_permissions',
                                     'field' => [
                                         'type' => 'mailchimp_marketing_permissions',
@@ -244,6 +289,7 @@ class Mailchimp extends Connection
     public function routes(Router $router): void
     {
         $router->get('merge-fields', MailchimpMergeFieldsController::class)->name('merge-fields');
+        $router->get('groups', MailchimpGroupsController::class)->name('groups');
         $router->get('marketing-permissions', MailchimpMarketingPermissionsController::class)->name('marketing-permissions');
         $router->patch('/', [MailchimpConnectionController::class, 'update'])->name('update');
     }
