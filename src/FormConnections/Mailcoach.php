@@ -201,7 +201,7 @@ class Mailcoach extends Connection
                                     'handle' => 'consent_field',
                                     'field' => [
                                         'type' => 'form_fields',
-                                        'display' => __('Consent'),
+                                        'display' => __('Only Subscribe When'),
                                         'instructions' => __('forms-pro::messages.mailcoach_connection_consent_field_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['choice', 'other'],

@@ -14,6 +14,7 @@ use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
 use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpException;
 use Statamic\FormsPro\FormConnections\Mailchimp\SubscribeToMailchimp;
 use Statamic\FormsPro\Http\Controllers\CP\MailchimpConnectionController;
+use Statamic\FormsPro\Http\Controllers\CP\MailchimpMarketingPermissionsController;
 use Statamic\FormsPro\Http\Controllers\CP\MailchimpMergeFieldsController;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
@@ -201,10 +202,20 @@ class Mailchimp extends Connection
                                     ],
                                 ],
                                 [
+                                    'handle' => 'marketing_permissions',
+                                    'field' => [
+                                        'type' => 'mailchimp_marketing_permissions',
+                                        'display' => __('Marketing Permissions'),
+                                        'instructions' => __('forms-pro::messages.mailchimp_connection_marketing_permissions_instructions'),
+                                        'form' => $form->handle(),
+                                        'url' => cp_route('forms.connect.mailchimp.marketing-permissions', $form->handle()),
+                                    ],
+                                ],
+                                [
                                     'handle' => 'consent_field',
                                     'field' => [
                                         'type' => 'form_fields',
-                                        'display' => __('Consent'),
+                                        'display' => __('Only Subscribe When'),
                                         'instructions' => __('forms-pro::messages.mailchimp_connection_consent_field_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['choice', 'other'],
@@ -233,6 +244,7 @@ class Mailchimp extends Connection
     public function routes(Router $router): void
     {
         $router->get('merge-fields', MailchimpMergeFieldsController::class)->name('merge-fields');
+        $router->get('marketing-permissions', MailchimpMarketingPermissionsController::class)->name('marketing-permissions');
         $router->patch('/', [MailchimpConnectionController::class, 'update'])->name('update');
     }
 }

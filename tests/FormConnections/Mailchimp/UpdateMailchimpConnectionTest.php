@@ -52,6 +52,7 @@ class UpdateMailchimpConnectionTest extends TestCase
                 'consent_field' => 'consent',
                 'tags' => ['newsletter'],
                 'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
+                'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'consent']],
                 'skip_confirmation' => true,
             ])
             ->assertOk();
@@ -64,6 +65,7 @@ class UpdateMailchimpConnectionTest extends TestCase
             'consent_field' => 'consent',
             'tags' => ['newsletter'],
             'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
+            'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'consent']],
             'skip_confirmation' => true,
         ], $updated->connections()->get('mailchimp'));
         $this->assertEquals([['id' => 'abc', 'url' => 'https://example.com/hook']], $updated->connections()->get('webhook'));
@@ -84,6 +86,7 @@ class UpdateMailchimpConnectionTest extends TestCase
                 'consent_field' => null,
                 'tags' => [],
                 'merge_fields' => [],
+                'marketing_permissions' => [],
                 'skip_confirmation' => false,
             ])
             ->assertOk();
@@ -139,6 +142,21 @@ class UpdateMailchimpConnectionTest extends TestCase
             'merge tag handled by a dedicated field' => [
                 ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'FNAME', 'value' => 'name']]],
                 ['merge_fields.0.key'],
+            ],
+            'marketing permission without a field' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'marketing_permissions' => [['permission' => 'd60cef6b1f']]],
+                ['marketing_permissions.0.field'],
+            ],
+            'marketing permission with an unknown form field' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'nope']]],
+                ['marketing_permissions.0.field'],
+            ],
+            'the same marketing permission twice' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'marketing_permissions' => [
+                    ['permission' => 'd60cef6b1f', 'field' => 'consent'],
+                    ['permission' => 'd60cef6b1f', 'field' => 'name'],
+                ]],
+                ['marketing_permissions.0.permission', 'marketing_permissions.1.permission'],
             ],
         ];
     }

@@ -25,6 +25,9 @@ class MailchimpConnectionController extends CpController
             'merge_fields' => ['nullable', 'array'],
             'merge_fields.*.key' => ['required', 'string', 'distinct', 'regex:/^[A-Z0-9_]+$/', Rule::notIn(Mailchimp::DEDICATED_MERGE_TAGS)],
             'merge_fields.*.value' => ['required', $isFormField],
+            'marketing_permissions' => ['nullable', 'array'],
+            'marketing_permissions.*.permission' => ['required', 'string', 'distinct'],
+            'marketing_permissions.*.field' => ['required', $isFormField],
             'skip_confirmation' => ['boolean'],
         ]);
 

@@ -1,0 +1,105 @@
+<script setup>
+import { Fieldtype } from '@statamic/cms';
+import { Description, Icon, injectPublishContext } from '@statamic/cms/ui';
+import axios from 'axios';
+import { computed, ref, watch } from 'vue';
+
+const emit = defineEmits(Fieldtype.emits);
+const props = defineProps(Fieldtype.props);
+const { isReadOnly, update, expose } = Fieldtype.use(emit, props);
+defineExpose(expose);
+
+const { values } = injectPublishContext();
+
+const state = ref(null);
+const loading = ref(false);
+const permissions = ref([]);
+
+const list = computed(() => values.value?.list);
+const formFields = computed(() => props.meta.field);
+const mapping = computed(() => new Map((props.value ?? []).map(({ permission, field }) => [permission, field])));
+
+const fieldFor = (id) => mapping.value.get(id) ?? null;
+
+const setField = (id, handle) => {
+    const updated = new Map(mapping.value);
+
+    if (handle) {
+        updated.set(id, handle);
+    } else {
+        updated.delete(id);
+    }
+
+    update(
+        permissions.value
+            .filter((permission) => updated.has(permission.id))
+            .map((permission) => ({ permission: permission.id, field: updated.get(permission.id) })),
+    );
+};
+
+const fetchPermissions = () => {
+    state.value = null;
+    permissions.value = [];
+
+    if (!list.value) return;
+
+    loading.value = true;
+
+    axios
+        .get(props.config.url, { params: { list: list.value } })
+        .then(({ data }) => {
+            state.value = data.state;
+            permissions.value = data.permissions;
+        })
+        .catch(() => (state.value = null))
+        .finally(() => (loading.value = false));
+};
+
+watch(list, fetchPermissions, { immediate: true });
+</script>
+
+<template>
+    <Description
+        v-if="!list"
+        :text="__('forms-pro::messages.mailchimp_connection_marketing_permissions_no_audience')"
+    />
+    <div v-else-if="loading" class="flex items-center truncate gap-x-2">
+        <Icon name="loading" />
+        <Description :text="__('Loading...')" />
+    </div>
+    <Description
+        v-else-if="state === 'not_enabled'"
+        :text="__('forms-pro::messages.mailchimp_connection_marketing_permissions_not_enabled')"
+    />
+    <Description
+        v-else-if="state === 'no_contacts'"
+        :text="__('forms-pro::messages.mailchimp_connection_marketing_permissions_no_contacts')"
+    />
+
+    <table v-else class="grid-table">
+        <thead>
+            <tr>
+                <th scope="col" width="50%" class="text-start">{{ __('Permission') }}</th>
+                <th scope="col" width="50%" class="text-start">{{ __('Form Field') }}</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr v-for="permission in permissions" :key="permission.id">
+                <td class="grid-cell">{{ permission.text }}</td>
+
+                <td class="grid-cell">
+                    <component
+                        :is="`${formFields.config.type}-fieldtype`"
+                        :config="formFields.config"
+                        :meta="formFields.meta"
+                        :handle="permission.id"
+                        :value="fieldFor(permission.id)"
+                        :read-only="isReadOnly"
+                        @update:value="setField(permission.id, $event)"
+                    />
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</template>

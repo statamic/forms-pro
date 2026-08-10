@@ -134,6 +134,72 @@ class SubscribeToMailchimpTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('marketingPermissionProvider')]
+    public function it_records_marketing_permissions_from_the_mapped_field(mixed $value, bool $enabled)
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'gdpr' => $value],
+            ['marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'gdpr']]],
+        );
+
+        $this->assertEquals(
+            [['marketing_permission_id' => 'd60cef6b1f', 'enabled' => $enabled]],
+            $payload['marketing_permissions'],
+        );
+    }
+
+    public static function marketingPermissionProvider(): array
+    {
+        return [
+            'checked' => [true, true],
+            'unchecked' => [false, false],
+            'yes' => ['yes', true],
+            'no' => ['no', false],
+            'blank' => ['', false],
+            'chosen' => [['email'], true],
+            'nothing chosen' => [[], false],
+        ];
+    }
+
+    #[Test]
+    public function it_records_every_mapped_marketing_permission()
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'gdpr' => true, 'interests' => []],
+            ['marketing_permissions' => [
+                ['permission' => 'd60cef6b1f', 'field' => 'gdpr'],
+                ['permission' => '3560e0d4a2', 'field' => 'interests'],
+            ]],
+        );
+
+        $this->assertEquals([
+            ['marketing_permission_id' => 'd60cef6b1f', 'enabled' => true],
+            ['marketing_permission_id' => '3560e0d4a2', 'enabled' => false],
+        ], $payload['marketing_permissions']);
+    }
+
+    #[Test]
+    public function it_omits_marketing_permissions_when_none_are_mapped()
+    {
+        $payload = $this->payload(['email' => 'jack@example.com']);
+
+        $this->assertArrayNotHasKey('marketing_permissions', $payload);
+    }
+
+    #[Test]
+    public function it_sends_marketing_permissions_in_the_same_request_as_the_member()
+    {
+        Http::fake(['us14.api.mailchimp.com/*' => Http::response([])]);
+
+        $this->subscribe(
+            ['email' => 'jack@example.com', 'gdpr' => true],
+            ['marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'gdpr']]],
+        );
+
+        Http::assertSentCount(1);
+    }
+
+    #[Test]
     public function it_tags_the_member_in_a_second_request()
     {
         Http::fake(['us14.api.mailchimp.com/*' => Http::response([])]);
@@ -276,6 +342,7 @@ class SubscribeToMailchimpTest extends TestCase
                 ['handle' => 'surname', 'field' => ['type' => 'text']],
                 ['handle' => 'company', 'field' => ['type' => 'text']],
                 ['handle' => 'interests', 'field' => ['type' => 'checkboxes']],
+                ['handle' => 'gdpr', 'field' => ['type' => 'toggle']],
             ],
         ]))->save();
     }

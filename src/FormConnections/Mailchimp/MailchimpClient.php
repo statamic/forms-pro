@@ -25,11 +25,38 @@ class MailchimpClient
             ->all();
     }
 
+    public function audience(string $audience): array
+    {
+        return $this->call('GET', "lists/{$audience}", []);
+    }
+
     public function mergeFields(string $audience): array
     {
         return collect($this->call('GET', "lists/{$audience}/merge-fields", ['count' => self::PER_PAGE])['merge_fields'] ?? [])
             ->sortBy('name')
             ->map(fn (array $mergeField): array => ['tag' => $mergeField['tag'], 'name' => $mergeField['name']])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Mailchimp has no endpoint for an audience's marketing permissions. They only
+     * appear on members, so we read them off the first handful of contacts.
+     */
+    public function marketingPermissions(string $audience): array
+    {
+        $members = $this->call('GET', "lists/{$audience}/members", [
+            'count' => 10,
+            'fields' => 'members.marketing_permissions',
+        ])['members'] ?? [];
+
+        return collect($members)
+            ->flatMap(fn (array $member): array => $member['marketing_permissions'] ?? [])
+            ->unique('marketing_permission_id')
+            ->map(fn (array $permission): array => [
+                'id' => $permission['marketing_permission_id'],
+                'text' => $permission['text'],
+            ])
             ->values()
             ->all();
     }
