@@ -24,6 +24,10 @@ return [
 
     'connections' => [
 
+        'kit' => [
+            'api_key' => env('FORMS_PRO_KIT_API_KEY'),
+        ],
+
         'mailchimp' => [
             'api_key' => env('FORMS_PRO_MAILCHIMP_API_KEY'),
         ],

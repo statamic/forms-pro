@@ -4,6 +4,7 @@ import MailchimpGroupFieldtype from './components/fieldtypes/MailchimpGroupField
 import MailchimpGroupOptionFieldtype from './components/fieldtypes/MailchimpGroupOptionFieldtype.vue';
 import MailchimpMarketingPermissionsFieldtype from './components/fieldtypes/MailchimpMarketingPermissionsFieldtype.vue';
 import MailchimpMergeFieldFieldtype from './components/fieldtypes/MailchimpMergeFieldFieldtype.vue';
+import KitConnection from './components/connections/KitConnection.vue';
 import MailchimpConnection from './components/connections/MailchimpConnection.vue';
 import MailcoachConnection from './components/connections/MailcoachConnection.vue';
 import SlackConnection from './components/connections/SlackConnection.vue';
@@ -17,6 +18,7 @@ Statamic.booting(() => {
     Statamic.$components.register('mailchimp_marketing_permissions-fieldtype', MailchimpMarketingPermissionsFieldtype);
     Statamic.$components.register('mailchimp_merge_field-fieldtype', MailchimpMergeFieldFieldtype);
 
+    Statamic.$components.register('kit-connection', KitConnection);
     Statamic.$components.register('mailchimp-connection', MailchimpConnection);
     Statamic.$components.register('mailcoach-connection', MailcoachConnection);
     Statamic.$components.register('slack-connection', SlackConnection);

@@ -1,6 +1,21 @@
 <?php
 
 return [
+    'kit_connection_description' => 'Subscribe people to your Kit account.',
+    'kit_connection_email_field_instructions' => 'Submissions without an email address are ignored.',
+    'kit_connection_first_name_field_instructions' => 'Kit only stores a first name. Map last name as a custom field below.',
+    'kit_connection_tags_instructions' => 'Applied to every subscriber. Existing tags are kept. Create tags in Kit first.',
+    'kit_connection_custom_fields_instructions' => 'Store extra values on the subscriber. Custom fields are defined on your account in Kit.',
+    'kit_connection_consent_field_instructions' => 'Leave empty to subscribe on every submission.',
+    'kit_connection_form_instructions' => 'Subscribers are attributed to this form in Kit, triggering any automations linked to it. If the form sends a confirmation email, everyone who submits gets one — they\'re subscribed either way.',
+    'kit_connection_api_error' => 'Couldn\'t connect to Kit.',
+
+    'kit_setup_heading' => 'Connect your Kit account',
+    'kit_setup_intro' => 'Your site needs an API key before it can send subscribers to Kit. You only need to do this once.',
+    'kit_setup_key' => 'Add a key under the "v4 Keys" heading (v3 keys won\'t work). Copy it straight away, as Kit won\'t show it again.',
+    'kit_setup_env' => 'Copy it into your site\'s :file file:',
+    'kit_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once the key is set, reload this page.',
+
     'mailchimp_connection_description' => 'Subscribe people to a Mailchimp audience.',
     'mailchimp_connection_list_instructions' => 'Where subscribers are added.',
     'mailchimp_connection_email_field_instructions' => 'Submissions without an email address are ignored.',
