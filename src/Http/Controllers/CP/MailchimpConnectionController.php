@@ -45,7 +45,7 @@ class MailchimpConnectionController extends CpController
             ->all();
 
         foreach (['merge_fields', 'groups'] as $grid) {
-            $config[$grid] = collect(Arr::get($config, $grid, []))
+            $config[$grid] = collect(Arr::get($config, $grid))
                 ->map(fn (array $row) => Arr::except($row, 'id'))
                 ->all() ?: null;
         }
@@ -61,7 +61,7 @@ class MailchimpConnectionController extends CpController
     {
         $fieldsWithOptions = array_keys(new MailchimpGroupOption()->fieldsWithOptions($form));
 
-        return collect($request->input('groups', []))
+        return collect($request->input('groups'))
             ->filter(fn (array $group): bool => in_array(Arr::get($group, 'field'), $fieldsWithOptions))
             ->keys()
             ->mapWithKeys(fn (int $index): array => ["groups.{$index}.option" => ['required', 'string']])

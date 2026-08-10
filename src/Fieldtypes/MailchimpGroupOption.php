@@ -36,7 +36,7 @@ class MailchimpGroupOption extends Fieldtype
                     return [];
                 }
 
-                return collect(Arr::get($field->fieldtype()->preload(), 'options', []))
+                return collect(Arr::get($field->fieldtype()->preload(), 'options'))
                     ->map(fn (array $option): array => [
                         'value' => $option['value'],
                         'label' => $option['label'] ?? $option['value'],

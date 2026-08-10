@@ -35,7 +35,7 @@ class MailcoachConnectionController extends CpController
             ->filter()
             ->all();
 
-        $config['attributes'] = collect(Arr::get($config, 'attributes', []))
+        $config['attributes'] = collect(Arr::get($config, 'attributes'))
             ->map(fn (array $attribute) => Arr::except($attribute, 'id'))
             ->all() ?: null;
 
