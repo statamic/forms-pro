@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\Http;
 
 class SlackClient
 {
-    private const RETRY_AFTER = 30;
+    private const int RETRY_AFTER = 30;
 
-    private const RETRYABLE = ['internal_error', 'fatal_error'];
+    private const array RETRYABLE = ['internal_error', 'fatal_error'];
 
-    public function __construct(private ?string $token) {}
+    public function __construct(private readonly ?string $token) {}
 
     public function postMessage(array $payload): array
     {

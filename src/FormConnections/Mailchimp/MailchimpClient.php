@@ -9,13 +9,13 @@ use Statamic\Support\Str;
 
 class MailchimpClient
 {
-    private const PER_PAGE = 1000;
+    private const int PER_PAGE = 1000;
 
-    private const RETRY_AFTER = 30;
+    private const int RETRY_AFTER = 30;
 
-    private const COMPLIANCE_TITLES = ['Member In Compliance State', 'Forgotten Email Not Subscribed'];
+    private const array COMPLIANCE_TITLES = ['Member In Compliance State', 'Forgotten Email Not Subscribed'];
 
-    public function __construct(private ?string $apiKey) {}
+    public function __construct(private readonly ?string $apiKey) {}
 
     public function audiences(): array
     {

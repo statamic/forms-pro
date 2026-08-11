@@ -9,13 +9,13 @@ use Illuminate\Support\Facades\Http;
 
 class KitClient
 {
-    private const PER_PAGE = 1000;
+    private const int PER_PAGE = 1000;
 
-    private const RATE_LIMIT_RETRY_AFTER = 60;
+    private const int RATE_LIMIT_RETRY_AFTER = 60;
 
-    private const SERVER_ERROR_RETRY_AFTER = 30;
+    private const int SERVER_ERROR_RETRY_AFTER = 30;
 
-    public function __construct(private ?string $apiKey) {}
+    public function __construct(private readonly ?string $apiKey) {}
 
     public function forms(): array
     {

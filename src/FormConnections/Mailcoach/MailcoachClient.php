@@ -9,11 +9,11 @@ use Statamic\Support\Str;
 
 class MailcoachClient
 {
-    private const PER_PAGE = 100;
+    private const int PER_PAGE = 100;
 
-    private const RETRY_AFTER = 30;
+    private const int RETRY_AFTER = 30;
 
-    public function __construct(private ?string $apiUrl, private ?string $token) {}
+    public function __construct(private readonly ?string $apiUrl, private readonly ?string $token) {}
 
     public function lists(): array
     {
