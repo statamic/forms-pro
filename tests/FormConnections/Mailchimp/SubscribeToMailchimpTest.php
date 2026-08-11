@@ -13,7 +13,6 @@ use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
 use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
-use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpException;
 use Statamic\FormsPro\FormConnections\Mailchimp\SubscribeToMailchimp;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
 use Tests\TestCase;
@@ -331,7 +330,7 @@ class SubscribeToMailchimpTest extends TestCase
     }
 
     #[Test]
-    public function it_fails_without_retrying_on_an_invalid_merge_field()
+    public function it_throws_on_an_invalid_merge_field()
     {
         Http::fake(['us14.api.mailchimp.com/*' => Http::response([
             'title' => 'Invalid Resource',
@@ -339,27 +338,23 @@ class SubscribeToMailchimpTest extends TestCase
             'errors' => [['field' => 'COMPANY', 'message' => 'Please enter a value']],
         ], 400)]);
 
-        $queueJob = Mockery::mock(Job::class);
-        $queueJob->shouldReceive('fail')->once()->with(Mockery::on(
-            fn (MailchimpException $e) => $e->getMessage() === 'Your merge fields were invalid. Please enter a value'
-        ));
+        $this->expectExceptionMessage('Your merge fields were invalid. Please enter a value');
 
-        $this->job(['email' => 'jack@example.com'])->setJob($queueJob)->handle(app(MailchimpClient::class));
-
-        Http::assertSentCount(1);
+        try {
+            $this->subscribe(['email' => 'jack@example.com']);
+        } finally {
+            Http::assertSentCount(1);
+        }
     }
 
     #[Test]
-    public function it_fails_without_retrying_when_the_key_is_invalid()
+    public function it_throws_when_the_key_is_invalid()
     {
         Http::fake(['us14.api.mailchimp.com/*' => Http::response(null, 401)]);
 
-        $queueJob = Mockery::mock(Job::class);
-        $queueJob->shouldReceive('fail')->once()->with(Mockery::on(
-            fn (MailchimpException $e) => str_contains($e->getMessage(), 'FORMS_PRO_MAILCHIMP_API_KEY')
-        ));
+        $this->expectExceptionMessage('FORMS_PRO_MAILCHIMP_API_KEY');
 
-        $this->job(['email' => 'jack@example.com'])->setJob($queueJob)->handle(app(MailchimpClient::class));
+        $this->subscribe(['email' => 'jack@example.com']);
     }
 
     #[Test]
@@ -369,12 +364,13 @@ class SubscribeToMailchimpTest extends TestCase
 
         Http::fake();
 
-        $queueJob = Mockery::mock(Job::class);
-        $queueJob->shouldReceive('fail')->once();
+        $this->expectExceptionMessage('FORMS_PRO_MAILCHIMP_API_KEY');
 
-        $this->job(['email' => 'jack@example.com'])->setJob($queueJob)->handle(app(MailchimpClient::class));
-
-        Http::assertNothingSent();
+        try {
+            $this->subscribe(['email' => 'jack@example.com']);
+        } finally {
+            Http::assertNothingSent();
+        }
     }
 
     private function form(): FormContract

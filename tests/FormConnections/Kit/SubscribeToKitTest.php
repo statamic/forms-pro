@@ -13,7 +13,6 @@ use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
 use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnections\Kit\KitClient;
-use Statamic\FormsPro\FormConnections\Kit\KitException;
 use Statamic\FormsPro\FormConnections\Kit\SubscribeToKit;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
 use Tests\TestCase;
@@ -209,16 +208,17 @@ class SubscribeToKitTest extends TestCase
 
     #[Test]
     #[DataProvider('fatalResponseProvider')]
-    public function it_fails_without_retrying_on_fatal_errors(int $status, ?array $body, string $message)
+    public function it_throws_on_fatal_errors(int $status, ?array $body, string $message)
     {
         Http::fake(['api.kit.com/*' => Http::response($body, $status)]);
 
-        $queueJob = Mockery::mock(Job::class);
-        $queueJob->shouldReceive('fail')->once()->with(Mockery::on(fn (KitException $e) => str_contains($e->getMessage(), $message)));
+        $this->expectExceptionMessage($message);
 
-        $this->job(['email' => 'jack@example.com'])->setJob($queueJob)->handle(app(KitClient::class));
-
-        Http::assertSentCount(1);
+        try {
+            $this->subscribe(['email' => 'jack@example.com']);
+        } finally {
+            Http::assertSentCount(1);
+        }
     }
 
     public static function fatalResponseProvider(): array
@@ -238,12 +238,13 @@ class SubscribeToKitTest extends TestCase
 
         Http::fake();
 
-        $queueJob = Mockery::mock(Job::class);
-        $queueJob->shouldReceive('fail')->once();
+        $this->expectExceptionMessage('FORMS_PRO_KIT_API_KEY');
 
-        $this->job(['email' => 'jack@example.com'])->setJob($queueJob)->handle(app(KitClient::class));
-
-        Http::assertNothingSent();
+        try {
+            $this->subscribe(['email' => 'jack@example.com']);
+        } finally {
+            Http::assertNothingSent();
+        }
     }
 
     private function form(): FormContract

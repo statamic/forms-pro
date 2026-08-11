@@ -46,9 +46,11 @@ class SubscribeToKit implements ShouldQueue
         } catch (KitException $e) {
             if ($e->isRetryable()) {
                 $this->release($e->retryAfter());
-            } else {
-                $this->fail($e);
+
+                return;
             }
+
+            throw $e;
         }
     }
 

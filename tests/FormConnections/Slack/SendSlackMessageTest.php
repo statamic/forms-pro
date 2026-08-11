@@ -318,16 +318,17 @@ class SendSlackMessageTest extends TestCase
 
     #[Test]
     #[DataProvider('fatalErrorProvider')]
-    public function it_fails_without_retrying_on_fatal_errors($error)
+    public function it_throws_on_fatal_errors($error)
     {
         Http::fake(['slack.com/*' => Http::response(['ok' => false, 'error' => $error])]);
 
-        $queueJob = Mockery::mock(Job::class);
-        $queueJob->shouldReceive('fail')->once()->with(Mockery::on(fn (SlackException $e) => $e->error() === $error));
+        $this->expectException(SlackException::class);
 
-        $this->job($this->form(), ['name' => 'Jack Black'])->setJob($queueJob)->handle(app(SlackClient::class));
-
-        Http::assertSentCount(1);
+        try {
+            $this->job($this->form(), ['name' => 'Jack Black'])->handle(app(SlackClient::class));
+        } finally {
+            Http::assertSentCount(1);
+        }
     }
 
     public static function fatalErrorProvider()
@@ -347,12 +348,13 @@ class SendSlackMessageTest extends TestCase
 
         Http::fake();
 
-        $queueJob = Mockery::mock(Job::class);
-        $queueJob->shouldReceive('fail')->once();
+        $this->expectExceptionMessage('FORMS_PRO_SLACK_TOKEN');
 
-        $this->job($this->form(), ['name' => 'Jack Black'])->setJob($queueJob)->handle(app(SlackClient::class));
-
-        Http::assertNothingSent();
+        try {
+            $this->job($this->form(), ['name' => 'Jack Black'])->handle(app(SlackClient::class));
+        } finally {
+            Http::assertNothingSent();
+        }
     }
 
     private function form(?array $fields = null): FormContract

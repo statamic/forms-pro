@@ -32,9 +32,11 @@ class SubscribeToMailcoach implements ShouldQueue
         } catch (MailcoachException $e) {
             if ($e->isRetryable()) {
                 $this->release($e->retryAfter());
-            } else {
-                $this->fail($e);
+
+                return;
             }
+
+            throw $e;
         }
     }
 

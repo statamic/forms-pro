@@ -40,7 +40,7 @@ class SubscribeToMailchimp implements ShouldQueue
             match (true) {
                 $e->isRetryable() => $this->release($e->retryAfter()),
                 $e->isComplianceState() => Log::info("Skipped subscribing [{$email}] to Mailchimp: {$e->getMessage()}"),
-                default => $this->fail($e),
+                default => throw $e,
             };
         }
     }
