@@ -24,6 +24,10 @@ return [
 
     'connections' => [
 
+        'hubspot' => [
+            'access_token' => env('FORMS_PRO_HUBSPOT_ACCESS_TOKEN'),
+        ],
+
         'kit' => [
             'api_key' => env('FORMS_PRO_KIT_API_KEY'),
         ],

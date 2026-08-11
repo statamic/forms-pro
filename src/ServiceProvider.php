@@ -2,6 +2,8 @@
 
 namespace Statamic\FormsPro;
 
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Statamic\FormsPro\FormConnections\HubSpot\HubSpotClient;
 use Statamic\FormsPro\FormConnections\Kit\KitClient;
 use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
 use Statamic\FormsPro\FormConnections\Mailcoach\MailcoachClient;
@@ -42,6 +44,12 @@ class ServiceProvider extends AddonServiceProvider
 
     private function bootConnections(): void
     {
+        EncryptCookies::except('hubspotutk');
+
+        $this->app->bind(HubSpotClient::class, fn () => new HubSpotClient(
+            config('forms-pro.connections.hubspot.access_token')
+        ));
+
         $this->app->bind(KitClient::class, fn () => new KitClient(
             config('forms-pro.connections.kit.api_key')
         ));
