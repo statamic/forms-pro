@@ -116,7 +116,7 @@ class SubmitToHubSpotTest extends TestCase
 
         $submission = $this->submission(['email' => 'jack@example.com']);
 
-        new SubmitToHubSpot($submission, ['form' => self::FORM, 'email_field' => 'email'])->handle(app(HubSpotClient::class));
+        (new SubmitToHubSpot($submission, ['form' => self::FORM, 'email_field' => 'email']))->handle(app(HubSpotClient::class));
 
         $this->assertSame((string) $submission->date()->getTimestampMs(), $this->submitted()['submittedAt']);
     }
@@ -128,7 +128,7 @@ class SubmitToHubSpotTest extends TestCase
 
         $submission = $this->submission(['email' => 'jack@example.com'])->id((string) now()->subMonths(2)->timestamp);
 
-        new SubmitToHubSpot($submission, ['form' => self::FORM, 'email_field' => 'email'])->handle(app(HubSpotClient::class));
+        (new SubmitToHubSpot($submission, ['form' => self::FORM, 'email_field' => 'email']))->handle(app(HubSpotClient::class));
 
         $this->assertArrayNotHasKey('submittedAt', $this->submitted());
     }
@@ -140,7 +140,7 @@ class SubmitToHubSpotTest extends TestCase
 
         $this->fake();
 
-        new SubmitToHubSpot($this->submission(['email' => 'jack@example.com']), ['form' => self::FORM, 'email_field' => 'email'], $context)
+        (new SubmitToHubSpot($this->submission(['email' => 'jack@example.com']), ['form' => self::FORM, 'email_field' => 'email'], $context))
             ->handle(app(HubSpotClient::class));
 
         $this->assertEquals($context, $this->submitted()['context']);

@@ -12,7 +12,7 @@ class MailchimpMarketingPermissionsController extends CpController
 {
     public function __invoke(Request $request, $form): array
     {
-        $request->validate(['list' => ['required', 'string']]);
+        $request->validate(['list' => ['required', 'alpha_num:ascii']]);
 
         $key = "forms-pro.mailchimp.marketing-permissions.{$request->list}";
 

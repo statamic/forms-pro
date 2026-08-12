@@ -30,7 +30,6 @@ class KitConnectionController extends CpController
             ->addValues($request->all())
             ->process()
             ->values()
-            ->filter()
             ->all();
 
         $config['custom_fields'] = collect(Arr::get($config, 'custom_fields'))

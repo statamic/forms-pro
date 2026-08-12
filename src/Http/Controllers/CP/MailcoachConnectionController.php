@@ -32,7 +32,6 @@ class MailcoachConnectionController extends CpController
             ->addValues($request->all())
             ->process()
             ->values()
-            ->filter()
             ->all();
 
         $config['attributes'] = collect(Arr::get($config, 'attributes'))

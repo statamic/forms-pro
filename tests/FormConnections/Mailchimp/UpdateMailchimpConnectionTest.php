@@ -7,8 +7,8 @@ use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
 use Statamic\Facades\Form;
 use Statamic\Facades\User;
+use Statamic\Testing\Concerns\FakesRoles;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
-use Tests\FakesRoles;
 use Tests\TestCase;
 
 class UpdateMailchimpConnectionTest extends TestCase
@@ -93,7 +93,11 @@ class UpdateMailchimpConnectionTest extends TestCase
             ])
             ->assertOk();
 
-        $this->assertEquals(['list' => self::AUDIENCE, 'email_field' => 'email'], Form::find('test')->connections()->get('mailchimp'));
+        $this->assertEquals([
+            'list' => self::AUDIENCE,
+            'email_field' => 'email',
+            'skip_confirmation' => false,
+        ], Form::find('test')->connections()->get('mailchimp'));
     }
 
     #[Test]
@@ -115,6 +119,8 @@ class UpdateMailchimpConnectionTest extends TestCase
     {
         return [
             'missing audience' => [['email_field' => 'email'], ['list']],
+            'audience with a path separator' => [['list' => 'a1b2c3d4e5/members', 'email_field' => 'email'], ['list']],
+            'audience with a query string' => [['list' => 'a1b2c3d4e5?count=1000', 'email_field' => 'email'], ['list']],
             'missing email field' => [['list' => self::AUDIENCE], ['email_field']],
             'unknown email field' => [['list' => self::AUDIENCE, 'email_field' => 'nope'], ['email_field']],
             'unknown consent field' => [['list' => self::AUDIENCE, 'email_field' => 'email', 'consent_field' => 'nope'], ['consent_field']],

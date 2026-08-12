@@ -10,6 +10,7 @@ use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connections\Connection;
+use Statamic\FormsPro\FormConnections\Concerns\ReadsSubmissionValues;
 use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
 use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpException;
 use Statamic\FormsPro\FormConnections\Mailchimp\SubscribeToMailchimp;
@@ -18,13 +19,14 @@ use Statamic\FormsPro\Http\Controllers\CP\MailchimpGroupsController;
 use Statamic\FormsPro\Http\Controllers\CP\MailchimpMarketingPermissionsController;
 use Statamic\FormsPro\Http\Controllers\CP\MailchimpMergeFieldsController;
 use Statamic\Support\Arr;
-use Statamic\Support\Str;
 use Statamic\Support\VueComponent;
 
 use function Statamic\trans as __;
 
 class Mailchimp extends Connection
 {
+    use ReadsSubmissionValues;
+
     public const array DEDICATED_MERGE_TAGS = ['FNAME', 'LNAME'];
 
     protected $developer = 'Statamic';
@@ -56,17 +58,8 @@ class Mailchimp extends Connection
 
     private function hasConsent(Submission $submission, array $config): bool
     {
-        if (blank($handle = Arr::get($config, 'consent_field'))) {
-            return true;
-        }
-
-        $value = $submission->get($handle);
-
-        return match (true) {
-            is_bool($value) => $value,
-            is_array($value) => filled($value),
-            default => filled($value) && ! in_array(Str::lower((string) $value), ['0', 'no', 'off', 'false']),
-        };
+        return blank($handle = Arr::get($config, 'consent_field'))
+            || $this->isChecked($submission, $handle);
     }
 
     public function render(Form $form): VueComponent

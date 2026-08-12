@@ -396,7 +396,7 @@ class SendSlackMessageTest extends TestCase
     {
         Http::fake(['slack.com/*' => Http::response(['ok' => true])]);
 
-        new SendSlackMessage($submission, Site::default(), $this->config($config))->handle(app(SlackClient::class));
+        (new SendSlackMessage($submission, Site::default(), $this->config($config)))->handle(app(SlackClient::class));
 
         return Http::recorded()->first()[0]->data()['blocks'];
     }

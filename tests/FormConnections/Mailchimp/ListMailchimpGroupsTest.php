@@ -3,12 +3,13 @@
 namespace Tests\FormConnections\Mailchimp;
 
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
 use Statamic\Facades\Form;
 use Statamic\Facades\User;
+use Statamic\Testing\Concerns\FakesRoles;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
-use Tests\FakesRoles;
 use Tests\TestCase;
 
 class ListMailchimpGroupsTest extends TestCase
@@ -77,6 +78,30 @@ class ListMailchimpGroupsTest extends TestCase
             ->assertJsonValidationErrors(['list']);
 
         Http::assertNothingSent();
+    }
+
+    #[Test]
+    #[DataProvider('malformedAudiences')]
+    public function it_rejects_an_audience_that_isnt_alphanumeric(string $audience)
+    {
+        Http::fake();
+
+        $this
+            ->actingAs($this->userWithPermission())
+            ->getJson(cp_route('forms.connect.mailchimp.groups', $this->form()->handle()).'?list='.urlencode($audience))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['list']);
+
+        Http::assertNothingSent();
+    }
+
+    public static function malformedAudiences(): array
+    {
+        return [
+            'path separator' => ['a1b2c3d4e5/members'],
+            'traversal' => ['../account-info/v3/details'],
+            'query string' => ['a1b2c3d4e5?count=1000'],
+        ];
     }
 
     #[Test]

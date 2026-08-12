@@ -16,7 +16,7 @@ class MailchimpConnectionController extends CpController
         $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
 
         $request->validate([
-            'list' => ['required', 'string'],
+            'list' => ['required', 'alpha_num:ascii'],
             'email_field' => ['required', $isFormField],
             'first_name_field' => ['nullable', $isFormField],
             'last_name_field' => ['nullable', $isFormField],
@@ -41,7 +41,6 @@ class MailchimpConnectionController extends CpController
             ->addValues($request->all())
             ->process()
             ->values()
-            ->filter()
             ->all();
 
         foreach (['merge_fields', 'groups'] as $grid) {
@@ -59,7 +58,7 @@ class MailchimpConnectionController extends CpController
      */
     private function groupOptionRules(Request $request, $form): array
     {
-        $fieldsWithOptions = array_keys(new MailchimpGroupOption()->fieldsWithOptions($form));
+        $fieldsWithOptions = array_keys((new MailchimpGroupOption)->fieldsWithOptions($form));
 
         return collect($request->input('groups'))
             ->filter(fn (array $group): bool => in_array(Arr::get($group, 'field'), $fieldsWithOptions))

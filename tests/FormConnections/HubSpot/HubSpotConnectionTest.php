@@ -30,7 +30,7 @@ class HubSpotConnectionTest extends TestCase
     #[Test]
     public function it_returns_a_job_for_the_configured_form()
     {
-        $jobs = new HubSpot()->finalized($this->submission(['email' => 'jack@example.com']));
+        $jobs = (new HubSpot)->finalized($this->submission(['email' => 'jack@example.com']));
 
         $this->assertCount(1, $jobs);
         $this->assertInstanceOf(SubmitToHubSpot::class, $jobs[0]);
@@ -43,14 +43,14 @@ class HubSpotConnectionTest extends TestCase
             ['handle' => 'email', 'field' => ['type' => 'text']],
         ]]))->save();
 
-        $this->assertEmpty(new HubSpot()->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
+        $this->assertEmpty((new HubSpot)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
     }
 
     #[Test]
     #[DataProvider('incompleteConfigProvider')]
     public function it_returns_no_jobs_when_the_config_is_incomplete(array $config)
     {
-        $this->assertEmpty(new HubSpot()->finalized($this->submission(['email' => 'jack@example.com'], $config)));
+        $this->assertEmpty((new HubSpot)->finalized($this->submission(['email' => 'jack@example.com'], $config)));
     }
 
     public static function incompleteConfigProvider(): array
@@ -64,14 +64,14 @@ class HubSpotConnectionTest extends TestCase
     #[Test]
     public function it_returns_no_jobs_when_the_submission_has_no_email_address()
     {
-        $this->assertEmpty(new HubSpot()->finalized($this->submission(['email' => null])));
+        $this->assertEmpty((new HubSpot)->finalized($this->submission(['email' => null])));
     }
 
     #[Test]
     #[DataProvider('consentProvider')]
     public function it_only_submits_when_consent_has_been_given(mixed $value, bool $expected)
     {
-        $jobs = new HubSpot()->finalized(
+        $jobs = (new HubSpot)->finalized(
             $this->submission(['email' => 'jack@example.com', 'marketing' => $value], ['consent_field' => 'marketing'])
         );
 
@@ -102,7 +102,7 @@ class HubSpotConnectionTest extends TestCase
             'REMOTE_ADDR' => '1.2.3.4',
         ], cookies: ['hubspotutk' => $hutk]);
 
-        $jobs = new HubSpot()->finalized($this->submission(['email' => 'jack@example.com']));
+        $jobs = (new HubSpot)->finalized($this->submission(['email' => 'jack@example.com']));
 
         $this->assertEquals([
             'hutk' => $hutk,
@@ -118,7 +118,7 @@ class HubSpotConnectionTest extends TestCase
             'HTTP_REFERER' => 'not a url',
         ], cookies: ['hubspotutk' => 'not-a-tracking-token']);
 
-        $context = new HubSpot()->finalized($this->submission(['email' => 'jack@example.com']))[0]->context;
+        $context = (new HubSpot)->finalized($this->submission(['email' => 'jack@example.com']))[0]->context;
 
         $this->assertArrayNotHasKey('hutk', $context);
         $this->assertArrayNotHasKey('pageUri', $context);
@@ -129,7 +129,7 @@ class HubSpotConnectionTest extends TestCase
     {
         $this->fakeAccount();
 
-        $rendered = new HubSpot()->render($this->form())->toArray();
+        $rendered = (new HubSpot)->render($this->form())->toArray();
 
         $this->assertEquals(
             [self::FORM => 'Contact Us'],
@@ -142,7 +142,7 @@ class HubSpotConnectionTest extends TestCase
     {
         $this->fakeAccount();
 
-        $rendered = new HubSpot()->render($this->form())->toArray();
+        $rendered = (new HubSpot)->render($this->form())->toArray();
 
         $this->assertEquals(self::FORM, $rendered['props']['blueprint']['tabs'][0]['sections'][0]['fields'][0]['default']);
     }
@@ -152,7 +152,7 @@ class HubSpotConnectionTest extends TestCase
     {
         $this->fakeAccount();
 
-        $forms = new HubSpot()->render($this->form())->toArray()['props']['hubspotForms'];
+        $forms = (new HubSpot)->render($this->form())->toArray()['props']['hubspotForms'];
 
         $this->assertEquals('Contact Us', $forms[self::FORM]['name']);
         $this->assertFalse($forms[self::FORM]['captcha']);
@@ -168,7 +168,7 @@ class HubSpotConnectionTest extends TestCase
     {
         $this->fakeAccount();
 
-        $properties = new HubSpot()->render($this->form())->toArray()['props']['hubspotForms'][self::FORM]['properties'];
+        $properties = (new HubSpot)->render($this->form())->toArray()['props']['hubspotForms'][self::FORM]['properties'];
 
         $this->assertNotContains('email', array_column($properties, 'name'));
     }
@@ -181,7 +181,7 @@ class HubSpotConnectionTest extends TestCase
             'api.hubapi.com/communication-preferences/*' => Http::response(['category' => 'MISSING_SCOPE'], 403),
         ]);
 
-        $rendered = new HubSpot()->render($this->form())->toArray();
+        $rendered = (new HubSpot)->render($this->form())->toArray();
 
         $this->assertNull($rendered['props']['apiError']);
         $this->assertCount(1, $rendered['props']['hubspotForms']);
@@ -194,7 +194,7 @@ class HubSpotConnectionTest extends TestCase
 
         Http::fake();
 
-        $props = new HubSpot()->render($this->form())->toArray()['props'];
+        $props = (new HubSpot)->render($this->form())->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -205,7 +205,7 @@ class HubSpotConnectionTest extends TestCase
     {
         Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
 
-        $rendered = new HubSpot()->render($this->form())->toArray();
+        $rendered = (new HubSpot)->render($this->form())->toArray();
 
         $this->assertEquals('Could not resolve host.', $rendered['props']['apiError']);
         $this->assertEmpty($rendered['props']['hubspotForms']);
@@ -216,11 +216,11 @@ class HubSpotConnectionTest extends TestCase
     {
         $this->fakeAccount();
 
-        new HubSpot()->render($this->form());
+        (new HubSpot)->render($this->form());
 
         config(['forms-pro.connections.hubspot.access_token' => 'pat-eu1-different']);
 
-        new HubSpot()->render($this->form());
+        (new HubSpot)->render($this->form());
 
         Http::assertSentCount(4);
     }

@@ -9,11 +9,12 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Statamic\Contracts\Forms\Submission;
+use Statamic\FormsPro\FormConnections\Concerns\ReadsSubmissionValues;
 use Statamic\Support\Arr;
 
 class SubmitToHubSpot implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, ReadsSubmissionValues, SerializesModels;
 
     private const CONTACT_OBJECT_TYPE = '0-1';
 
@@ -139,35 +140,5 @@ class SubmitToHubSpot implements ShouldQueue
             ])
             ->values()
             ->all();
-    }
-
-    private function isChecked(Submission $submission, ?string $handle): bool
-    {
-        if (! $handle) {
-            return false;
-        }
-
-        $value = $submission->get($handle);
-
-        return match (true) {
-            is_bool($value) => $value,
-            is_array($value) => filled($value),
-            default => filled($value) && ! in_array(strtolower((string) $value), ['0', 'no', 'off', 'false']),
-        };
-    }
-
-    private function value(Submission $submission, ?string $handle): ?string
-    {
-        if (! $handle) {
-            return null;
-        }
-
-        $value = $submission->get($handle);
-
-        return match (true) {
-            is_array($value) => implode(', ', Arr::flatten($value)) ?: null,
-            is_scalar($value) => (string) $value,
-            default => null,
-        };
     }
 }

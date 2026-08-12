@@ -31,7 +31,7 @@ class MailchimpConnectionTest extends TestCase
     {
         $form = $this->form(['list' => self::AUDIENCE, 'email_field' => 'email']);
 
-        $jobs = new Mailchimp()->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
+        $jobs = (new Mailchimp)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
 
         $this->assertCount(1, $jobs);
         $this->assertContainsOnlyInstancesOf(SubscribeToMailchimp::class, $jobs);
@@ -43,7 +43,7 @@ class MailchimpConnectionTest extends TestCase
     {
         $form = tap(Form::make('test'))->save();
 
-        $this->assertEmpty(new Mailchimp()->finalized($form->makeSubmission()));
+        $this->assertEmpty((new Mailchimp)->finalized($form->makeSubmission()));
     }
 
     #[Test]
@@ -52,7 +52,7 @@ class MailchimpConnectionTest extends TestCase
     {
         $form = $this->form($config);
 
-        $this->assertEmpty(new Mailchimp()->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
+        $this->assertEmpty((new Mailchimp)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
     }
 
     public static function incompleteConfigProvider(): array
@@ -68,7 +68,7 @@ class MailchimpConnectionTest extends TestCase
     {
         $form = $this->form(['list' => self::AUDIENCE, 'email_field' => 'email']);
 
-        $this->assertEmpty(new Mailchimp()->finalized($form->makeSubmission()->data(['email' => ''])));
+        $this->assertEmpty((new Mailchimp)->finalized($form->makeSubmission()->data(['email' => ''])));
     }
 
     #[Test]
@@ -81,7 +81,7 @@ class MailchimpConnectionTest extends TestCase
             'consent_field' => 'consent',
         ]);
 
-        $jobs = new Mailchimp()->finalized($form->makeSubmission()->data([
+        $jobs = (new Mailchimp)->finalized($form->makeSubmission()->data([
             'email' => 'jack@example.com',
             'consent' => $value,
         ]));
@@ -109,7 +109,7 @@ class MailchimpConnectionTest extends TestCase
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
-        $props = new Mailchimp()->render($this->form(['list' => self::AUDIENCE, 'email_field' => 'email']))->toArray()['props'];
+        $props = (new Mailchimp)->render($this->form(['list' => self::AUDIENCE, 'email_field' => 'email']))->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertNull($props['apiError']);
@@ -124,7 +124,7 @@ class MailchimpConnectionTest extends TestCase
 
         Http::fake();
 
-        $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
+        $props = (new Mailchimp)->render($this->form([]))->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -135,7 +135,7 @@ class MailchimpConnectionTest extends TestCase
     {
         Http::fake(['us14.api.mailchimp.com/*' => Http::response(null, 401)]);
 
-        $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
+        $props = (new Mailchimp)->render($this->form([]))->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertStringContainsString('FORMS_PRO_MAILCHIMP_API_KEY', $props['apiError']);
@@ -147,7 +147,7 @@ class MailchimpConnectionTest extends TestCase
     {
         Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
 
-        $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
+        $props = (new Mailchimp)->render($this->form([]))->toArray()['props'];
 
         $this->assertStringContainsString('Could not resolve host.', $props['apiError']);
     }
@@ -159,7 +159,7 @@ class MailchimpConnectionTest extends TestCase
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
-        $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
+        $props = (new Mailchimp)->render($this->form([]))->toArray()['props'];
 
         $this->assertEquals(self::AUDIENCE, $props['values']['list']);
     }
@@ -172,7 +172,7 @@ class MailchimpConnectionTest extends TestCase
             ['id' => 'f6e5d4c3b2', 'name' => 'Customers'],
         ]])]);
 
-        $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
+        $props = (new Mailchimp)->render($this->form([]))->toArray()['props'];
 
         $this->assertNull($props['values']['list']);
     }

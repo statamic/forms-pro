@@ -30,7 +30,7 @@ class KitConnectionTest extends TestCase
     {
         $form = $this->form(['email_field' => 'email']);
 
-        $jobs = new Kit()->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
+        $jobs = (new Kit)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
 
         $this->assertCount(1, $jobs);
         $this->assertContainsOnlyInstancesOf(SubscribeToKit::class, $jobs);
@@ -40,7 +40,7 @@ class KitConnectionTest extends TestCase
     #[Test]
     public function it_returns_no_jobs_when_the_form_isnt_connected_to_kit()
     {
-        $this->assertEmpty(new Kit()->finalized($this->form()->makeSubmission()));
+        $this->assertEmpty((new Kit)->finalized($this->form()->makeSubmission()));
     }
 
     #[Test]
@@ -48,7 +48,7 @@ class KitConnectionTest extends TestCase
     {
         $form = $this->form(['form' => self::FORM]);
 
-        $this->assertEmpty(new Kit()->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
+        $this->assertEmpty((new Kit)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
     }
 
     #[Test]
@@ -56,7 +56,7 @@ class KitConnectionTest extends TestCase
     {
         $form = $this->form(['email_field' => 'email']);
 
-        $this->assertEmpty(new Kit()->finalized($form->makeSubmission()->data(['email' => ''])));
+        $this->assertEmpty((new Kit)->finalized($form->makeSubmission()->data(['email' => ''])));
     }
 
     #[Test]
@@ -65,7 +65,7 @@ class KitConnectionTest extends TestCase
     {
         $form = $this->form(['email_field' => 'email', 'consent_field' => 'consent']);
 
-        $jobs = new Kit()->finalized($form->makeSubmission()->data([
+        $jobs = (new Kit)->finalized($form->makeSubmission()->data([
             'email' => 'jack@example.com',
             'consent' => $value,
         ]));
@@ -94,7 +94,7 @@ class KitConnectionTest extends TestCase
     {
         $this->fakeAccount();
 
-        $props = new Kit()->render($this->form(['form' => self::FORM, 'email_field' => 'email']))->toArray()['props'];
+        $props = (new Kit)->render($this->form(['form' => self::FORM, 'email_field' => 'email']))->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertNull($props['apiError']);
@@ -118,7 +118,7 @@ class KitConnectionTest extends TestCase
 
         Http::fake();
 
-        $props = new Kit()->render($this->form())->toArray()['props'];
+        $props = (new Kit)->render($this->form())->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -129,7 +129,7 @@ class KitConnectionTest extends TestCase
     {
         Http::fake(['api.kit.com/*' => Http::response(null, 401)]);
 
-        $props = new Kit()->render($this->form())->toArray()['props'];
+        $props = (new Kit)->render($this->form())->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertStringContainsString('FORMS_PRO_KIT_API_KEY', $props['apiError']);

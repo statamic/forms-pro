@@ -33,7 +33,7 @@ class MailcoachConnectionTest extends TestCase
     {
         $form = $this->form(['list' => self::LIST, 'email_field' => 'email']);
 
-        $jobs = new Mailcoach()->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
+        $jobs = (new Mailcoach)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
 
         $this->assertCount(1, $jobs);
         $this->assertContainsOnlyInstancesOf(SubscribeToMailcoach::class, $jobs);
@@ -45,7 +45,7 @@ class MailcoachConnectionTest extends TestCase
     {
         $form = tap(Form::make('test'))->save();
 
-        $this->assertEmpty(new Mailcoach()->finalized($form->makeSubmission()));
+        $this->assertEmpty((new Mailcoach)->finalized($form->makeSubmission()));
     }
 
     #[Test]
@@ -54,7 +54,7 @@ class MailcoachConnectionTest extends TestCase
     {
         $form = $this->form($config);
 
-        $this->assertEmpty(new Mailcoach()->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
+        $this->assertEmpty((new Mailcoach)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
     }
 
     public static function incompleteConfigProvider(): array
@@ -70,7 +70,7 @@ class MailcoachConnectionTest extends TestCase
     {
         $form = $this->form(['list' => self::LIST, 'email_field' => 'email']);
 
-        $this->assertEmpty(new Mailcoach()->finalized($form->makeSubmission()->data(['email' => ''])));
+        $this->assertEmpty((new Mailcoach)->finalized($form->makeSubmission()->data(['email' => ''])));
     }
 
     #[Test]
@@ -83,7 +83,7 @@ class MailcoachConnectionTest extends TestCase
             'consent_field' => 'consent',
         ]);
 
-        $jobs = new Mailcoach()->finalized($form->makeSubmission()->data([
+        $jobs = (new Mailcoach)->finalized($form->makeSubmission()->data([
             'email' => 'jack@example.com',
             'consent' => $value,
         ]));
@@ -114,7 +114,7 @@ class MailcoachConnectionTest extends TestCase
             ['uuid' => self::LIST, 'name' => 'Newsletter', 'requires_confirmation' => true],
         ]])]);
 
-        $props = new Mailcoach()->render($this->form(['list' => self::LIST, 'email_field' => 'email']))->toArray()['props'];
+        $props = (new Mailcoach)->render($this->form(['list' => self::LIST, 'email_field' => 'email']))->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertNull($props['apiError']);
@@ -129,7 +129,7 @@ class MailcoachConnectionTest extends TestCase
 
         Http::fake();
 
-        $props = new Mailcoach()->render($this->form([]))->toArray()['props'];
+        $props = (new Mailcoach)->render($this->form([]))->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -140,7 +140,7 @@ class MailcoachConnectionTest extends TestCase
     {
         Http::fake(['acme.mailcoach.app/*' => Http::response(null, 401)]);
 
-        $props = new Mailcoach()->render($this->form([]))->toArray()['props'];
+        $props = (new Mailcoach)->render($this->form([]))->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertStringContainsString('FORMS_PRO_MAILCOACH_TOKEN', $props['apiError']);
@@ -154,7 +154,7 @@ class MailcoachConnectionTest extends TestCase
             ['uuid' => self::LIST, 'name' => 'Newsletter'],
         ]])]);
 
-        $props = new Mailcoach()->render($this->form([]))->toArray()['props'];
+        $props = (new Mailcoach)->render($this->form([]))->toArray()['props'];
 
         $this->assertEquals(self::LIST, $props['values']['list']);
     }
@@ -167,7 +167,7 @@ class MailcoachConnectionTest extends TestCase
             ['uuid' => '2f0b3a1c-9d4e-4a6b-8c1d-5e7f9a0b2c3d', 'name' => 'Customers'],
         ]])]);
 
-        $props = new Mailcoach()->render($this->form([]))->toArray()['props'];
+        $props = (new Mailcoach)->render($this->form([]))->toArray()['props'];
 
         $this->assertNull($props['values']['list']);
     }

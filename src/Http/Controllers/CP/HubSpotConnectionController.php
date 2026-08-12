@@ -32,7 +32,6 @@ class HubSpotConnectionController extends CpController
             ->addValues($request->all())
             ->process()
             ->values()
-            ->filter()
             ->all();
 
         $form->connections($form->connections()->put('hubspot', Arr::removeNullValues($config)))->save();

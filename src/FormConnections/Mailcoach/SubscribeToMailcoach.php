@@ -8,11 +8,12 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Statamic\Contracts\Forms\Submission;
+use Statamic\FormsPro\FormConnections\Concerns\ReadsSubmissionValues;
 use Statamic\Support\Arr;
 
 class SubscribeToMailcoach implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, ReadsSubmissionValues, SerializesModels;
 
     public $tries = 5;
 
@@ -57,20 +58,5 @@ class SubscribeToMailcoach implements ShouldQueue
             });
 
         return Arr::removeNullValues($attributes->all());
-    }
-
-    private function value(Submission $submission, ?string $handle): ?string
-    {
-        if (! $handle) {
-            return null;
-        }
-
-        $value = $submission->get($handle);
-
-        return match (true) {
-            is_array($value) => implode(', ', Arr::flatten($value)) ?: null,
-            is_scalar($value) => (string) $value,
-            default => null,
-        };
     }
 }

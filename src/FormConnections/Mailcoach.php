@@ -10,18 +10,20 @@ use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connections\Connection;
+use Statamic\FormsPro\FormConnections\Concerns\ReadsSubmissionValues;
 use Statamic\FormsPro\FormConnections\Mailcoach\MailcoachClient;
 use Statamic\FormsPro\FormConnections\Mailcoach\MailcoachException;
 use Statamic\FormsPro\FormConnections\Mailcoach\SubscribeToMailcoach;
 use Statamic\FormsPro\Http\Controllers\CP\MailcoachConnectionController;
 use Statamic\Support\Arr;
-use Statamic\Support\Str;
 use Statamic\Support\VueComponent;
 
 use function Statamic\trans as __;
 
 class Mailcoach extends Connection
 {
+    use ReadsSubmissionValues;
+
     protected $developer = 'Statamic';
 
     public function description(): ?string
@@ -51,17 +53,8 @@ class Mailcoach extends Connection
 
     private function hasConsent(Submission $submission, array $config): bool
     {
-        if (blank($handle = Arr::get($config, 'consent_field'))) {
-            return true;
-        }
-
-        $value = $submission->get($handle);
-
-        return match (true) {
-            is_bool($value) => $value,
-            is_array($value) => filled($value),
-            default => filled($value) && ! in_array(Str::lower((string) $value), ['0', 'no', 'off', 'false']),
-        };
+        return blank($handle = Arr::get($config, 'consent_field'))
+            || $this->isChecked($submission, $handle);
     }
 
     public function render(Form $form): VueComponent

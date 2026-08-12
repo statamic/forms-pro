@@ -29,7 +29,7 @@ class SendSlackMessage implements ShouldQueue
 
         try {
             $slack->postMessage(
-                new MessageBuilder($submission, $this->site, $this->config)->build()
+                (new MessageBuilder($submission, $this->site, $this->config))->build()
             );
         } catch (SlackException $e) {
             match (true) {

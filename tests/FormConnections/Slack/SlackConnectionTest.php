@@ -31,7 +31,7 @@ class SlackConnectionTest extends TestCase
             ['id' => 'def', 'channel' => 'C0456DEFGHI'],
         ]]))->save();
 
-        $jobs = new Slack()->finalized($form->makeSubmission());
+        $jobs = (new Slack)->finalized($form->makeSubmission());
 
         $this->assertCount(2, $jobs);
         $this->assertContainsOnlyInstancesOf(SendSlackMessage::class, $jobs);
@@ -44,7 +44,7 @@ class SlackConnectionTest extends TestCase
     {
         $form = tap(Form::make('test'))->save();
 
-        $this->assertEmpty(new Slack()->finalized($form->makeSubmission()));
+        $this->assertEmpty((new Slack)->finalized($form->makeSubmission()));
     }
 
     #[Test]
@@ -55,7 +55,7 @@ class SlackConnectionTest extends TestCase
             ['id' => 'def', 'channel' => 'C0456DEFGHI'],
         ]]))->save();
 
-        $jobs = new Slack()->finalized($form->makeSubmission());
+        $jobs = (new Slack)->finalized($form->makeSubmission());
 
         $this->assertCount(1, $jobs);
         $this->assertEquals('C0456DEFGHI', $jobs[0]->config['channel']);
@@ -80,7 +80,7 @@ class SlackConnectionTest extends TestCase
 
         $submission = $form->makeSubmission()->data(['how_did_you_hear' => $value]);
 
-        $this->assertCount($shouldDispatch ? 1 : 0, new Slack()->finalized($submission));
+        $this->assertCount($shouldDispatch ? 1 : 0, (new Slack)->finalized($submission));
     }
 
     public static function conditionsProvider(): array
@@ -102,7 +102,7 @@ class SlackConnectionTest extends TestCase
             ['id' => 'def', 'channel' => 'C0456DEFGHI'],
         ]]))->save();
 
-        $this->assertEquals(2, new Slack()->count($form));
+        $this->assertEquals(2, (new Slack)->count($form));
     }
 
     #[Test]
@@ -117,7 +117,7 @@ class SlackConnectionTest extends TestCase
             ],
         ]))->save();
 
-        $component = new Slack()->render($form)->toArray();
+        $component = (new Slack)->render($form)->toArray();
 
         $this->assertEquals('slack-connection', $component['name']);
         $this->assertEquals(cp_route('forms.connect.slack.update', 'test'), $component['props']['action']);
@@ -133,7 +133,7 @@ class SlackConnectionTest extends TestCase
 
         $form = tap(Form::make('test'))->save();
 
-        $props = new Slack()->render($form)->toArray()['props'];
+        $props = (new Slack)->render($form)->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -146,7 +146,7 @@ class SlackConnectionTest extends TestCase
 
         $form = tap(Form::make('test'))->save();
 
-        $props = new Slack()->render($form)->toArray()['props'];
+        $props = (new Slack)->render($form)->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertEquals('Error from Slack: [invalid_auth].', $props['apiError']);
@@ -160,7 +160,7 @@ class SlackConnectionTest extends TestCase
 
         $form = tap(Form::make('test'))->save();
 
-        $props = new Slack()->render($form)->toArray()['props'];
+        $props = (new Slack)->render($form)->toArray()['props'];
 
         $this->assertEquals('Slack responded with a [503] status code.', $props['apiError']);
     }
@@ -172,7 +172,7 @@ class SlackConnectionTest extends TestCase
 
         $form = tap(Form::make('test'))->save();
 
-        $props = new Slack()->render($form)->toArray()['props'];
+        $props = (new Slack)->render($form)->toArray()['props'];
 
         $this->assertStringContainsString('Could not resolve host.', $props['apiError']);
     }

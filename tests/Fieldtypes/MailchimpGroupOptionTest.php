@@ -26,6 +26,6 @@ class MailchimpGroupOptionTest extends TestCase
         $this->assertEquals(['interests' => [
             ['value' => 'News', 'label' => 'News'],
             ['value' => 'Offers', 'label' => 'Special offers'],
-        ]], new MailchimpGroupOption()->fieldsWithOptions($form));
+        ]], (new MailchimpGroupOption)->fieldsWithOptions($form));
     }
 }

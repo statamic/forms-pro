@@ -11,7 +11,7 @@ class MailchimpGroupsController extends CpController
 {
     public function __invoke(Request $request, $form): array
     {
-        $request->validate(['list' => ['required', 'string']]);
+        $request->validate(['list' => ['required', 'alpha_num:ascii']]);
 
         return Cache::remember(
             "forms-pro.mailchimp.groups.{$request->list}",

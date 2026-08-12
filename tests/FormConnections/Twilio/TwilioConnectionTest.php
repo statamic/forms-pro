@@ -38,7 +38,7 @@ class TwilioConnectionTest extends TestCase
             ['id' => 'def', 'to' => 'field:phone', 'from' => '+14155552671', 'body' => 'Thanks!'],
         ]);
 
-        $jobs = new Twilio()->finalized($form->makeSubmission()->data(['phone' => '07700 900123']));
+        $jobs = (new Twilio)->finalized($form->makeSubmission()->data(['phone' => '07700 900123']));
 
         $this->assertCount(2, $jobs);
         $this->assertContainsOnlyInstancesOf(SendTwilioMessage::class, $jobs);
@@ -49,7 +49,7 @@ class TwilioConnectionTest extends TestCase
     #[Test]
     public function it_returns_no_jobs_when_the_form_has_no_twilio_notifications()
     {
-        $this->assertEmpty(new Twilio()->finalized($this->form()->makeSubmission()));
+        $this->assertEmpty((new Twilio)->finalized($this->form()->makeSubmission()));
     }
 
     #[Test]
@@ -60,7 +60,7 @@ class TwilioConnectionTest extends TestCase
             ['id' => 'def', 'to' => '+447700900124', 'from' => '+14155552671', 'body' => 'Two'],
         ]);
 
-        $jobs = new Twilio()->finalized($form->makeSubmission()->data([]));
+        $jobs = (new Twilio)->finalized($form->makeSubmission()->data([]));
 
         $this->assertCount(1, $jobs);
         $this->assertEquals('+447700900124', $jobs[0]->config['to']);
@@ -77,15 +77,15 @@ class TwilioConnectionTest extends TestCase
             'conditions' => [['field' => 'enquiry_type', 'operator' => 'equals', 'value' => 'sales']],
         ]]);
 
-        $this->assertCount(1, new Twilio()->finalized($form->makeSubmission()->data(['enquiry_type' => 'sales'])));
-        $this->assertCount(0, new Twilio()->finalized($form->makeSubmission()->data(['enquiry_type' => 'support'])));
+        $this->assertCount(1, (new Twilio)->finalized($form->makeSubmission()->data(['enquiry_type' => 'sales'])));
+        $this->assertCount(0, (new Twilio)->finalized($form->makeSubmission()->data(['enquiry_type' => 'support'])));
     }
 
     #[Test]
     public function it_counts_notifications()
     {
-        $this->assertEquals(0, new Twilio()->count(tap(Form::make('test'))->save()));
-        $this->assertEquals(1, new Twilio()->count($this->form([
+        $this->assertEquals(0, (new Twilio)->count(tap(Form::make('test'))->save()));
+        $this->assertEquals(1, (new Twilio)->count($this->form([
             ['id' => 'abc', 'to' => '+447700900123', 'from' => '+14155552671', 'body' => 'New enquiry'],
         ])));
     }
@@ -105,7 +105,7 @@ class TwilioConnectionTest extends TestCase
             ]]),
         ]);
 
-        $component = new Twilio()->render($this->form())->toArray();
+        $component = (new Twilio)->render($this->form())->toArray();
 
         $this->assertEquals('twilio-connection', $component['name']);
         $this->assertEquals(cp_route('forms.connect.twilio.update', $this->form()->handle()), $component['props']['action']);
@@ -126,7 +126,7 @@ class TwilioConnectionTest extends TestCase
 
         Http::fake();
 
-        $props = new Twilio()->render($this->form())->toArray()['props'];
+        $props = (new Twilio)->render($this->form())->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -140,7 +140,7 @@ class TwilioConnectionTest extends TestCase
             'messaging.twilio.com/v1/Services*' => Http::response(['services' => []]),
         ]);
 
-        new Twilio()->render($this->form());
+        (new Twilio)->render($this->form());
 
         Http::assertNotSent(fn (Request $request) => str_contains($request->url(), self::ACCOUNT_SID.'.json'));
     }
@@ -150,7 +150,7 @@ class TwilioConnectionTest extends TestCase
     {
         Http::fake(['*' => Http::response(['code' => 20003], 401)]);
 
-        $props = new Twilio()->render($this->form())->toArray()['props'];
+        $props = (new Twilio)->render($this->form())->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertEquals('The [FORMS_PRO_TWILIO_API_KEY] and [FORMS_PRO_TWILIO_API_SECRET] environment variables are invalid.', $props['apiError']);
@@ -162,7 +162,7 @@ class TwilioConnectionTest extends TestCase
     {
         Http::fake(['*' => Http::response(null, 503)]);
 
-        $props = new Twilio()->render($this->form())->toArray()['props'];
+        $props = (new Twilio)->render($this->form())->toArray()['props'];
 
         $this->assertEquals('Twilio responded with a [503] status code.', $props['apiError']);
     }
@@ -172,7 +172,7 @@ class TwilioConnectionTest extends TestCase
     {
         Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
 
-        $props = new Twilio()->render($this->form())->toArray()['props'];
+        $props = (new Twilio)->render($this->form())->toArray()['props'];
 
         $this->assertStringContainsString('Could not resolve host.', $props['apiError']);
     }

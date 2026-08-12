@@ -9,12 +9,13 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Statamic\Contracts\Forms\Submission;
+use Statamic\FormsPro\FormConnections\Concerns\ReadsSubmissionValues;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
 
 class SubscribeToMailchimp implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, ReadsSubmissionValues, SerializesModels;
 
     public $tries = 5;
 
@@ -84,13 +85,11 @@ class SubscribeToMailchimp implements ShouldQueue
             return false;
         }
 
-        $value = $submission->get($handle);
-
         if (blank($option = Arr::get($group, 'option'))) {
-            return $this->isChecked($value);
+            return $this->isChecked($submission, $handle);
         }
 
-        return in_array($option, Arr::wrap($value));
+        return in_array($option, Arr::wrap($submission->get($handle)));
     }
 
     private function marketingPermissions(Submission $submission): array
@@ -99,33 +98,9 @@ class SubscribeToMailchimp implements ShouldQueue
             ->filter(fn (array $permission): bool => filled(Arr::get($permission, 'field')))
             ->map(fn (array $permission): array => [
                 'marketing_permission_id' => $permission['permission'],
-                'enabled' => $this->isChecked($submission->get($permission['field'])),
+                'enabled' => $this->isChecked($submission, $permission['field']),
             ])
             ->values()
             ->all();
-    }
-
-    private function isChecked(mixed $value): bool
-    {
-        return match (true) {
-            is_bool($value) => $value,
-            is_array($value) => filled($value),
-            default => filled($value) && ! in_array(Str::lower((string) $value), ['0', 'no', 'off', 'false']),
-        };
-    }
-
-    private function value(Submission $submission, ?string $handle): ?string
-    {
-        if (! $handle) {
-            return null;
-        }
-
-        $value = $submission->get($handle);
-
-        return match (true) {
-            is_array($value) => implode(', ', Arr::flatten($value)) ?: null,
-            is_scalar($value) => (string) $value,
-            default => null,
-        };
     }
 }

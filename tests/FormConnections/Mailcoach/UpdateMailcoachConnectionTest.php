@@ -7,8 +7,8 @@ use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
 use Statamic\Facades\Form;
 use Statamic\Facades\User;
+use Statamic\Testing\Concerns\FakesRoles;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
-use Tests\FakesRoles;
 use Tests\TestCase;
 
 class UpdateMailcoachConnectionTest extends TestCase
@@ -88,7 +88,11 @@ class UpdateMailcoachConnectionTest extends TestCase
             ])
             ->assertOk();
 
-        $this->assertEquals(['list' => self::LIST, 'email_field' => 'email'], Form::find('test')->connections()->get('mailcoach'));
+        $this->assertEquals([
+            'list' => self::LIST,
+            'email_field' => 'email',
+            'skip_confirmation' => false,
+        ], Form::find('test')->connections()->get('mailcoach'));
     }
 
     #[Test]
