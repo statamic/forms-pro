@@ -8,6 +8,7 @@ use Statamic\FormsPro\FormConnections\Kit\KitClient;
 use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
 use Statamic\FormsPro\FormConnections\Mailcoach\MailcoachClient;
 use Statamic\FormsPro\FormConnections\Slack\SlackClient;
+use Statamic\FormsPro\FormConnections\Twilio\TwilioClient;
 use Statamic\Providers\AddonServiceProvider;
 
 class ServiceProvider extends AddonServiceProvider
@@ -65,6 +66,12 @@ class ServiceProvider extends AddonServiceProvider
 
         $this->app->bind(SlackClient::class, fn () => new SlackClient(
             config('forms-pro.connections.slack.token')
+        ));
+
+        $this->app->bind(TwilioClient::class, fn () => new TwilioClient(
+            accountSid: config('forms-pro.connections.twilio.account_sid'),
+            apiKey: config('forms-pro.connections.twilio.api_key'),
+            apiSecret: config('forms-pro.connections.twilio.api_secret'),
         ));
     }
 }

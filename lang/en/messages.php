@@ -108,4 +108,20 @@ return [
     'slack_setup_install' => 'Choose "Install to Workspace", select the workspace you\'d like to install it into, and click Allow.',
     'slack_setup_token' => 'Copy the Bot User OAuth Token from the app\'s "OAuth &amp; Permissions" page into your site\'s :file file:',
     'slack_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once :variable is set, reload this page.',
+
+    'twilio_connection_description' => 'Text someone when a form is submitted.',
+    'twilio_connection_to_instructions' => 'Type a number in full international format, or pick a form field to text whoever submitted.',
+    'twilio_connection_from_instructions' => 'Numbers without SMS capability are hidden. A Messaging Service picks a sender for you if you own several.',
+    'twilio_connection_body_instructions' => 'Messages can include values from the submission. Long messages are split and billed per 160 characters — fewer if you use emoji or curly quotes.',
+    'twilio_connection_country_code_instructions' => 'Applied to submitted numbers that arrive without one. Leave empty to text only full international numbers.',
+    'twilio_connection_delete_confirmation' => 'Are you sure you want to delete this Twilio notification?',
+    'twilio_connection_no_senders' => 'This Twilio account has no numbers you can text from. Buy one in the console, then reload this page.',
+    'twilio_connection_api_error' => 'Couldn\'t connect to Twilio.',
+
+    'twilio_setup_heading' => 'Connect your Twilio account',
+    'twilio_setup_intro' => 'Your site needs API credentials before it can send text messages. You only need to do this once.',
+    'twilio_setup_number' => 'Buy a phone number with SMS capability.',
+    'twilio_setup_key' => 'Create a Standard API Key. Copy the SID and secret straight away, as Twilio won\'t show the secret again.',
+    'twilio_setup_env' => 'Copy the key\'s SID and secret into your site\'s :file file, along with your Account SID from the Twilio console dashboard:',
+    'twilio_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once all three are set, reload this page.',
 ];

@@ -45,6 +45,12 @@ return [
             'token' => env('FORMS_PRO_SLACK_TOKEN'),
         ],
 
+        'twilio' => [
+            'account_sid' => env('FORMS_PRO_TWILIO_ACCOUNT_SID'),
+            'api_key' => env('FORMS_PRO_TWILIO_API_KEY'),
+            'api_secret' => env('FORMS_PRO_TWILIO_API_SECRET'),
+        ],
+
     ],
 
 ];

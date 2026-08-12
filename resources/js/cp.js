@@ -12,6 +12,7 @@ import KitConnection from './components/connections/KitConnection.vue';
 import MailchimpConnection from './components/connections/MailchimpConnection.vue';
 import MailcoachConnection from './components/connections/MailcoachConnection.vue';
 import SlackConnection from './components/connections/SlackConnection.vue';
+import TwilioConnection from './components/connections/TwilioConnection.vue';
 
 registerIconSet('forms-pro', import.meta.glob('../svg/*.svg', { query: '?raw', import: 'default' }));
 
@@ -30,4 +31,5 @@ Statamic.booting(() => {
     Statamic.$components.register('mailchimp-connection', MailchimpConnection);
     Statamic.$components.register('mailcoach-connection', MailcoachConnection);
     Statamic.$components.register('slack-connection', SlackConnection);
+    Statamic.$components.register('twilio-connection', TwilioConnection);
 });
