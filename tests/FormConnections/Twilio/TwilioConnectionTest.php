@@ -19,8 +19,19 @@ class TwilioConnectionTest extends TestCase
 
     private const ACCOUNT_SID = 'AC00000000000000000000000000000000';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'forms-pro.connections.twilio.account_sid' => self::ACCOUNT_SID,
+            'forms-pro.connections.twilio.api_key' => 'SK00000000000000000000000000000000',
+            'forms-pro.connections.twilio.api_secret' => 'secret',
+        ]);
+    }
+
     #[Test]
-    public function it_returns_a_job_for_each_configured_message()
+    public function it_returns_a_job_per_twilio_notification()
     {
         $form = $this->form([
             ['id' => 'abc', 'to' => '+447700900123', 'from' => '+14155552671', 'body' => 'New enquiry'],
@@ -36,13 +47,13 @@ class TwilioConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_returns_no_jobs_when_the_form_isnt_connected_to_twilio()
+    public function it_returns_no_jobs_when_the_form_has_no_twilio_notifications()
     {
         $this->assertEmpty(new Twilio()->finalized($this->form()->makeSubmission()));
     }
 
     #[Test]
-    public function it_skips_disabled_messages()
+    public function it_skips_disabled_notifications()
     {
         $form = $this->form([
             ['id' => 'abc', 'to' => '+447700900123', 'from' => '+14155552671', 'body' => 'One', 'enabled' => false],
@@ -56,7 +67,7 @@ class TwilioConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_only_returns_jobs_whose_conditions_pass()
+    public function it_filters_notifications_using_conditions()
     {
         $form = $this->form([[
             'id' => 'abc',
@@ -71,7 +82,7 @@ class TwilioConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_counts_the_configured_messages()
+    public function it_counts_notifications()
     {
         $this->assertEquals(0, new Twilio()->count(tap(Form::make('test'))->save()));
         $this->assertEquals(1, new Twilio()->count($this->form([
@@ -82,8 +93,6 @@ class TwilioConnectionTest extends TestCase
     #[Test]
     public function it_renders_the_vue_component()
     {
-        $this->configure();
-
         Http::fake([
             'api.twilio.com/*/IncomingPhoneNumbers.json*' => Http::response(['incoming_phone_numbers' => [
                 ['phone_number' => '+14155552671', 'friendly_name' => 'Marketing', 'capabilities' => ['sms' => true]],
@@ -113,6 +122,8 @@ class TwilioConnectionTest extends TestCase
     #[Test]
     public function it_renders_the_setup_instructions_when_unconfigured()
     {
+        config(['forms-pro.connections.twilio' => null]);
+
         Http::fake();
 
         $props = new Twilio()->render($this->form())->toArray()['props'];
@@ -124,8 +135,6 @@ class TwilioConnectionTest extends TestCase
     #[Test]
     public function it_only_asks_twilio_for_resources_a_standard_api_key_can_reach()
     {
-        $this->configure();
-
         Http::fake([
             'api.twilio.com/*/IncomingPhoneNumbers.json*' => Http::response(['incoming_phone_numbers' => []]),
             'messaging.twilio.com/v1/Services*' => Http::response(['services' => []]),
@@ -139,8 +148,6 @@ class TwilioConnectionTest extends TestCase
     #[Test]
     public function it_renders_api_errors()
     {
-        $this->configure();
-
         Http::fake(['*' => Http::response(['code' => 20003], 401)]);
 
         $props = new Twilio()->render($this->form())->toArray()['props'];
@@ -153,8 +160,6 @@ class TwilioConnectionTest extends TestCase
     #[Test]
     public function it_renders_an_api_error_when_twilio_is_unavailable()
     {
-        $this->configure();
-
         Http::fake(['*' => Http::response(null, 503)]);
 
         $props = new Twilio()->render($this->form())->toArray()['props'];
@@ -165,22 +170,11 @@ class TwilioConnectionTest extends TestCase
     #[Test]
     public function it_renders_an_api_error_when_twilio_cant_be_reached()
     {
-        $this->configure();
-
         Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
 
         $props = new Twilio()->render($this->form())->toArray()['props'];
 
         $this->assertStringContainsString('Could not resolve host.', $props['apiError']);
-    }
-
-    private function configure(): void
-    {
-        config([
-            'forms-pro.connections.twilio.account_sid' => self::ACCOUNT_SID,
-            'forms-pro.connections.twilio.api_key' => 'SK00000000000000000000000000000000',
-            'forms-pro.connections.twilio.api_secret' => 'secret',
-        ]);
     }
 
     private function form(?array $configs = null): FormContract

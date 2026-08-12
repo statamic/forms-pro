@@ -18,6 +18,16 @@ class MailcoachConnectionTest extends TestCase
 
     private const LIST = '9dcbb6dc-1b47-4d2e-9d3f-8dbf1a92a5f1';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'forms-pro.connections.mailcoach.api_url' => 'https://acme.mailcoach.app',
+            'forms-pro.connections.mailcoach.token' => 'mailcoach-token',
+        ]);
+    }
+
     #[Test]
     public function it_returns_a_job_for_the_configured_list()
     {
@@ -98,17 +108,8 @@ class MailcoachConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_counts_the_connection_once_configured()
-    {
-        $this->assertEquals(0, new Mailcoach()->count(tap(Form::make('test'))->save()));
-        $this->assertEquals(1, new Mailcoach()->count($this->form(['list' => self::LIST])));
-    }
-
-    #[Test]
     public function it_renders_the_connection_with_the_available_lists()
     {
-        $this->configureMailcoach();
-
         Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
             ['uuid' => self::LIST, 'name' => 'Newsletter', 'requires_confirmation' => true],
         ]])]);
@@ -122,8 +123,10 @@ class MailcoachConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_renders_the_setup_instructions_when_mailcoach_hasnt_been_configured()
+    public function it_renders_the_setup_instructions_when_unconfigured()
     {
+        config(['forms-pro.connections.mailcoach' => null]);
+
         Http::fake();
 
         $props = new Mailcoach()->render($this->form([]))->toArray()['props'];
@@ -135,8 +138,6 @@ class MailcoachConnectionTest extends TestCase
     #[Test]
     public function it_renders_api_errors()
     {
-        $this->configureMailcoach();
-
         Http::fake(['acme.mailcoach.app/*' => Http::response(null, 401)]);
 
         $props = new Mailcoach()->render($this->form([]))->toArray()['props'];
@@ -149,8 +150,6 @@ class MailcoachConnectionTest extends TestCase
     #[Test]
     public function it_preselects_the_list_when_theres_only_one()
     {
-        $this->configureMailcoach();
-
         Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
             ['uuid' => self::LIST, 'name' => 'Newsletter'],
         ]])]);
@@ -163,8 +162,6 @@ class MailcoachConnectionTest extends TestCase
     #[Test]
     public function it_doesnt_preselect_a_list_when_there_are_several()
     {
-        $this->configureMailcoach();
-
         Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
             ['uuid' => self::LIST, 'name' => 'Newsletter'],
             ['uuid' => '2f0b3a1c-9d4e-4a6b-8c1d-5e7f9a0b2c3d', 'name' => 'Customers'],
@@ -173,14 +170,6 @@ class MailcoachConnectionTest extends TestCase
         $props = new Mailcoach()->render($this->form([]))->toArray()['props'];
 
         $this->assertNull($props['values']['list']);
-    }
-
-    private function configureMailcoach(): void
-    {
-        config([
-            'forms-pro.connections.mailcoach.api_url' => 'https://acme.mailcoach.app',
-            'forms-pro.connections.mailcoach.token' => 'mailcoach-token',
-        ]);
     }
 
     private function form(array $config): FormContract

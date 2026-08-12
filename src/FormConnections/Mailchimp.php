@@ -39,11 +39,6 @@ class Mailchimp extends Connection
         return File::get(__DIR__.'/../../resources/svg/mailchimp.svg');
     }
 
-    public function count(Form $form): ?int
-    {
-        return filled($form->connections()->get('mailchimp')) ? 1 : 0;
-    }
-
     public function finalized(Submission $submission): object|array
     {
         $config = $submission->form()->connections()->get('mailchimp', []);

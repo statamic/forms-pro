@@ -19,6 +19,13 @@ class MailchimpConnectionTest extends TestCase
 
     private const AUDIENCE = 'a1b2c3d4e5';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['forms-pro.connections.mailchimp.api_key' => 'mailchimp-key-us14']);
+    }
+
     #[Test]
     public function it_returns_a_job_for_the_configured_audience()
     {
@@ -96,17 +103,8 @@ class MailchimpConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_counts_the_connection_once_configured()
-    {
-        $this->assertEquals(0, new Mailchimp()->count(tap(Form::make('test'))->save()));
-        $this->assertEquals(1, new Mailchimp()->count($this->form(['list' => self::AUDIENCE])));
-    }
-
-    #[Test]
     public function it_renders_the_connection_with_the_available_audiences()
     {
-        $this->configureMailchimp();
-
         Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
@@ -120,8 +118,10 @@ class MailchimpConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_renders_the_setup_instructions_when_mailchimp_hasnt_been_configured()
+    public function it_renders_the_setup_instructions_when_unconfigured()
     {
+        config(['forms-pro.connections.mailchimp.api_key' => null]);
+
         Http::fake();
 
         $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
@@ -133,8 +133,6 @@ class MailchimpConnectionTest extends TestCase
     #[Test]
     public function it_renders_api_errors()
     {
-        $this->configureMailchimp();
-
         Http::fake(['us14.api.mailchimp.com/*' => Http::response(null, 401)]);
 
         $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
@@ -147,8 +145,6 @@ class MailchimpConnectionTest extends TestCase
     #[Test]
     public function it_renders_an_api_error_when_mailchimp_cant_be_reached()
     {
-        $this->configureMailchimp();
-
         Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
 
         $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
@@ -159,8 +155,6 @@ class MailchimpConnectionTest extends TestCase
     #[Test]
     public function it_preselects_the_audience_when_theres_only_one()
     {
-        $this->configureMailchimp();
-
         Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
@@ -173,8 +167,6 @@ class MailchimpConnectionTest extends TestCase
     #[Test]
     public function it_doesnt_preselect_an_audience_when_there_are_several()
     {
-        $this->configureMailchimp();
-
         Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
             ['id' => 'f6e5d4c3b2', 'name' => 'Customers'],
@@ -183,11 +175,6 @@ class MailchimpConnectionTest extends TestCase
         $props = new Mailchimp()->render($this->form([]))->toArray()['props'];
 
         $this->assertNull($props['values']['list']);
-    }
-
-    private function configureMailchimp(): void
-    {
-        config(['forms-pro.connections.mailchimp.api_key' => 'mailchimp-key-us14']);
     }
 
     private function form(array $config): FormContract

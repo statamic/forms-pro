@@ -34,11 +34,6 @@ class Kit extends Connection
         return File::get(__DIR__.'/../../resources/svg/kit.svg');
     }
 
-    public function count(Form $form): ?int
-    {
-        return filled($form->connections()->get('kit')) ? 1 : 0;
-    }
-
     public function finalized(Submission $submission): object|array
     {
         $config = $submission->form()->connections()->get('kit', []);

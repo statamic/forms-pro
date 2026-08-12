@@ -18,6 +18,13 @@ class KitConnectionTest extends TestCase
 
     private const FORM = 9785233;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['forms-pro.connections.kit.api_key' => 'kit_apikey']);
+    }
+
     #[Test]
     public function it_returns_a_job_when_an_email_field_is_configured()
     {
@@ -83,16 +90,8 @@ class KitConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_counts_the_connection_once_configured()
-    {
-        $this->assertEquals(0, new Kit()->count(tap(Form::make('test'))->save()));
-        $this->assertEquals(1, new Kit()->count($this->form(['email_field' => 'email'])));
-    }
-
-    #[Test]
     public function it_renders_the_connection_with_the_forms_tags_and_custom_fields()
     {
-        $this->configureKit();
         $this->fakeAccount();
 
         $props = new Kit()->render($this->form(['form' => self::FORM, 'email_field' => 'email']))->toArray()['props'];
@@ -113,8 +112,10 @@ class KitConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_renders_the_setup_instructions_when_kit_hasnt_been_configured()
+    public function it_renders_the_setup_instructions_when_unconfigured()
     {
+        config(['forms-pro.connections.kit.api_key' => null]);
+
         Http::fake();
 
         $props = new Kit()->render($this->form())->toArray()['props'];
@@ -126,8 +127,6 @@ class KitConnectionTest extends TestCase
     #[Test]
     public function it_renders_api_errors()
     {
-        $this->configureKit();
-
         Http::fake(['api.kit.com/*' => Http::response(null, 401)]);
 
         $props = new Kit()->render($this->form())->toArray()['props'];
@@ -136,11 +135,6 @@ class KitConnectionTest extends TestCase
         $this->assertStringContainsString('FORMS_PRO_KIT_API_KEY', $props['apiError']);
         $this->assertEquals([], $props['meta']['form']['options']);
         $this->assertEquals([], $props['meta']['tags']['options']);
-    }
-
-    private function configureKit(): void
-    {
-        config(['forms-pro.connections.kit.api_key' => 'kit_apikey']);
     }
 
     private function fakeAccount(): void

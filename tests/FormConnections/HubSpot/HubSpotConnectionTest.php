@@ -125,18 +125,6 @@ class HubSpotConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_counts_the_connection_once_configured()
-    {
-        $form = tap(Form::make('contact_us'))->save();
-
-        $this->assertEquals(0, new HubSpot()->count($form));
-
-        $form->connections($form->connections()->put('hubspot', ['form' => self::FORM]))->save();
-
-        $this->assertEquals(1, new HubSpot()->count($form));
-    }
-
-    #[Test]
     public function it_renders_the_connection_with_the_available_forms()
     {
         $this->fakeAccount();
@@ -200,15 +188,15 @@ class HubSpotConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_renders_the_setup_instructions_when_hubspot_hasnt_been_configured()
+    public function it_renders_the_setup_instructions_when_unconfigured()
     {
         config(['forms-pro.connections.hubspot.access_token' => null]);
 
         Http::fake();
 
-        $rendered = new HubSpot()->render($this->form())->toArray();
+        $props = new HubSpot()->render($this->form())->toArray()['props'];
 
-        $this->assertFalse($rendered['props']['isConfigured']);
+        $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
     }
 

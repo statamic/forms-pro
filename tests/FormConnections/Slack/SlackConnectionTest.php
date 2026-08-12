@@ -16,6 +16,13 @@ class SlackConnectionTest extends TestCase
 {
     use PreventsSavingStacheItemsToDisk;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['forms-pro.connections.slack.token' => 'xoxb-token']);
+    }
+
     #[Test]
     public function it_returns_a_job_per_slack_notification()
     {
@@ -101,7 +108,6 @@ class SlackConnectionTest extends TestCase
     #[Test]
     public function it_renders_the_vue_component()
     {
-        config(['forms-pro.connections.slack.token' => 'xoxb-token']);
         Http::fake(['slack.com/*' => Http::response(['ok' => true, 'channels' => []])]);
 
         $form = tap(Form::make('test')->formFields([
@@ -119,8 +125,10 @@ class SlackConnectionTest extends TestCase
     }
 
     #[Test]
-    public function it_renders_the_setup_instructions_when_slack_hasnt_been_configured()
+    public function it_renders_the_setup_instructions_when_unconfigured()
     {
+        config(['forms-pro.connections.slack.token' => null]);
+
         Http::fake();
 
         $form = tap(Form::make('test'))->save();
@@ -134,7 +142,6 @@ class SlackConnectionTest extends TestCase
     #[Test]
     public function it_renders_api_errors()
     {
-        config(['forms-pro.connections.slack.token' => 'xoxb-token']);
         Http::fake(['slack.com/*' => Http::response(['ok' => false, 'error' => 'invalid_auth'])]);
 
         $form = tap(Form::make('test'))->save();
@@ -149,7 +156,6 @@ class SlackConnectionTest extends TestCase
     #[Test]
     public function it_renders_an_api_error_when_slack_is_unavailable()
     {
-        config(['forms-pro.connections.slack.token' => 'xoxb-token']);
         Http::fake(['slack.com/*' => Http::response(null, 503)]);
 
         $form = tap(Form::make('test'))->save();
@@ -162,7 +168,6 @@ class SlackConnectionTest extends TestCase
     #[Test]
     public function it_renders_an_api_error_when_slack_cant_be_reached()
     {
-        config(['forms-pro.connections.slack.token' => 'xoxb-token']);
         Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
 
         $form = tap(Form::make('test'))->save();

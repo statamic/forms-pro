@@ -51,7 +51,7 @@ class SendTwilioMessage implements ShouldQueue
 
     private function recipient(Submission $submission): ?string
     {
-        $to = Arr::get($this->config, 'to');
+        $to = $this->config['to'];
 
         if (Str::startsWith($to, 'field:')) {
             $to = $submission->get(Str::after($to, 'field:'));
@@ -94,7 +94,7 @@ class SendTwilioMessage implements ShouldQueue
     private function body(Submission $submission): ?string
     {
         $body = Antlers::parse(
-            Parse::config(Arr::get($this->config, 'body')),
+            Parse::config($this->config['body']),
             $submission->toAugmentedArray()
         );
 
@@ -103,7 +103,7 @@ class SendTwilioMessage implements ShouldQueue
 
     private function sender(): array
     {
-        $from = Arr::get($this->config, 'from');
+        $from = $this->config['from'];
 
         return Str::startsWith($from, 'MG')
             ? ['MessagingServiceSid' => $from]

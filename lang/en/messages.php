@@ -109,7 +109,7 @@ return [
     'slack_setup_token' => 'Copy the Bot User OAuth Token from the app\'s "OAuth &amp; Permissions" page into your site\'s :file file:',
     'slack_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once :variable is set, reload this page.',
 
-    'twilio_connection_description' => 'Text someone when a form is submitted.',
+    'twilio_connection_description' => 'Send text messages.',
     'twilio_connection_to_instructions' => 'Type a number in full international format, or pick a form field to text whoever submitted.',
     'twilio_connection_from_instructions' => 'Numbers without SMS capability are hidden. A Messaging Service picks a sender for you if you own several.',
     'twilio_connection_body_instructions' => 'Messages can include values from the submission. Long messages are split and billed per 160 characters — fewer if you use emoji or curly quotes.',

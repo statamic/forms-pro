@@ -163,7 +163,7 @@ onUnmounted(() => {
                         <div class="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
                             <PublishContainer
                                 :name="`slack-connection-${notification.id}`"
-                                :blueprint="blueprint"
+                                :blueprint
                                 v-model="notification.values"
                                 :meta="notification.meta"
                                 :errors="rowErrors(index)"
