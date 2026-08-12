@@ -24,9 +24,13 @@ class TwilioConnectionController extends CpController
             'configs.*.country_code' => ['nullable', 'string', 'regex:/^\+[1-9]\d{0,3}$/'],
         ]);
 
+        $fields = Twilio::blueprint($form)->fields();
+
         $configs = collect($request->configs)
-            ->map(function (array $config) use ($form): array {
-                $values = Twilio::blueprint($form)->fields()
+            ->map(function (array $config) use ($fields): array {
+                $config = Arr::removeNullValues($config);
+
+                $values = $fields
                     ->addValues(Arr::except($config, ['_id', 'id', 'enabled', 'conditions']))
                     ->process()
                     ->values()

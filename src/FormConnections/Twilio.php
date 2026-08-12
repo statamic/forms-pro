@@ -52,9 +52,9 @@ class Twilio extends Connection
     {
         $senders = [];
 
-        $isConfigured = filled(config('forms-pro.connections.twilio.account_sid'))
-            && filled(config('forms-pro.connections.twilio.api_key'))
-            && filled(config('forms-pro.connections.twilio.api_secret'));
+        $isConfigured = config('forms-pro.connections.twilio.account_sid')
+            && config('forms-pro.connections.twilio.api_key')
+            && config('forms-pro.connections.twilio.api_secret');
 
         try {
             if ($isConfigured) {

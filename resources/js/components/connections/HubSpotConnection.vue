@@ -118,12 +118,12 @@ onUnmounted(() => saveBinding.value?.destroy());
         </Alert>
 
         <PublishContainer
-	        ref="container"
-	        :blueprint
-	        v-model="values"
-	        :meta
-	        :errors
-	        :extra-values="extraValues"
+            ref="container"
+            :blueprint
+            v-model="values"
+            :meta
+            :errors
+            :extra-values="extraValues"
         >
             <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
                 <PublishFields />

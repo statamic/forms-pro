@@ -21,9 +21,13 @@ class SlackConnectionController extends CpController
             'configs.*.heading' => ['nullable', 'string', 'max:2000'],
         ]);
 
+        $fields = Slack::blueprint($form)->fields();
+
         $configs = collect($request->configs)
-            ->map(function (array $config) use ($form): array {
-                $values = Slack::blueprint($form)->fields()
+            ->map(function (array $config) use ($fields): array {
+                $config = Arr::removeNullValues($config);
+
+                $values = $fields
                     ->addValues(Arr::except($config, ['_id', 'id', 'enabled', 'conditions']))
                     ->process()
                     ->values()

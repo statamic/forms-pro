@@ -44,13 +44,10 @@ class SubscribeToKit implements ShouldQueue
                 $kit->tag($tag, $email);
             }
         } catch (KitException $e) {
-            if ($e->isRetryable()) {
-                $this->release($e->retryAfter());
-
-                return;
-            }
-
-            throw $e;
+            match (true) {
+                $e->isRetryable() => $this->release($e->retryAfter()),
+                default => throw $e,
+            };
         }
     }
 

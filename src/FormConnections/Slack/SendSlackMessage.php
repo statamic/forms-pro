@@ -32,13 +32,10 @@ class SendSlackMessage implements ShouldQueue
                 new MessageBuilder($submission, $this->site, $this->config)->build()
             );
         } catch (SlackException $e) {
-            if ($e->isRetryable()) {
-                $this->release($e->retryAfter());
-
-                return;
-            }
-
-            throw $e;
+            match (true) {
+                $e->isRetryable() => $this->release($e->retryAfter()),
+                default => throw $e,
+            };
         }
     }
 }

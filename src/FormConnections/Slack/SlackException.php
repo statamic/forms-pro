@@ -8,15 +8,10 @@ class SlackException extends RuntimeException
 {
     public function __construct(
         string $message,
+        private ?int $retryAfter = null,
         private ?string $error = null,
-        private ?int $retryAfter = null
     ) {
         parent::__construct($message);
-    }
-
-    public function error(): ?string
-    {
-        return $this->error;
     }
 
     public function retryAfter(): ?int
@@ -27,5 +22,10 @@ class SlackException extends RuntimeException
     public function isRetryable(): bool
     {
         return $this->retryAfter !== null;
+    }
+
+    public function error(): ?string
+    {
+        return $this->error;
     }
 }

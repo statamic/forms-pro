@@ -50,7 +50,7 @@ class Slack extends Connection
 
     public function render(Form $form): VueComponent
     {
-        $isConfigured = filled(config('forms-pro.connections.slack.token'));
+        $isConfigured = (bool) config('forms-pro.connections.slack.token');
 
         try {
             $channels = $isConfigured ? $this->channels() : [];
