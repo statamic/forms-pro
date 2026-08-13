@@ -31,7 +31,7 @@ class MailcoachClient
                 'per_page' => self::PER_PAGE,
             ]));
 
-            $lists = $lists->merge($response['data']);
+            $lists = $lists->merge($response['data'] ?? []);
         } while (filled($response['links']['next'] ?? null));
 
         return $lists
@@ -42,7 +42,7 @@ class MailcoachClient
 
     public function subscribe(string $list, array $subscriber): array
     {
-        return $this->handle($this->request()->post("email-lists/{$list}/subscribers", $subscriber))['data'];
+        return $this->handle($this->request()->post("email-lists/{$list}/subscribers", $subscriber))['data'] ?? [];
     }
 
     private function request(): PendingRequest
@@ -65,7 +65,7 @@ class MailcoachClient
     private function handle(Response $response): array
     {
         if ($response->successful()) {
-            return $response->json();
+            return $response->json() ?? [];
         }
 
         if ($response->status() === 429) {
