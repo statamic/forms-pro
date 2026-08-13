@@ -305,7 +305,7 @@ class AppendRowToGoogleSheetTest extends TestCase
         try {
             $this->handle($this->form(), ['name' => 'Jack Black']);
         } finally {
-            $this->assertNull(Cache::get('forms-pro.google-sheets.sheet.'.self::SPREADSHEET.'.0'));
+            $this->assertNull(Cache::get('forms-pro.google-sheets.sheet.'.app(GoogleSheetsClient::class)->fingerprint().'.'.self::SPREADSHEET.'.0'));
         }
     }
 
