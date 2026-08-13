@@ -66,16 +66,19 @@ class Mailchimp extends Connection
     {
         $isConfigured = (bool) config('forms-pro.connections.mailchimp.api_key');
 
+        $audiences = [];
+
         try {
-            $audiences = $isConfigured
-                ? Cache::remember(
-                    'forms-pro.mailchimp.audiences',
+            if ($isConfigured) {
+                $mailchimp = app(MailchimpClient::class);
+
+                $audiences = Cache::remember(
+                    "forms-pro.mailchimp.audiences.{$mailchimp->fingerprint()}",
                     now()->addMinutes(5),
-                    fn () => app(MailchimpClient::class)->audiences()
-                )
-                : [];
+                    fn () => $mailchimp->audiences()
+                );
+            }
         } catch (ConnectionException|MailchimpException $e) {
-            $audiences = [];
             $apiError = $e->getMessage();
         }
 

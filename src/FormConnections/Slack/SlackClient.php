@@ -13,6 +13,11 @@ class SlackClient
 
     public function __construct(private readonly ?string $token) {}
 
+    public function fingerprint(): string
+    {
+        return substr(hash('xxh128', (string) $this->token), 0, 8);
+    }
+
     public function postMessage(array $payload): array
     {
         try {

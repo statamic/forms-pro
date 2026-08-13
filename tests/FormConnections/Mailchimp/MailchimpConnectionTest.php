@@ -153,6 +153,22 @@ class MailchimpConnectionTest extends TestCase
     }
 
     #[Test]
+    public function it_scopes_the_cache_key_to_the_api_key()
+    {
+        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
+            ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
+        ]])]);
+
+        (new Mailchimp)->render($this->form([]));
+
+        config(['forms-pro.connections.mailchimp.api_key' => 'different-key-us14']);
+
+        (new Mailchimp)->render($this->form([]));
+
+        Http::assertSentCount(2);
+    }
+
+    #[Test]
     public function it_preselects_the_audience_when_theres_only_one()
     {
         Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [

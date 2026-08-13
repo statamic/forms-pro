@@ -17,6 +17,11 @@ class MailchimpClient
 
     public function __construct(private readonly ?string $apiKey) {}
 
+    public function fingerprint(): string
+    {
+        return substr(hash('xxh128', (string) $this->apiKey), 0, 8);
+    }
+
     public function audiences(): array
     {
         return collect($this->call('GET', 'lists', ['count' => self::PER_PAGE])['lists'] ?? [])

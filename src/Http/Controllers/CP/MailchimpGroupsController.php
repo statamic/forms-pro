@@ -13,10 +13,12 @@ class MailchimpGroupsController extends CpController
     {
         $request->validate(['list' => ['required', 'alpha_num:ascii']]);
 
+        $mailchimp = app(MailchimpClient::class);
+
         return Cache::remember(
-            "forms-pro.mailchimp.groups.{$request->list}",
+            "forms-pro.mailchimp.groups.{$mailchimp->fingerprint()}.{$request->list}",
             now()->addMinutes(5),
-            fn () => app(MailchimpClient::class)->groups($request->list)
+            fn () => $mailchimp->groups($request->list)
         );
     }
 }

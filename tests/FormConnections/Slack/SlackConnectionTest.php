@@ -176,4 +176,20 @@ class SlackConnectionTest extends TestCase
 
         $this->assertStringContainsString('Could not resolve host.', $props['apiError']);
     }
+
+    #[Test]
+    public function it_scopes_the_cache_key_to_the_token()
+    {
+        Http::fake(['slack.com/*' => Http::response(['ok' => true, 'channels' => []])]);
+
+        $form = tap(Form::make('test'))->save();
+
+        (new Slack)->render($form);
+
+        config(['forms-pro.connections.slack.token' => 'xoxb-different']);
+
+        (new Slack)->render($form);
+
+        Http::assertSentCount(2);
+    }
 }

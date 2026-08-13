@@ -14,7 +14,7 @@ class MailchimpMarketingPermissionsController extends CpController
     {
         $request->validate(['list' => ['required', 'alpha_num:ascii']]);
 
-        $key = "forms-pro.mailchimp.marketing-permissions.{$request->list}";
+        $key = 'forms-pro.mailchimp.marketing-permissions.'.app(MailchimpClient::class)->fingerprint().".{$request->list}";
 
         if ($cached = Cache::get($key)) {
             return $cached;

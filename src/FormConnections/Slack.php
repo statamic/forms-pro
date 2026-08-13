@@ -84,6 +84,17 @@ class Slack extends Connection
         ]);
     }
 
+    private function channels(): array
+    {
+        $slack = app(SlackClient::class);
+
+        return Cache::remember(
+            "forms-pro.slack.channels.{$slack->fingerprint()}",
+            now()->addMinutes(5),
+            fn () => $slack->channels()->all()
+        );
+    }
+
     public static function blueprint(Form $form, array $channels = []): \Statamic\Fields\Blueprint
     {
         return Blueprint::make()->setContents([
@@ -151,15 +162,6 @@ class Slack extends Connection
                 ],
             ],
         ]);
-    }
-
-    private function channels(): array
-    {
-        return Cache::remember(
-            'forms-pro.slack.channels',
-            now()->addMinutes(5),
-            fn () => app(SlackClient::class)->channels()->all()
-        );
     }
 
     public function routes(Router $router): void

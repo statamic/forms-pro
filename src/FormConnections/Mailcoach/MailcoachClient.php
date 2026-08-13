@@ -15,6 +15,11 @@ class MailcoachClient
 
     public function __construct(private readonly ?string $apiUrl, private readonly ?string $token) {}
 
+    public function fingerprint(): string
+    {
+        return substr(hash('xxh128', $this->apiUrl.$this->token), 0, 8);
+    }
+
     public function lists(): array
     {
         $lists = collect();

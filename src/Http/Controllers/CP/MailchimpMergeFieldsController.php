@@ -14,10 +14,12 @@ class MailchimpMergeFieldsController extends CpController
     {
         $request->validate(['list' => ['required', 'alpha_num:ascii']]);
 
+        $mailchimp = app(MailchimpClient::class);
+
         return Cache::remember(
-            "forms-pro.mailchimp.merge-fields.{$request->list}",
+            "forms-pro.mailchimp.merge-fields.{$mailchimp->fingerprint()}.{$request->list}",
             now()->addMinutes(5),
-            fn () => collect(app(MailchimpClient::class)->mergeFields($request->list))
+            fn () => collect($mailchimp->mergeFields($request->list))
                 ->reject(fn (array $mergeField) => in_array($mergeField['tag'], Mailchimp::DEDICATED_MERGE_TAGS))
                 ->values()
                 ->all()

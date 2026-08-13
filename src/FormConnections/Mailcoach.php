@@ -62,16 +62,19 @@ class Mailcoach extends Connection
         $isConfigured = config('forms-pro.connections.mailcoach.api_url')
             && config('forms-pro.connections.mailcoach.token');
 
+        $lists = [];
+
         try {
-            $lists = $isConfigured
-                ? Cache::remember(
-                    'forms-pro.mailcoach.email-lists',
+            if ($isConfigured) {
+                $mailcoach = app(MailcoachClient::class);
+
+                $lists = Cache::remember(
+                    "forms-pro.mailcoach.email-lists.{$mailcoach->fingerprint()}",
                     now()->addMinutes(5),
-                    fn () => app(MailcoachClient::class)->lists()
-                )
-                : [];
+                    fn () => $mailcoach->lists()
+                );
+            }
         } catch (ConnectionException|MailcoachException $e) {
-            $lists = [];
             $apiError = $e->getMessage();
         }
 

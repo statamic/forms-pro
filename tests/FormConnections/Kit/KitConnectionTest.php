@@ -137,6 +137,20 @@ class KitConnectionTest extends TestCase
         $this->assertEquals([], $props['meta']['tags']['options']);
     }
 
+    #[Test]
+    public function it_scopes_the_cache_key_to_the_api_key()
+    {
+        $this->fakeAccount();
+
+        (new Kit)->render($this->form());
+
+        config(['forms-pro.connections.kit.api_key' => 'kit_different']);
+
+        (new Kit)->render($this->form());
+
+        Http::assertSentCount(6);
+    }
+
     private function fakeAccount(): void
     {
         Http::fake([

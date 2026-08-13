@@ -64,10 +64,12 @@ class Kit extends Connection
 
         try {
             if ($isConfigured) {
-                $account = Cache::remember('forms-pro.kit.account', now()->addMinutes(5), fn (): array => [
-                    'forms' => app(KitClient::class)->forms(),
-                    'tags' => app(KitClient::class)->tags(),
-                    'custom_fields' => app(KitClient::class)->customFields(),
+                $kit = app(KitClient::class);
+
+                $account = Cache::remember("forms-pro.kit.account.{$kit->fingerprint()}", now()->addMinutes(5), fn (): array => [
+                    'forms' => $kit->forms(),
+                    'tags' => $kit->tags(),
+                    'custom_fields' => $kit->customFields(),
                 ]);
             }
         } catch (ConnectionException|KitException $e) {

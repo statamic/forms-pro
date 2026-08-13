@@ -17,6 +17,11 @@ class KitClient
 
     public function __construct(private readonly ?string $apiKey) {}
 
+    public function fingerprint(): string
+    {
+        return substr(hash('xxh128', (string) $this->apiKey), 0, 8);
+    }
+
     public function forms(): array
     {
         return $this->paginate('forms', ['type' => 'embed', 'status' => 'active'])

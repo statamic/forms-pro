@@ -148,6 +148,22 @@ class MailcoachConnectionTest extends TestCase
     }
 
     #[Test]
+    public function it_scopes_the_cache_key_to_the_credentials()
+    {
+        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
+            ['uuid' => self::LIST, 'name' => 'Newsletter'],
+        ]])]);
+
+        (new Mailcoach)->render($this->form([]));
+
+        config(['forms-pro.connections.mailcoach.token' => 'different-token']);
+
+        (new Mailcoach)->render($this->form([]));
+
+        Http::assertSentCount(2);
+    }
+
+    #[Test]
     public function it_preselects_the_list_when_theres_only_one()
     {
         Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
