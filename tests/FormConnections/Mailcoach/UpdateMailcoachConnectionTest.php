@@ -16,7 +16,7 @@ class UpdateMailcoachConnectionTest extends TestCase
     use FakesRoles;
     use PreventsSavingStacheItemsToDisk;
 
-    private const LIST = '9dcbb6dc-1b47-4d2e-9d3f-8dbf1a92a5f1';
+    private const string LIST = '9dcbb6dc-1b47-4d2e-9d3f-8dbf1a92a5f1';
 
     #[Test]
     public function it_denies_access_if_you_dont_have_permission()

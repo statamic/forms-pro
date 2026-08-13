@@ -17,7 +17,7 @@ class ListMailchimpGroupsTest extends TestCase
     use FakesRoles;
     use PreventsSavingStacheItemsToDisk;
 
-    private const AUDIENCE = 'a1b2c3d4e5';
+    private const string AUDIENCE = 'a1b2c3d4e5';
 
     protected function setUp(): void
     {

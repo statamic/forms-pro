@@ -16,7 +16,7 @@ class KitConnectionTest extends TestCase
 {
     use PreventsSavingStacheItemsToDisk;
 
-    private const FORM = 9785233;
+    private const int FORM = 9785233;
 
     protected function setUp(): void
     {

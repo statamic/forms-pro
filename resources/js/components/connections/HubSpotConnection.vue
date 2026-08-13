@@ -30,12 +30,14 @@ const extraValues = computed<object>(() => ({
     consent_type: hubspotForm.value?.consent?.type ?? 'none',
 }));
 
-const missingConsent = computed<boolean>(() => {
+const missingConsentToProcess = computed<boolean>(
+    () => hubspotForm.value?.consent?.type === 'explicit_consent_to_process' && !values.value.consent_to_process_field,
+);
+
+const missingCommunications = computed<boolean>(() => {
     const consent = hubspotForm.value?.consent;
 
     if (!consent || ['none', 'legitimate_interest'].includes(consent.type)) return false;
-
-    if (consent.type === 'explicit_consent_to_process' && !values.value.consent_to_process_field) return true;
 
     return Boolean(consent.checkboxes?.length) && !(values.value.communications ?? []).length;
 });
@@ -101,8 +103,12 @@ onUnmounted(() => saveBinding.value?.destroy());
             <Description :text="__('forms-pro::messages.hubspot_connection_no_forms')" />
         </Alert>
 
-        <Alert v-if="missingConsent" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Description :text="__('forms-pro::messages.hubspot_connection_consent_warning')" />
+        <Alert v-if="missingConsentToProcess" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
+            <Description :text="__('forms-pro::messages.hubspot_connection_consent_to_process_warning')" />
+        </Alert>
+
+        <Alert v-if="missingCommunications" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
+            <Description :text="__('forms-pro::messages.hubspot_connection_communications_warning')" />
         </Alert>
 
         <Alert v-if="missingSubscription" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">

@@ -17,17 +17,17 @@ use function Statamic\trans as __;
 
 class MessageBuilder
 {
-    private const BLOCK_LIMIT = 50;
+    private const int BLOCK_LIMIT = 50;
 
-    private const FIELDS_PER_SECTION = 10;
+    private const int FIELDS_PER_SECTION = 10;
 
-    private const FIELD_TEXT_LIMIT = 2000;
+    private const int FIELD_TEXT_LIMIT = 2000;
 
-    private const HEADING_LIMIT = 150;
+    private const int HEADING_LIMIT = 150;
 
-    private const SECTION_TEXT_LIMIT = 3000;
+    private const int SECTION_TEXT_LIMIT = 3000;
 
-    private const SHORT_VALUE_LENGTH = 80;
+    private const int SHORT_VALUE_LENGTH = 80;
 
     public function __construct(private Submission $submission, private Site $site, private array $config) {}
 

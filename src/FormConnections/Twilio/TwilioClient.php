@@ -9,15 +9,15 @@ use Statamic\Support\Arr;
 
 class TwilioClient
 {
-    private const API_URL = 'https://api.twilio.com/2010-04-01/';
+    private const string API_URL = 'https://api.twilio.com/2010-04-01/';
 
-    private const MESSAGING_URL = 'https://messaging.twilio.com/v1/';
+    private const string MESSAGING_URL = 'https://messaging.twilio.com/v1/';
 
-    private const PER_PAGE = 1000;
+    private const int PER_PAGE = 1000;
 
-    private const RETRY_AFTER = 30;
+    private const int RETRY_AFTER = 30;
 
-    private const SKIPPABLE_ERRORS = [21211, 21214, 21610, 21614, 21617];
+    private const array SKIPPABLE_ERRORS = [21211, 21214, 21610, 21614, 21617];
 
     public function __construct(
         private ?string $accountSid,

@@ -16,7 +16,7 @@ class UpdateKitConnectionTest extends TestCase
     use FakesRoles;
     use PreventsSavingStacheItemsToDisk;
 
-    private const FORM = 9785233;
+    private const int FORM = 9785233;
 
     #[Test]
     public function it_denies_access_if_you_dont_have_permission()

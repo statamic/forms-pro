@@ -17,7 +17,7 @@ class TwilioConnectionTest extends TestCase
 {
     use PreventsSavingStacheItemsToDisk;
 
-    private const ACCOUNT_SID = 'AC00000000000000000000000000000000';
+    private const string ACCOUNT_SID = 'AC00000000000000000000000000000000';
 
     protected function setUp(): void
     {

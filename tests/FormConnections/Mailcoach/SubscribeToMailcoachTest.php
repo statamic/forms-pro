@@ -20,7 +20,7 @@ class SubscribeToMailcoachTest extends TestCase
 {
     use PreventsSavingStacheItemsToDisk;
 
-    private const LIST = '9dcbb6dc-1b47-4d2e-9d3f-8dbf1a92a5f1';
+    private const string LIST = '9dcbb6dc-1b47-4d2e-9d3f-8dbf1a92a5f1';
 
     protected function setUp(): void
     {

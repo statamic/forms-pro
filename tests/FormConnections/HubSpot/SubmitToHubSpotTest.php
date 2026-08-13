@@ -22,11 +22,11 @@ class SubmitToHubSpotTest extends TestCase
 {
     use PreventsSavingStacheItemsToDisk;
 
-    private const FORM = '2cc5419c-d732-4a4a-a82d-c0bfbcf948a5';
+    private const string FORM = '2cc5419c-d732-4a4a-a82d-c0bfbcf948a5';
 
-    private const PORTAL = 149072453;
+    private const int PORTAL = 149072453;
 
-    private const SUBMIT_URL = 'https://api.hsforms.com/submissions/v3/integration/secure/submit/'.self::PORTAL.'/'.self::FORM;
+    private const string SUBMIT_URL = 'https://api.hsforms.com/submissions/v3/integration/secure/submit/'.self::PORTAL.'/'.self::FORM;
 
     protected function setUp(): void
     {
@@ -200,13 +200,54 @@ class SubmitToHubSpotTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('declinedConsentProvider')]
+    public function it_doesnt_submit_when_the_submitter_declined_consent_to_process(array $data)
+    {
+        $this->fake(definition: $this->definition(['legalConsentOptions' => $this->explicitConsent()]));
+
+        Log::shouldReceive('info')->once()->with(Mockery::on(fn (string $message) => str_contains(
+            $message, 'Skipped submitting [jack@example.com] to HubSpot: The submitter didn\'t consent'
+        )));
+
+        $this->submit($data, ['consent_to_process_field' => 'marketing']);
+
+        Http::assertNotSent(fn (Request $request) => str_contains($request->url(), 'hsforms'));
+    }
+
+    public static function declinedConsentProvider(): array
+    {
+        return [
+            'unticked' => [['email' => 'jack@example.com', 'marketing' => false]],
+            'left empty' => [['email' => 'jack@example.com']],
+            'answered no' => [['email' => 'jack@example.com', 'marketing' => 'no']],
+        ];
+    }
+
+    #[Test]
+    public function it_fails_when_the_form_needs_consent_to_process_and_no_field_is_mapped()
+    {
+        $this->fake(definition: $this->definition(['legalConsentOptions' => $this->explicitConsent()]));
+
+        $this->expectExceptionMessage('no field is mapped to it');
+
+        try {
+            $this->submit(['email' => 'jack@example.com']);
+        } finally {
+            Http::assertNotSent(fn (Request $request) => str_contains($request->url(), 'hsforms'));
+        }
+    }
+
+    #[Test]
     public function it_never_sends_the_subscription_name_as_the_consent_text()
     {
         $this->fake(definition: $this->definition(['legalConsentOptions' => $this->explicitConsent()]));
 
         $payload = $this->payload(
             ['email' => 'jack@example.com', 'marketing' => true],
-            ['communications' => [['subscription' => 3314676590, 'field' => 'marketing']]],
+            [
+                'consent_to_process_field' => 'marketing',
+                'communications' => [['subscription' => 3314676590, 'field' => 'marketing']],
+            ],
             fake: false,
         );
 
@@ -220,7 +261,10 @@ class SubmitToHubSpotTest extends TestCase
 
         $payload = $this->payload(
             ['email' => 'jack@example.com', 'marketing' => true],
-            ['communications' => [['subscription' => 3314676590, 'field' => 'marketing']]],
+            [
+                'consent_to_process_field' => 'marketing',
+                'communications' => [['subscription' => 3314676590, 'field' => 'marketing']],
+            ],
             fake: false,
         );
 

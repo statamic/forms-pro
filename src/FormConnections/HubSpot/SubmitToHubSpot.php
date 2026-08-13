@@ -16,7 +16,7 @@ class SubmitToHubSpot implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, ReadsSubmissionValues, SerializesModels;
 
-    private const CONTACT_OBJECT_TYPE = '0-1';
+    private const string CONTACT_OBJECT_TYPE = '0-1';
 
     public $tries = 5;
 
@@ -107,8 +107,7 @@ class SubmitToHubSpot implements ShouldQueue
         }
 
         return ['consent' => Arr::removeNullValues([
-            'consentToProcess' => $type === 'implicit_consent_to_process'
-                || $this->isChecked($submission, Arr::get($this->config, 'consent_to_process_field')),
+            'consentToProcess' => $this->consentToProcess($submission, $type),
             'text' => $consent['consentToProcessText'] ?? null,
             'communications' => $this->communications($submission, $consent) ?: null,
         ])];
@@ -124,6 +123,26 @@ class SubmitToHubSpot implements ShouldQueue
         }
 
         return count($available) === 1 ? $available[0] : null;
+    }
+
+    private function consentToProcess(Submission $submission, string $type): bool
+    {
+        if ($type === 'implicit_consent_to_process') {
+            return true;
+        }
+
+        $handle = Arr::get($this->config, 'consent_to_process_field');
+
+        throw_if(blank($handle), new HubSpotException(
+            'The HubSpot form requires consent to process data, but no field is mapped to it.'
+        ));
+
+        throw_unless($this->isChecked($submission, $handle), new HubSpotException(
+            'The submitter didn\'t consent to their data being processed.',
+            skippable: true,
+        ));
+
+        return true;
     }
 
     private function communications(Submission $submission, array $consent): array

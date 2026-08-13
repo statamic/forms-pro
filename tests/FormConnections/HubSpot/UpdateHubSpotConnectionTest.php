@@ -16,7 +16,7 @@ class UpdateHubSpotConnectionTest extends TestCase
     use FakesRoles;
     use PreventsSavingStacheItemsToDisk;
 
-    private const FORM = '2cc5419c-d732-4a4a-a82d-c0bfbcf948a5';
+    private const string FORM = '2cc5419c-d732-4a4a-a82d-c0bfbcf948a5';
 
     #[Test]
     public function it_denies_access_if_you_dont_have_permission()

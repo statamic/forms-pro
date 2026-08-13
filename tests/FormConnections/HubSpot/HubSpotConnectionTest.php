@@ -18,7 +18,7 @@ class HubSpotConnectionTest extends TestCase
 {
     use PreventsSavingStacheItemsToDisk;
 
-    private const FORM = '2cc5419c-d732-4a4a-a82d-c0bfbcf948a5';
+    private const string FORM = '2cc5419c-d732-4a4a-a82d-c0bfbcf948a5';
 
     protected function setUp(): void
     {

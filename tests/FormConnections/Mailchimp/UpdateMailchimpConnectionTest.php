@@ -16,7 +16,7 @@ class UpdateMailchimpConnectionTest extends TestCase
     use FakesRoles;
     use PreventsSavingStacheItemsToDisk;
 
-    private const AUDIENCE = 'a1b2c3d4e5';
+    private const string AUDIENCE = 'a1b2c3d4e5';
 
     #[Test]
     public function it_denies_access_if_you_dont_have_permission()
