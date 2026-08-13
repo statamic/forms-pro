@@ -373,6 +373,22 @@ class SubscribeToMailchimpTest extends TestCase
         }
     }
 
+    #[Test]
+    public function it_doesnt_subscribe_when_the_api_key_has_no_datacenter_suffix()
+    {
+        config(['forms-pro.connections.mailchimp.api_key' => 'keywithoutdatacenter']);
+
+        Http::fake();
+
+        $this->expectExceptionMessage('is invalid');
+
+        try {
+            $this->subscribe(['email' => 'jack@example.com']);
+        } finally {
+            Http::assertNothingSent();
+        }
+    }
+
     private function form(): FormContract
     {
         return tap(Form::make('contact_us')->title('Contact Us')->formFields([

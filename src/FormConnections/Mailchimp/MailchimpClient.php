@@ -121,6 +121,10 @@ class MailchimpClient
             'The [FORMS_PRO_MAILCHIMP_API_KEY] environment variable is required to use the Mailchimp connection.'
         ));
 
+        throw_unless(Str::contains($this->apiKey, '-'), new MailchimpException(
+            'The [FORMS_PRO_MAILCHIMP_API_KEY] environment variable is invalid.'
+        ));
+
         return Http::withToken($this->apiKey)
             ->baseUrl('https://'.Str::afterLast($this->apiKey, '-').'.api.mailchimp.com/3.0/')
             ->acceptJson()
