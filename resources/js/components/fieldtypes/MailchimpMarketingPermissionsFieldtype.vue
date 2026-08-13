@@ -59,6 +59,14 @@ const fetchPermissions = () => {
             error.value = data.error;
             state.value = data.state;
             permissions.value = data.permissions;
+
+            if (data.state === 'ok') {
+                const pruned = (props.value ?? []).filter(({ permission }) => data.permissions.some(({ id }) => id === permission));
+
+                if (pruned.length !== (props.value ?? []).length) {
+                    update(pruned.length ? pruned : null);
+                }
+            }
         })
         .catch(() => fetch === latestFetch && (error.value = __('Something went wrong')))
         .finally(() => fetch === latestFetch && (loading.value = false));
