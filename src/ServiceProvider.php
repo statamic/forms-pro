@@ -3,6 +3,7 @@
 namespace Statamic\FormsPro;
 
 use Illuminate\Cookie\Middleware\EncryptCookies;
+use Statamic\FormsPro\FormConnections\GoogleSheets\GoogleSheetsClient;
 use Statamic\FormsPro\FormConnections\HubSpot\HubSpotClient;
 use Statamic\FormsPro\FormConnections\Kit\KitClient;
 use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
@@ -45,6 +46,10 @@ class ServiceProvider extends AddonServiceProvider
 
     private function bootConnections(): void
     {
+        $this->app->bind(GoogleSheetsClient::class, fn () => new GoogleSheetsClient(
+            config('forms-pro.connections.google_sheets.credentials')
+        ));
+
         EncryptCookies::except('hubspotutk');
 
         $this->app->bind(HubSpotClient::class, fn () => new HubSpotClient(

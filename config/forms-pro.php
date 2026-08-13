@@ -24,6 +24,10 @@ return [
 
     'connections' => [
 
+        'google_sheets' => [
+            'credentials' => env('FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS'),
+        ],
+
         'hubspot' => [
             'access_token' => env('FORMS_PRO_HUBSPOT_ACCESS_TOKEN'),
         ],

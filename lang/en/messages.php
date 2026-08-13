@@ -1,6 +1,27 @@
 <?php
 
 return [
+    'google_sheets_connection_description' => 'Add submissions as rows in a Google Sheet.',
+    'google_sheets_connection_spreadsheet_instructions' => 'Paste the address from your browser\'s address bar.',
+    'google_sheets_connection_tab_instructions' => 'Rows are added to the bottom. Existing rows aren\'t changed.',
+    'google_sheets_connection_tab_no_spreadsheet' => 'Enter a spreadsheet first',
+    'google_sheets_connection_tab_placeholder' => 'Choose a tab',
+    'google_sheets_connection_fields_instructions' => 'Leave empty to include every field. Each one gets a column named after its handle, added the first time it\'s submitted. Unticking a field leaves its column and past data alone.',
+    'google_sheets_connection_service_account' => 'Statamic can only open spreadsheets that are shared with this address. It needs Editor access to add rows.',
+    'google_sheets_connection_not_found' => 'Couldn\'t open that spreadsheet. Check the address and make sure it\'s shared with :email as an Editor.',
+    'google_sheets_connection_api_error' => 'Couldn\'t connect to Google Sheets.',
+
+    'google_sheets_setup_heading' => 'Connect your Google account',
+    'google_sheets_setup_intro' => 'Your site needs a service account before it can write to Google Sheets. You only need to do this once.',
+    'google_sheets_setup_project' => 'Create a Google Cloud project, or open one you already have.',
+    'google_sheets_setup_api' => 'Enable the Google Sheets API for that project. The Drive API isn\'t needed.',
+    'google_sheets_setup_service_account' => 'Create a service account. Leave the optional steps empty — it doesn\'t need any roles, because you\'ll share the spreadsheet with it directly.',
+    'google_sheets_setup_key' => 'On the service account\'s Keys tab, add a key and choose JSON. It downloads once and Google won\'t show it again.',
+    'google_sheets_setup_env' => 'Encode the file you just downloaded by running this in your terminal:',
+    'google_sheets_setup_env_paste' => 'Then copy the result into your site\'s :file file:',
+    'google_sheets_setup_share' => 'Open the spreadsheet you\'d like submissions added to and share it with the service account\'s address, giving it Editor access. It\'s shown against the service account you created earlier, and ends in :suffix.',
+    'google_sheets_setup_developer' => 'These steps need access to the server, so you may need a developer to do them for you. Once the key is set, reload this page.',
+
     'hubspot_connection_description' => 'Send submissions to a HubSpot form.',
     'hubspot_connection_form_instructions' => 'Submissions are recorded against this form, so its workflows, follow-up emails and reporting all run as if someone filled it in on a HubSpot page.',
     'hubspot_connection_email_field_instructions' => 'Submissions without an email address are ignored.',
