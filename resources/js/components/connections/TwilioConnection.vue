@@ -99,7 +99,7 @@ onUnmounted(() => saveBinding.value?.destroy());
             <Description :text="__('forms-pro::messages.twilio_no_senders')" />
         </Alert>
 
-        <Label :text="__('Notifications')" class="mb-2" />
+        <Label v-if="notifications.length" :text="__('Notifications')" class="mb-2" />
 
         <ConnectionRows
             v-model="notifications"
@@ -107,7 +107,7 @@ onUnmounted(() => saveBinding.value?.destroy());
             :has-error
             :add-label="__('Add Notification')"
             :empty-heading="__('No notifications yet')"
-            :empty-description="__('forms-pro::messages.twilio_description')"
+            :empty-description="__('forms-pro::messages.twilio_empty_description')"
             :delete-heading="__('Delete Twilio Notification')"
             :delete-description="__('forms-pro::messages.twilio_delete_confirmation')"
         >
