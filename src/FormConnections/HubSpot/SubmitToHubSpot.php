@@ -101,7 +101,7 @@ class SubmitToHubSpot implements ShouldQueue
             return ['legitimateInterest' => Arr::removeNullValues([
                 'value' => true,
                 'subscriptionTypeId' => $this->legitimateInterestSubscription($consent),
-                'legalBasis' => $consent['lawfulBasis'] === 'client' ? 'CUSTOMER' : 'LEAD',
+                'legalBasis' => ($consent['lawfulBasis'] ?? null) === 'client' ? 'CUSTOMER' : 'LEAD',
                 'text' => $consent['privacyText'] ?? null,
             ])];
         }

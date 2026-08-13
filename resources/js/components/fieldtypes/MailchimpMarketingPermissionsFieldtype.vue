@@ -65,7 +65,7 @@ watch(list, fetchPermissions, { immediate: true });
     />
     <div v-else-if="loading" class="flex items-center truncate gap-x-2">
         <Icon name="loading" />
-        <Description :text="__('Loading...')" />
+        <Description :text="__('Loading')" />
     </div>
     <Description
         v-else-if="state === 'not_enabled'"

@@ -51,7 +51,7 @@ class SendTwilioMessage implements ShouldQueue
 
     private function recipient(Submission $submission): ?string
     {
-        $to = $this->config['to'];
+        $to = Arr::get($this->config, 'to');
 
         if (Str::startsWith($to, 'field:')) {
             $to = $submission->get(Str::after($to, 'field:'));

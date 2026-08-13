@@ -23,7 +23,7 @@ const options = computed(() => Object.entries(tabs.value).map(([id, name]) => ({
 
 const placeholder = computed(() => {
     if (!spreadsheet.value) return __('forms-pro::messages.google_sheets_connection_tab_no_spreadsheet');
-    if (loading.value) return __('Loading...');
+    if (loading.value) return __('Loading');
 
     return __('forms-pro::messages.google_sheets_connection_tab_placeholder');
 });

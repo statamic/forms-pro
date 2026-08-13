@@ -63,9 +63,7 @@ class HubSpot extends Connection
 
     private function context(): array
     {
-        if (! $request = request()) {
-            return [];
-        }
+        $request = request();
 
         $hutk = $request->cookie('hubspotutk');
         $referer = $request->headers->get('referer');

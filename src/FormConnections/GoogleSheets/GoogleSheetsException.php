@@ -9,7 +9,6 @@ class GoogleSheetsException extends RuntimeException
     public function __construct(
         string $message,
         private ?int $retryAfter = null,
-        private bool $skippable = false,
     ) {
         parent::__construct($message);
     }
@@ -22,10 +21,5 @@ class GoogleSheetsException extends RuntimeException
     public function isRetryable(): bool
     {
         return $this->retryAfter !== null;
-    }
-
-    public function isSkippable(): bool
-    {
-        return $this->skippable;
     }
 }
