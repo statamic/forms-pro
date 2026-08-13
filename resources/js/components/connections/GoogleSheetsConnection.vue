@@ -67,13 +67,13 @@ onUnmounted(() => saveBinding.value?.destroy());
 
     <div v-if="isConfigured">
         <Alert v-if="apiError" variant="error" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Heading :text="__('forms-pro::messages.google_sheets_connection_api_error')" />
+            <Heading :text="__('forms-pro::messages.google_sheets_api_error')" />
             <Description :text="__(apiError)" class="mt-1" />
         </Alert>
 
         <div v-if="serviceAccount" class="mb-6">
             <Label :text="__('Service Account')" />
-            <Description :text="__('forms-pro::messages.google_sheets_connection_service_account')" class="mt-1" />
+            <Description :text="__('forms-pro::messages.google_sheets_service_account')" class="mt-1" />
             <Input :model-value="serviceAccount" read-only copyable class="mt-2 font-mono text-xs" />
         </div>
 

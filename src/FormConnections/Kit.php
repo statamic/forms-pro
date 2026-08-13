@@ -28,7 +28,7 @@ class Kit extends Connection
 
     public function description(): ?string
     {
-        return __('forms-pro::messages.kit_connection_description');
+        return __('forms-pro::messages.kit_description');
     }
 
     public function icon(): ?string
@@ -105,7 +105,7 @@ class Kit extends Connection
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Email Address'),
-                                        'instructions' => __('forms-pro::messages.kit_connection_email_field_instructions'),
+                                        'instructions' => __('forms-pro::messages.kit_email_field_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'validate' => ['required'],
@@ -116,7 +116,7 @@ class Kit extends Connection
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('First Name'),
-                                        'instructions' => __('forms-pro::messages.kit_connection_first_name_field_instructions'),
+                                        'instructions' => __('forms-pro::messages.kit_first_name_field_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'clearable' => true,
@@ -127,7 +127,7 @@ class Kit extends Connection
                                     'field' => [
                                         'type' => 'select',
                                         'display' => __('Tags'),
-                                        'instructions' => __('forms-pro::messages.kit_connection_tags_instructions'),
+                                        'instructions' => __('forms-pro::messages.kit_tags_instructions'),
                                         'options' => $tags,
                                         'multiple' => true,
                                         'clearable' => true,
@@ -140,7 +140,7 @@ class Kit extends Connection
                                         'type' => 'grid',
                                         'mode' => 'table',
                                         'display' => __('Custom Fields'),
-                                        'instructions' => __('forms-pro::messages.kit_connection_custom_fields_instructions'),
+                                        'instructions' => __('forms-pro::messages.kit_custom_fields_instructions'),
                                         'add_row' => __('Add Custom Field'),
                                         'fullscreen' => false,
                                         'reorderable' => false,
@@ -174,7 +174,7 @@ class Kit extends Connection
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Only Subscribe When'),
-                                        'instructions' => __('forms-pro::messages.kit_connection_consent_field_instructions'),
+                                        'instructions' => __('forms-pro::messages.kit_consent_field_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['choice', 'other'],
                                         'clearable' => true,
@@ -186,7 +186,7 @@ class Kit extends Connection
                                     'field' => [
                                         'type' => 'select',
                                         'display' => __('Kit Form'),
-                                        'instructions' => __('forms-pro::messages.kit_connection_form_instructions'),
+                                        'instructions' => __('forms-pro::messages.kit_form_instructions'),
                                         'options' => $forms,
                                         'clearable' => true,
                                         'searchable' => true,

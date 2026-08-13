@@ -25,7 +25,7 @@ class Twilio extends Connection
 
     public function description(): ?string
     {
-        return __('forms-pro::messages.twilio_connection_description');
+        return __('forms-pro::messages.twilio_description');
     }
 
     public function icon(): ?string
@@ -105,7 +105,7 @@ class Twilio extends Connection
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Recipient'),
-                                        'instructions' => __('forms-pro::messages.twilio_connection_to_instructions'),
+                                        'instructions' => __('forms-pro::messages.twilio_to_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['contact', 'text', 'other'],
                                         'prefix' => 'field:',
@@ -119,7 +119,7 @@ class Twilio extends Connection
                                     'field' => [
                                         'type' => 'text',
                                         'display' => __('Default Country Code'),
-                                        'instructions' => __('forms-pro::messages.twilio_connection_country_code_instructions'),
+                                        'instructions' => __('forms-pro::messages.twilio_country_code_instructions'),
                                         'placeholder' => '+44',
                                         'width' => 50,
                                     ],
@@ -129,7 +129,7 @@ class Twilio extends Connection
                                     'field' => [
                                         'type' => 'select',
                                         'display' => __('Sender'),
-                                        'instructions' => __('forms-pro::messages.twilio_connection_from_instructions'),
+                                        'instructions' => __('forms-pro::messages.twilio_from_instructions'),
                                         'options' => $senders,
                                         'default' => count($senders) === 1 ? array_key_first($senders) : null,
                                         'validate' => ['required'],
@@ -142,7 +142,7 @@ class Twilio extends Connection
                                     'field' => [
                                         'type' => 'textarea',
                                         'display' => __('Message'),
-                                        'instructions' => __('forms-pro::messages.twilio_connection_body_instructions'),
+                                        'instructions' => __('forms-pro::messages.twilio_body_instructions'),
                                         'validate' => ['required', 'max:1600'],
                                     ],
                                 ],

@@ -26,7 +26,7 @@ class GoogleSheets extends Connection
 
     public function description(): ?string
     {
-        return __('forms-pro::messages.google_sheets_connection_description');
+        return __('forms-pro::messages.google_sheets_description');
     }
 
     public function icon(): ?string
@@ -118,7 +118,7 @@ class GoogleSheets extends Connection
                                     'field' => [
                                         'type' => 'text',
                                         'display' => __('Spreadsheet'),
-                                        'instructions' => __('forms-pro::messages.google_sheets_connection_spreadsheet_instructions'),
+                                        'instructions' => __('forms-pro::messages.google_sheets_spreadsheet_instructions'),
                                         'placeholder' => 'https://docs.google.com/spreadsheets/d/…',
                                         'validate' => ['required'],
                                     ],
@@ -128,7 +128,7 @@ class GoogleSheets extends Connection
                                     'field' => [
                                         'type' => 'google_sheets_tabs',
                                         'display' => __('Tab'),
-                                        'instructions' => __('forms-pro::messages.google_sheets_connection_tab_instructions'),
+                                        'instructions' => __('forms-pro::messages.google_sheets_tab_instructions'),
                                         'url' => cp_route('forms.connect.google_sheets.tabs', $form->handle()),
                                         'options' => $tabs,
                                         'validate' => ['required'],
@@ -139,7 +139,7 @@ class GoogleSheets extends Connection
                                     'field' => [
                                         'type' => 'checkboxes',
                                         'display' => __('Columns'),
-                                        'instructions' => __('forms-pro::messages.google_sheets_connection_fields_instructions'),
+                                        'instructions' => __('forms-pro::messages.google_sheets_fields_instructions'),
                                         'options' => static::columns($form),
                                     ],
                                 ],

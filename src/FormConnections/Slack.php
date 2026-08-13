@@ -25,7 +25,7 @@ class Slack extends Connection
 
     public function description(): ?string
     {
-        return __('forms-pro::messages.slack_connection_description');
+        return __('forms-pro::messages.slack_description');
     }
 
     public function icon(): ?string
@@ -107,7 +107,7 @@ class Slack extends Connection
                                     'field' => [
                                         'type' => 'select',
                                         'display' => __('Channel'),
-                                        'instructions' => __('forms-pro::messages.slack_connection_channel_instructions'),
+                                        'instructions' => __('forms-pro::messages.slack_channel_instructions'),
                                         'options' => collect($channels)->mapWithKeys(fn (array $channel) => [$channel['id'] => '#'.$channel['name']])->all(),
                                         'validate' => ['required'],
                                         'searchable' => true,
@@ -127,7 +127,7 @@ class Slack extends Connection
                                     'field' => [
                                         'type' => 'toggle',
                                         'display' => __('Link to Submission'),
-                                        'instructions' => __('forms-pro::messages.slack_connection_link_to_submission_instructions'),
+                                        'instructions' => __('forms-pro::messages.slack_link_to_submission_instructions'),
                                         'default' => true,
                                         'width' => 50,
                                     ],
@@ -137,7 +137,7 @@ class Slack extends Connection
                                     'field' => [
                                         'type' => 'toggle',
                                         'display' => __('Include Submitted Fields'),
-                                        'instructions' => __('forms-pro::messages.slack_connection_include_fields_instructions'),
+                                        'instructions' => __('forms-pro::messages.slack_include_fields_instructions'),
                                         'default' => true,
                                         'width' => 50,
                                     ],
@@ -147,7 +147,7 @@ class Slack extends Connection
                                     'field' => [
                                         'type' => 'checkboxes',
                                         'display' => __('Fields to Include'),
-                                        'instructions' => __('forms-pro::messages.slack_connection_fields_instructions'),
+                                        'instructions' => __('forms-pro::messages.slack_fields_instructions'),
                                         'options' => $form->formFields()->fields()
                                             ->reject(fn ($field) => array_intersect($field->fieldtype()->categories(), ['information', 'structure']))
                                             ->mapWithKeys(fn ($field) => [$field->handle() => __($field->display())])

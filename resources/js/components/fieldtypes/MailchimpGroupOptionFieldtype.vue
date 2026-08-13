@@ -24,11 +24,11 @@ watch(options, () => {
 <template>
     <Description
         v-if="!row?.field"
-        :text="__('forms-pro::messages.mailchimp_connection_group_option_no_field')"
+        :text="__('forms-pro::messages.mailchimp_group_option_no_field')"
     />
     <Description
         v-else-if="!options.length"
-        :text="__('forms-pro::messages.mailchimp_connection_group_option_when_checked')"
+        :text="__('forms-pro::messages.mailchimp_group_option_when_checked')"
     />
 
     <Combobox
@@ -36,7 +36,7 @@ watch(options, () => {
         :id
         :model-value="value"
         :options
-        :placeholder="__('forms-pro::messages.mailchimp_connection_group_option_placeholder')"
+        :placeholder="__('forms-pro::messages.mailchimp_group_option_placeholder')"
         :read-only="isReadOnly"
         searchable
         @update:model-value="update"

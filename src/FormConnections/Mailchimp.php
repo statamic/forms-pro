@@ -33,7 +33,7 @@ class Mailchimp extends Connection
 
     public function description(): ?string
     {
-        return __('forms-pro::messages.mailchimp_connection_description');
+        return __('forms-pro::messages.mailchimp_description');
     }
 
     public function icon(): ?string
@@ -111,7 +111,7 @@ class Mailchimp extends Connection
                                     'field' => [
                                         'type' => 'select',
                                         'display' => __('Audience'),
-                                        'instructions' => __('forms-pro::messages.mailchimp_connection_list_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailchimp_list_instructions'),
                                         'options' => $audiences,
                                         'default' => count($audiences) === 1 ? array_key_first($audiences) : null,
                                         'validate' => ['required'],
@@ -123,7 +123,7 @@ class Mailchimp extends Connection
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Email Address'),
-                                        'instructions' => __('forms-pro::messages.mailchimp_connection_email_field_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailchimp_email_field_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'validate' => ['required'],
@@ -156,7 +156,7 @@ class Mailchimp extends Connection
                                     'field' => [
                                         'type' => 'taggable',
                                         'display' => __('Tags'),
-                                        'instructions' => __('forms-pro::messages.mailchimp_connection_tags_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailchimp_tags_instructions'),
                                     ],
                                 ],
                                 [
@@ -165,7 +165,7 @@ class Mailchimp extends Connection
                                         'type' => 'grid',
                                         'mode' => 'table',
                                         'display' => __('Merge Fields'),
-                                        'instructions' => __('forms-pro::messages.mailchimp_connection_merge_fields_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailchimp_merge_fields_instructions'),
                                         'add_row' => __('Add Merge Field'),
                                         'fullscreen' => false,
                                         'reorderable' => false,
@@ -199,7 +199,7 @@ class Mailchimp extends Connection
                                         'type' => 'grid',
                                         'mode' => 'table',
                                         'display' => __('Groups'),
-                                        'instructions' => __('forms-pro::messages.mailchimp_connection_groups_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailchimp_groups_instructions'),
                                         'add_row' => __('Add Group'),
                                         'fullscreen' => false,
                                         'reorderable' => false,
@@ -242,7 +242,7 @@ class Mailchimp extends Connection
                                     'field' => [
                                         'type' => 'mailchimp_marketing_permissions',
                                         'display' => __('Marketing Permissions'),
-                                        'instructions' => __('forms-pro::messages.mailchimp_connection_marketing_permissions_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailchimp_marketing_permissions_instructions'),
                                         'form' => $form->handle(),
                                         'url' => cp_route('forms.connect.mailchimp.marketing-permissions', $form->handle()),
                                     ],
@@ -252,7 +252,7 @@ class Mailchimp extends Connection
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Only Subscribe When'),
-                                        'instructions' => __('forms-pro::messages.mailchimp_connection_consent_field_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailchimp_consent_field_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['choice', 'other'],
                                         'clearable' => true,
@@ -264,7 +264,7 @@ class Mailchimp extends Connection
                                     'field' => [
                                         'type' => 'toggle',
                                         'display' => __('Skip Confirmation Email'),
-                                        'instructions' => __('forms-pro::messages.mailchimp_connection_skip_confirmation_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailchimp_skip_confirmation_instructions'),
                                         'default' => false,
                                         'width' => 50,
                                     ],

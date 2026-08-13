@@ -19,7 +19,7 @@ class HubSpotCommunications extends Fieldtype
             'type' => 'form_fields',
             'form' => $this->config('form'),
             'categories' => ['choice', 'other'],
-            'placeholder' => 'forms-pro::messages.hubspot_connection_communications_placeholder',
+            'placeholder' => 'forms-pro::messages.hubspot_communications_placeholder',
             'clearable' => true,
         ]);
 

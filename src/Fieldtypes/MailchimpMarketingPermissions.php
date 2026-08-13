@@ -17,7 +17,7 @@ class MailchimpMarketingPermissions extends Fieldtype
             'type' => 'form_fields',
             'form' => $this->config('form'),
             'categories' => ['choice', 'other'],
-            'placeholder' => 'forms-pro::messages.mailchimp_connection_marketing_permissions_placeholder',
+            'placeholder' => 'forms-pro::messages.mailchimp_marketing_permissions_placeholder',
             'clearable' => true,
         ]);
 

@@ -34,11 +34,11 @@ const options = computed(() => {
 });
 
 const placeholder = computed(() => {
-    if (!list.value) return __('forms-pro::messages.mailchimp_connection_group_no_audience');
+    if (!list.value) return __('forms-pro::messages.mailchimp_group_no_audience');
     if (loading.value) return __('Loading');
-    if (!options.value.length) return __('forms-pro::messages.mailchimp_connection_group_all_mapped');
+    if (!options.value.length) return __('forms-pro::messages.mailchimp_group_all_mapped');
 
-    return __('forms-pro::messages.mailchimp_connection_group_placeholder');
+    return __('forms-pro::messages.mailchimp_group_placeholder');
 });
 
 const fetchGroups = () => {

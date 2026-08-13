@@ -30,7 +30,7 @@ watch(hubspotForm, () => save(mapping.value));
 </script>
 
 <template>
-    <Description v-if="!hubspotForm" :text="__('forms-pro::messages.hubspot_connection_no_form')" />
+    <Description v-if="!hubspotForm" :text="__('forms-pro::messages.hubspot_no_form')" />
 
     <table v-else class="grid-table">
         <thead>

@@ -32,7 +32,7 @@ class HubSpot extends Connection
 
     public function description(): ?string
     {
-        return __('forms-pro::messages.hubspot_connection_description');
+        return __('forms-pro::messages.hubspot_description');
     }
 
     public function icon(): ?string
@@ -131,7 +131,7 @@ class HubSpot extends Connection
                                     'field' => [
                                         'type' => 'select',
                                         'display' => __('HubSpot Form'),
-                                        'instructions' => __('forms-pro::messages.hubspot_connection_form_instructions'),
+                                        'instructions' => __('forms-pro::messages.hubspot_form_instructions'),
                                         'options' => collect($forms)->map(fn (array $hubspotForm): string => $hubspotForm['name'])->all(),
                                         'default' => count($forms) === 1 ? array_key_first($forms) : null,
                                         'validate' => ['required'],
@@ -143,7 +143,7 @@ class HubSpot extends Connection
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Email Address'),
-                                        'instructions' => __('forms-pro::messages.hubspot_connection_email_field_instructions'),
+                                        'instructions' => __('forms-pro::messages.hubspot_email_field_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'validate' => ['required'],
@@ -154,7 +154,7 @@ class HubSpot extends Connection
                                     'field' => [
                                         'type' => 'hubspot_properties',
                                         'display' => __('Fields'),
-                                        'instructions' => __('forms-pro::messages.hubspot_connection_properties_instructions'),
+                                        'instructions' => __('forms-pro::messages.hubspot_properties_instructions'),
                                         'form' => $form->handle(),
                                         'forms' => $forms,
                                     ],
@@ -164,7 +164,7 @@ class HubSpot extends Connection
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Consent to Process Data'),
-                                        'instructions' => __('forms-pro::messages.hubspot_connection_consent_to_process_instructions'),
+                                        'instructions' => __('forms-pro::messages.hubspot_consent_to_process_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['choice', 'other'],
                                         'clearable' => true,
@@ -176,7 +176,7 @@ class HubSpot extends Connection
                                     'field' => [
                                         'type' => 'hubspot_subscription',
                                         'display' => __('Legitimate Interest Subscription'),
-                                        'instructions' => __('forms-pro::messages.hubspot_connection_legitimate_interest_instructions'),
+                                        'instructions' => __('forms-pro::messages.hubspot_legitimate_interest_instructions'),
                                         'forms' => $forms,
                                         'subscriptions' => $subscriptions,
                                         'if' => ['consent_type' => 'legitimate_interest'],
@@ -187,7 +187,7 @@ class HubSpot extends Connection
                                     'field' => [
                                         'type' => 'hubspot_communications',
                                         'display' => __('Marketing Consent'),
-                                        'instructions' => __('forms-pro::messages.hubspot_connection_communications_instructions'),
+                                        'instructions' => __('forms-pro::messages.hubspot_communications_instructions'),
                                         'form' => $form->handle(),
                                         'forms' => $forms,
                                         'subscriptions' => $subscriptions,
@@ -199,7 +199,7 @@ class HubSpot extends Connection
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Only Submit When'),
-                                        'instructions' => __('forms-pro::messages.hubspot_connection_consent_field_instructions'),
+                                        'instructions' => __('forms-pro::messages.hubspot_consent_field_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['choice', 'other'],
                                         'clearable' => true,

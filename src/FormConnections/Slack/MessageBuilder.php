@@ -48,7 +48,7 @@ class MessageBuilder
             return (string) Antlers::parse(Parse::config($heading), $this->submission->toAugmentedArray());
         }
 
-        return __('forms-pro::messages.slack_connection_heading', [
+        return __('forms-pro::messages.slack_heading', [
             'form' => __($this->submission->form()->title()),
         ]);
     }
@@ -229,7 +229,7 @@ class MessageBuilder
             'type' => 'actions',
             'elements' => [[
                 'type' => 'button',
-                'text' => ['type' => 'plain_text', 'text' => __('forms-pro::messages.slack_connection_view_submission')],
+                'text' => ['type' => 'plain_text', 'text' => __('forms-pro::messages.slack_view_submission')],
                 'url' => cp_route('forms.submissions.show', [$this->submission->form()->handle(), $this->submission->id()]),
             ]],
         ];
@@ -258,7 +258,7 @@ class MessageBuilder
             'type' => 'context',
             'elements' => [[
                 'type' => 'mrkdwn',
-                'text' => '_'.__('forms-pro::messages.slack_connection_truncated').'_',
+                'text' => '_'.__('forms-pro::messages.slack_truncated').'_',
             ]],
         ];
     }

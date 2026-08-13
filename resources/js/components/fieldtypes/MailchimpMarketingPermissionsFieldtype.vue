@@ -61,7 +61,7 @@ watch(list, fetchPermissions, { immediate: true });
 <template>
     <Description
         v-if="!list"
-        :text="__('forms-pro::messages.mailchimp_connection_marketing_permissions_no_audience')"
+        :text="__('forms-pro::messages.mailchimp_marketing_permissions_no_audience')"
     />
     <div v-else-if="loading" class="flex items-center truncate gap-x-2">
         <Icon name="loading" />
@@ -69,11 +69,11 @@ watch(list, fetchPermissions, { immediate: true });
     </div>
     <Description
         v-else-if="state === 'not_enabled'"
-        :text="__('forms-pro::messages.mailchimp_connection_marketing_permissions_not_enabled')"
+        :text="__('forms-pro::messages.mailchimp_marketing_permissions_not_enabled')"
     />
     <Description
         v-else-if="state === 'no_contacts'"
-        :text="__('forms-pro::messages.mailchimp_connection_marketing_permissions_no_contacts')"
+        :text="__('forms-pro::messages.mailchimp_marketing_permissions_no_contacts')"
     />
 
     <table v-else class="grid-table">

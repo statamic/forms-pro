@@ -66,7 +66,7 @@ onUnmounted(() => saveBinding.value?.destroy());
 
     <div v-if="isConfigured">
         <Alert v-if="apiError" variant="error" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Heading :text="__('forms-pro::messages.kit_connection_api_error')" />
+            <Heading :text="__('forms-pro::messages.kit_api_error')" />
             <Description :text="__(apiError)" class="mt-1" />
         </Alert>
 

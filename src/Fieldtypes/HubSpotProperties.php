@@ -18,7 +18,7 @@ class HubSpotProperties extends Fieldtype
         $field = new Field('field', [
             'type' => 'form_fields',
             'form' => $this->config('form'),
-            'placeholder' => 'forms-pro::messages.hubspot_connection_property_placeholder',
+            'placeholder' => 'forms-pro::messages.hubspot_property_placeholder',
             'clearable' => true,
         ]);
 

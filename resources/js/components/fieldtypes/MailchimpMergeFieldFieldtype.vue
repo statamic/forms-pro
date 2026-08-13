@@ -24,10 +24,10 @@ const options = computed(() => {
 });
 
 const placeholder = computed(() => {
-    if (!list.value) return __('forms-pro::messages.mailchimp_connection_merge_field_no_audience');
+    if (!list.value) return __('forms-pro::messages.mailchimp_merge_field_no_audience');
     if (loading.value) return __('Loading');
 
-    return __('forms-pro::messages.mailchimp_connection_merge_field_placeholder');
+    return __('forms-pro::messages.mailchimp_merge_field_placeholder');
 });
 
 const fetchMergeFields = () => {

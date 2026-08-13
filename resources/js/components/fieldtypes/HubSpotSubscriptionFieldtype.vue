@@ -35,7 +35,7 @@ watch(hubspotForm, () => {
         :options
         :model-value="value"
         :read-only="isReadOnly"
-        :placeholder="__('forms-pro::messages.hubspot_connection_subscription_placeholder')"
+        :placeholder="__('forms-pro::messages.hubspot_subscription_placeholder')"
         @update:model-value="update($event)"
     />
 </template>

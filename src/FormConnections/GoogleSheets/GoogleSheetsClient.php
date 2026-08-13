@@ -162,7 +162,7 @@ class GoogleSheetsClient
         }
 
         if ($response->notFound()) {
-            throw new GoogleSheetsException(__('forms-pro::messages.google_sheets_connection_not_found', [
+            throw new GoogleSheetsException(__('forms-pro::messages.google_sheets_not_found', [
                 'email' => $this->serviceAccountEmail(),
             ]));
         }

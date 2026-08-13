@@ -32,7 +32,7 @@ watch(hubspotForm, () => save(mapping.value));
 </script>
 
 <template>
-    <Description v-if="!checkboxes.length" :text="__('forms-pro::messages.hubspot_connection_no_consent')" />
+    <Description v-if="!checkboxes.length" :text="__('forms-pro::messages.hubspot_no_consent')" />
 
     <table v-else class="grid-table">
         <thead>

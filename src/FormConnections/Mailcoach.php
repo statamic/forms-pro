@@ -28,7 +28,7 @@ class Mailcoach extends Connection
 
     public function description(): ?string
     {
-        return __('forms-pro::messages.mailcoach_connection_description');
+        return __('forms-pro::messages.mailcoach_description');
     }
 
     public function icon(): ?string
@@ -107,7 +107,7 @@ class Mailcoach extends Connection
                                     'field' => [
                                         'type' => 'select',
                                         'display' => __('Mailcoach List'),
-                                        'instructions' => __('forms-pro::messages.mailcoach_connection_list_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailcoach_list_instructions'),
                                         'options' => $lists,
                                         'default' => count($lists) === 1 ? array_key_first($lists) : null,
                                         'validate' => ['required'],
@@ -119,7 +119,7 @@ class Mailcoach extends Connection
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Email Address'),
-                                        'instructions' => __('forms-pro::messages.mailcoach_connection_email_field_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailcoach_email_field_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'validate' => ['required'],
@@ -152,7 +152,7 @@ class Mailcoach extends Connection
                                     'field' => [
                                         'type' => 'taggable',
                                         'display' => __('Tags'),
-                                        'instructions' => __('forms-pro::messages.mailcoach_connection_tags_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailcoach_tags_instructions'),
                                     ],
                                 ],
                                 [
@@ -161,7 +161,7 @@ class Mailcoach extends Connection
                                         'type' => 'grid',
                                         'mode' => 'table',
                                         'display' => __('Attributes'),
-                                        'instructions' => __('forms-pro::messages.mailcoach_connection_attributes_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailcoach_attributes_instructions'),
                                         'add_row' => __('Add Attribute'),
                                         'fullscreen' => false,
                                         'reorderable' => false,
@@ -193,7 +193,7 @@ class Mailcoach extends Connection
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Only Subscribe When'),
-                                        'instructions' => __('forms-pro::messages.mailcoach_connection_consent_field_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailcoach_consent_field_instructions'),
                                         'form' => $form->handle(),
                                         'categories' => ['choice', 'other'],
                                         'clearable' => true,
@@ -205,7 +205,7 @@ class Mailcoach extends Connection
                                     'field' => [
                                         'type' => 'toggle',
                                         'display' => __('Skip Confirmation Email'),
-                                        'instructions' => __('forms-pro::messages.mailcoach_connection_skip_confirmation_instructions'),
+                                        'instructions' => __('forms-pro::messages.mailcoach_skip_confirmation_instructions'),
                                         'default' => false,
                                         'width' => 50,
                                     ],

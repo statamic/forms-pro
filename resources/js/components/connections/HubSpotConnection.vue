@@ -95,32 +95,32 @@ onUnmounted(() => saveBinding.value?.destroy());
 
     <div v-if="isConfigured">
         <Alert v-if="apiError" variant="error" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Heading :text="__('forms-pro::messages.hubspot_connection_api_error')" />
+            <Heading :text="__('forms-pro::messages.hubspot_api_error')" />
             <Description :text="__(apiError)" class="mt-1" />
         </Alert>
 
         <Alert v-else-if="!Object.keys(hubspotForms).length" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Description :text="__('forms-pro::messages.hubspot_connection_no_forms')" />
+            <Description :text="__('forms-pro::messages.hubspot_no_forms')" />
         </Alert>
 
         <Alert v-if="missingConsentToProcess" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Description :text="__('forms-pro::messages.hubspot_connection_consent_to_process_warning')" />
+            <Description :text="__('forms-pro::messages.hubspot_consent_to_process_warning')" />
         </Alert>
 
         <Alert v-if="missingCommunications" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Description :text="__('forms-pro::messages.hubspot_connection_communications_warning')" />
+            <Description :text="__('forms-pro::messages.hubspot_communications_warning')" />
         </Alert>
 
         <Alert v-if="missingSubscription" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Description :text="__('forms-pro::messages.hubspot_connection_subscription_warning')" />
+            <Description :text="__('forms-pro::messages.hubspot_subscription_warning')" />
         </Alert>
 
         <Alert v-if="hubspotForm?.captcha" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Description :text="__('forms-pro::messages.hubspot_connection_captcha_warning')" />
+            <Description :text="__('forms-pro::messages.hubspot_captcha_warning')" />
         </Alert>
 
         <Alert v-if="hubspotForm && !hubspotForm.has_email" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Description :text="__('forms-pro::messages.hubspot_connection_no_email_warning')" />
+            <Description :text="__('forms-pro::messages.hubspot_no_email_warning')" />
         </Alert>
 
         <PublishContainer

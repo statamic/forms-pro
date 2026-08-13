@@ -22,10 +22,10 @@ const spreadsheet = computed(() => (values.value?.spreadsheet?.startsWith(spread
 const options = computed(() => Object.entries(tabs.value).map(([id, name]) => ({ value: Number(id), label: name })));
 
 const placeholder = computed(() => {
-    if (!spreadsheet.value) return __('forms-pro::messages.google_sheets_connection_tab_no_spreadsheet');
+    if (!spreadsheet.value) return __('forms-pro::messages.google_sheets_tab_no_spreadsheet');
     if (loading.value) return __('Loading');
 
-    return __('forms-pro::messages.google_sheets_connection_tab_placeholder');
+    return __('forms-pro::messages.google_sheets_tab_placeholder');
 });
 
 const fetchTabs = () => {
