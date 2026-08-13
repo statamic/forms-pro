@@ -41,7 +41,6 @@ class Slack extends Connection
     public function finalized(Submission $submission): object|array
     {
         return collect($submission->form()->connections()->get('slack'))
-            ->reject(fn (array $config) => ($config['enabled'] ?? true) === false)
             ->filter(fn (array $config) => ConnectionLogic::passes($config, $submission))
             ->map(fn (array $config) => new SendSlackMessage($submission, $submission->site(), $config))
             ->values()

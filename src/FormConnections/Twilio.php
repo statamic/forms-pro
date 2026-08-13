@@ -41,7 +41,6 @@ class Twilio extends Connection
     public function finalized(Submission $submission): object|array
     {
         return collect($submission->form()->connections()->get('twilio'))
-            ->reject(fn (array $config) => ($config['enabled'] ?? true) === false)
             ->filter(fn (array $config) => ConnectionLogic::passes($config, $submission))
             ->map(fn (array $config) => new SendTwilioMessage($submission, $config))
             ->values()
