@@ -45,6 +45,16 @@ class SubscribeToKitTest extends TestCase
     }
 
     #[Test]
+    public function it_doesnt_subscribe_when_the_email_field_is_blank()
+    {
+        Http::fake();
+
+        $this->subscribe(['email' => null]);
+
+        Http::assertNothingSent();
+    }
+
+    #[Test]
     public function it_doesnt_send_a_state()
     {
         $payload = $this->payload(['email' => 'jack@example.com']);

@@ -29,7 +29,10 @@ class SubscribeToMailchimp implements ShouldQueue
     public function handle(MailchimpClient $mailchimp): void
     {
         $submission = $this->submission->form()->submission($this->submission->id()) ?? $this->submission;
-        $email = $this->value($submission, $this->config['email_field']);
+
+        if (! $email = $this->value($submission, $this->config['email_field'])) {
+            return;
+        }
 
         try {
             $mailchimp->subscribe($this->config['list'], $this->member($submission, $email));

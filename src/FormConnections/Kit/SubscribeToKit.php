@@ -28,7 +28,10 @@ class SubscribeToKit implements ShouldQueue
     public function handle(KitClient $kit): void
     {
         $submission = $this->submission->form()->submission($this->submission->id()) ?? $this->submission;
-        $email = $this->value($submission, $this->config['email_field']);
+
+        if (! $email = $this->value($submission, $this->config['email_field'])) {
+            return;
+        }
 
         try {
             $response = $kit->subscribe($this->subscriber($submission, $email));
