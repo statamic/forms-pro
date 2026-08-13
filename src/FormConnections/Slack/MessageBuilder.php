@@ -35,7 +35,7 @@ class MessageBuilder
     {
         return [
             'channel' => $this->config['channel'],
-            'text' => $this->heading(),
+            'text' => $this->escape($this->heading()),
             'blocks' => $this->blocks(),
             'unfurl_links' => false,
             'unfurl_media' => false,

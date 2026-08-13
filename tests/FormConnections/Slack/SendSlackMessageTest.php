@@ -87,6 +87,18 @@ class SendSlackMessageTest extends TestCase
     }
 
     #[Test]
+    public function it_escapes_mrkdwn_in_the_plain_text_fallback()
+    {
+        Http::fake(['slack.com/*' => Http::response(['ok' => true])]);
+
+        $this->send($this->form(), ['name' => '<!channel>'], [
+            'heading' => 'New enquiry from {{ name }}',
+        ]);
+
+        Http::assertSent(fn (Request $request) => $request['text'] === 'New enquiry from &lt;!channel&gt;');
+    }
+
+    #[Test]
     public function it_includes_all_fields_by_default()
     {
         $blocks = $this->blocksForForm($this->form(), ['name' => 'Jack Black', 'email' => 'jack@example.com']);
