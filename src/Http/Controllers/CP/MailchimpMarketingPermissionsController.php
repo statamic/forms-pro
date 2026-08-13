@@ -2,9 +2,11 @@
 
 namespace Statamic\FormsPro\Http\Controllers\CP;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
+use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpException;
 use Statamic\Http\Controllers\CP\CpController;
 use Statamic\Support\Arr;
 
@@ -20,7 +22,11 @@ class MailchimpMarketingPermissionsController extends CpController
             return $cached;
         }
 
-        $permissions = $this->permissions($request->list);
+        try {
+            $permissions = $this->permissions($request->list);
+        } catch (ConnectionException|MailchimpException $e) {
+            return ['state' => null, 'permissions' => [], 'error' => $e->getMessage()];
+        }
 
         // An audience only reveals its permissions once it has a contact, so the empty
         // state isn't cached — the next submission should be enough to resolve it.
@@ -36,7 +42,7 @@ class MailchimpMarketingPermissionsController extends CpController
         $mailchimp = app(MailchimpClient::class);
 
         if (! Arr::get($mailchimp->audience($audience), 'marketing_permissions')) {
-            return ['state' => 'not_enabled', 'permissions' => []];
+            return ['state' => 'not_enabled', 'permissions' => [], 'error' => null];
         }
 
         $permissions = $mailchimp->marketingPermissions($audience);
@@ -44,6 +50,7 @@ class MailchimpMarketingPermissionsController extends CpController
         return [
             'state' => $permissions ? 'ok' : 'no_contacts',
             'permissions' => $permissions,
+            'error' => null,
         ];
     }
 }

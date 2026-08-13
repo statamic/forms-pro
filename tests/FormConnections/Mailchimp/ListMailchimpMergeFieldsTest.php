@@ -39,9 +39,21 @@ class ListMailchimpMergeFieldsTest extends TestCase
             ->actingAs($this->userWithPermission())
             ->getJson($this->url())
             ->assertOk()
-            ->assertExactJson([['tag' => 'COMPANY', 'name' => 'Company']]);
+            ->assertExactJson(['merge_fields' => [['tag' => 'COMPANY', 'name' => 'Company']], 'error' => null]);
 
         Http::assertSent(fn (Request $request) => str_contains($request->url(), 'lists/'.self::AUDIENCE.'/merge-fields'));
+    }
+
+    #[Test]
+    public function it_returns_the_error_when_mailchimp_is_unavailable()
+    {
+        Http::fake(['us14.api.mailchimp.com/*' => Http::response([], 500)]);
+
+        $this
+            ->actingAs($this->userWithPermission())
+            ->getJson($this->url())
+            ->assertOk()
+            ->assertExactJson(['merge_fields' => [], 'error' => 'Mailchimp responded with a [500] status code.']);
     }
 
     #[Test]

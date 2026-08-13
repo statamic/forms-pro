@@ -1,6 +1,6 @@
 <script setup>
 import { Fieldtype } from '@statamic/cms';
-import { Description, Icon, injectPublishContext } from '@statamic/cms/ui';
+import { Description, ErrorMessage, Icon, injectPublishContext } from '@statamic/cms/ui';
 import axios from 'axios';
 import { computed, ref, watch } from 'vue';
 
@@ -11,6 +11,7 @@ defineExpose(expose);
 
 const { values } = injectPublishContext();
 
+const error = ref(null);
 const state = ref(null);
 const loading = ref(false);
 const permissions = ref([]);
@@ -37,7 +38,12 @@ const setField = (id, handle) => {
     );
 };
 
+let latestFetch = 0;
+
 const fetchPermissions = () => {
+    const fetch = ++latestFetch;
+
+    error.value = null;
     state.value = null;
     permissions.value = [];
 
@@ -48,11 +54,14 @@ const fetchPermissions = () => {
     axios
         .get(props.config.url, { params: { list: list.value } })
         .then(({ data }) => {
+            if (fetch !== latestFetch) return;
+
+            error.value = data.error;
             state.value = data.state;
             permissions.value = data.permissions;
         })
-        .catch(() => (state.value = null))
-        .finally(() => (loading.value = false));
+        .catch(() => fetch === latestFetch && (error.value = __('Something went wrong')))
+        .finally(() => fetch === latestFetch && (loading.value = false));
 };
 
 watch(list, fetchPermissions, { immediate: true });
@@ -75,8 +84,9 @@ watch(list, fetchPermissions, { immediate: true });
         v-else-if="state === 'no_contacts'"
         :text="__('forms-pro::messages.mailchimp_marketing_permissions_no_contacts')"
     />
+    <ErrorMessage v-else-if="error" :text="error" class="text-red-500 dark:text-red-400" />
 
-    <table v-else class="grid-table">
+    <table v-else-if="state === 'ok'" class="grid-table">
         <thead>
             <tr>
                 <th scope="col" width="50%" class="text-start">{{ __('Permission') }}</th>

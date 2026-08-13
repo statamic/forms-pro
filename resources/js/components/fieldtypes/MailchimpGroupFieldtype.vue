@@ -1,6 +1,6 @@
 <script setup>
 import { Fieldtype } from '@statamic/cms';
-import { Combobox, Icon, injectPublishContext } from '@statamic/cms/ui';
+import { Combobox, ErrorMessage, Icon, injectPublishContext } from '@statamic/cms/ui';
 import axios from 'axios';
 import { computed, ref, watch } from 'vue';
 
@@ -11,6 +11,7 @@ defineExpose(expose);
 
 const { values } = injectPublishContext();
 
+const error = ref(null);
 const loading = ref(false);
 const groups = ref([]);
 
@@ -36,49 +37,63 @@ const options = computed(() => {
 const placeholder = computed(() => {
     if (!list.value) return __('forms-pro::messages.mailchimp_group_no_audience');
     if (loading.value) return __('Loading');
-    if (!options.value.length) return __('forms-pro::messages.mailchimp_group_all_mapped');
+    if (groups.value.length && !options.value.length) return __('forms-pro::messages.mailchimp_group_all_mapped');
 
     return __('forms-pro::messages.mailchimp_group_placeholder');
 });
 
+let latestFetch = 0;
+
 const fetchGroups = () => {
+    const fetch = ++latestFetch;
+
+    error.value = null;
     groups.value = [];
+
     if (!list.value) return;
+
     loading.value = true;
 
     axios.get(props.config.url, { params: { list: list.value } })
-        .then((response) => {
-            groups.value = response.data;
+        .then(({ data }) => {
+            if (fetch !== latestFetch) return;
 
-            if (props.value && !response.data.some((group) => group.id === props.value)) {
+            error.value = data.error;
+            groups.value = data.groups;
+
+            if (!data.error && props.value && !data.groups.some((group) => group.id === props.value)) {
                 update(null);
             }
         })
-        .catch(() => (groups.value = []))
-        .finally(() => (loading.value = false));
+        .catch(() => fetch === latestFetch && (error.value = __('Something went wrong')))
+        .finally(() => fetch === latestFetch && (loading.value = false));
 };
 
 watch(list, fetchGroups, { immediate: true });
 </script>
 
 <template>
-    <Combobox
-        :id
-        :model-value="value"
-        :options
-        :placeholder
-        :read-only="isReadOnly"
-        :disabled="!list || loading"
-        searchable
-        @update:model-value="update"
-    >
-        <template #selected-option="{ option }">
-            <div v-if="loading" class="flex items-center truncate gap-x-2">
-                <Icon name="loading" />
-                {{ __('Loading') }}
-            </div>
+    <div class="space-y-2">
+        <Combobox
+            :id
+            :model-value="value"
+            :options
+            :placeholder
+            :read-only="isReadOnly"
+            :disabled="!list || loading"
+            searchable
+            @update:model-value="update"
+        >
+            <template #selected-option="{ option }">
+                <div v-if="loading" class="flex items-center truncate gap-x-2">
+                    <Icon name="loading" />
+                    {{ __('Loading') }}
+                </div>
 
-            <div v-else class="truncate">{{ option.label }}</div>
-        </template>
-    </Combobox>
+                <div v-else class="truncate">{{ option.label }}</div>
+            </template>
+        </Combobox>
+
+        <ErrorMessage v-if="error" :text="error" class="text-red-500 dark:text-red-400" />
+    </div>
 </template>

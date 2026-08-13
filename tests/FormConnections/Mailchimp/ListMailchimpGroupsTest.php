@@ -47,11 +47,11 @@ class ListMailchimpGroupsTest extends TestCase
             ->actingAs($this->userWithPermission())
             ->getJson($this->url())
             ->assertOk()
-            ->assertExactJson([
+            ->assertExactJson(['groups' => [
                 ['id' => '4e4b2bc6ae', 'name' => 'News', 'category' => 'Interests'],
                 ['id' => '3e1e51dbae', 'name' => 'Offers', 'category' => 'Interests'],
                 ['id' => 'f79652f791', 'name' => 'Weekly', 'category' => 'Updates'],
-            ]);
+            ], 'error' => null]);
     }
 
     #[Test]
@@ -63,7 +63,19 @@ class ListMailchimpGroupsTest extends TestCase
             ->actingAs($this->userWithPermission())
             ->getJson($this->url())
             ->assertOk()
-            ->assertExactJson([]);
+            ->assertExactJson(['groups' => [], 'error' => null]);
+    }
+
+    #[Test]
+    public function it_returns_the_error_when_mailchimp_is_unavailable()
+    {
+        Http::fake(['*/interest-categories*' => Http::response([], 500)]);
+
+        $this
+            ->actingAs($this->userWithPermission())
+            ->getJson($this->url())
+            ->assertOk()
+            ->assertExactJson(['groups' => [], 'error' => 'Mailchimp responded with a [500] status code.']);
     }
 
     #[Test]

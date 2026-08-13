@@ -49,6 +49,7 @@ class ListMailchimpMarketingPermissionsTest extends TestCase
                     ['id' => 'd60cef6b1f', 'text' => 'Email'],
                     ['id' => '3560e0d4a2', 'text' => 'Direct Mail'],
                 ],
+                'error' => null,
             ]);
 
         Http::assertSent(fn (Request $request) => str_contains($request->url(), 'lists/'.self::AUDIENCE.'/members'));
@@ -63,7 +64,7 @@ class ListMailchimpMarketingPermissionsTest extends TestCase
             ->actingAs($this->userWithPermission())
             ->getJson($this->url())
             ->assertOk()
-            ->assertExactJson(['state' => 'not_enabled', 'permissions' => []]);
+            ->assertExactJson(['state' => 'not_enabled', 'permissions' => [], 'error' => null]);
 
         Http::assertSentCount(1);
     }
@@ -77,7 +78,19 @@ class ListMailchimpMarketingPermissionsTest extends TestCase
             ->actingAs($this->userWithPermission())
             ->getJson($this->url())
             ->assertOk()
-            ->assertExactJson(['state' => 'no_contacts', 'permissions' => []]);
+            ->assertExactJson(['state' => 'no_contacts', 'permissions' => [], 'error' => null]);
+    }
+
+    #[Test]
+    public function it_returns_the_error_when_mailchimp_is_unavailable()
+    {
+        Http::fake(['*/lists/'.self::AUDIENCE => Http::response([], 500)]);
+
+        $this
+            ->actingAs($this->userWithPermission())
+            ->getJson($this->url())
+            ->assertOk()
+            ->assertExactJson(['state' => null, 'permissions' => [], 'error' => 'Mailchimp responded with a [500] status code.']);
     }
 
     #[Test]
