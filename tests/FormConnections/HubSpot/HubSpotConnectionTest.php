@@ -138,6 +138,28 @@ class HubSpotConnectionTest extends TestCase
     }
 
     #[Test]
+    public function it_follows_pagination_when_listing_forms()
+    {
+        Http::fake([
+            'api.hubapi.com/marketing/v3/forms*after=page-two*' => Http::response(['results' => [
+                array_merge($this->definition(), ['id' => 'second-form', 'name' => 'Careers']),
+            ]]),
+            'api.hubapi.com/marketing/v3/forms*' => Http::response([
+                'results' => [$this->definition()],
+                'paging' => ['next' => ['after' => 'page-two']],
+            ]),
+            'api.hubapi.com/communication-preferences/*' => Http::response(['subscriptionDefinitions' => []]),
+        ]);
+
+        $rendered = (new HubSpot)->render($this->form())->toArray();
+
+        $this->assertEquals(
+            ['second-form' => 'Careers', self::FORM => 'Contact Us'],
+            $rendered['props']['blueprint']['tabs'][0]['sections'][0]['fields'][0]['options'],
+        );
+    }
+
+    #[Test]
     public function it_preselects_the_form_when_theres_only_one()
     {
         $this->fakeAccount();

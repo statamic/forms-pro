@@ -112,6 +112,29 @@ class KitConnectionTest extends TestCase
     }
 
     #[Test]
+    public function it_follows_pagination_when_listing_tags()
+    {
+        Http::fake([
+            'api.kit.com/v4/forms*' => Http::response(['forms' => []]),
+            'api.kit.com/v4/custom_fields*' => Http::response(['custom_fields' => []]),
+            'api.kit.com/v4/tags*after=page-two*' => Http::response(['tags' => [
+                ['id' => 22367469, 'name' => 'Subscribers'],
+            ]]),
+            'api.kit.com/v4/tags*' => Http::response([
+                'tags' => [['id' => 22367468, 'name' => 'Customers']],
+                'pagination' => ['end_cursor' => 'page-two', 'has_next_page' => true],
+            ]),
+        ]);
+
+        $props = (new Kit)->render($this->form())->toArray()['props'];
+
+        $this->assertEquals([
+            ['value' => '22367468', 'label' => 'Customers'],
+            ['value' => '22367469', 'label' => 'Subscribers'],
+        ], $props['meta']['tags']['options']);
+    }
+
+    #[Test]
     public function it_renders_the_setup_instructions_when_unconfigured()
     {
         config(['forms-pro.connections.kit.api_key' => null]);

@@ -3,6 +3,7 @@
 namespace Tests\FormConnections\Slack;
 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -122,6 +123,31 @@ class SlackConnectionTest extends TestCase
         $this->assertEquals('slack-connection', $component['name']);
         $this->assertEquals(cp_route('forms.connect.slack.update', 'test'), $component['props']['action']);
         $this->assertTrue($component['props']['isConfigured']);
+    }
+
+    #[Test]
+    public function it_follows_pagination_when_listing_channels()
+    {
+        Http::fake(fn (Request $request) => match ($request['cursor']) {
+            '' => Http::response([
+                'ok' => true,
+                'channels' => [['id' => 'C1', 'name' => 'general']],
+                'response_metadata' => ['next_cursor' => 'page-two'],
+            ]),
+            'page-two' => Http::response([
+                'ok' => true,
+                'channels' => [['id' => 'C2', 'name' => 'support']],
+            ]),
+        });
+
+        $form = tap(Form::make('test'))->save();
+
+        $options = (new Slack)->render($form)->toArray()['props']['defaults']['meta']['channel']['options'];
+
+        $this->assertEquals([
+            ['value' => 'C1', 'label' => '#general'],
+            ['value' => 'C2', 'label' => '#support'],
+        ], $options);
     }
 
     #[Test]

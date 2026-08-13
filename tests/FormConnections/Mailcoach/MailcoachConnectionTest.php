@@ -123,6 +123,27 @@ class MailcoachConnectionTest extends TestCase
     }
 
     #[Test]
+    public function it_follows_pagination_when_listing_lists()
+    {
+        Http::fake([
+            'acme.mailcoach.app/*page=2*' => Http::response(['data' => [
+                ['uuid' => 'list-two', 'name' => 'Product Updates'],
+            ]]),
+            'acme.mailcoach.app/*' => Http::response([
+                'data' => [['uuid' => 'list-one', 'name' => 'Newsletter']],
+                'links' => ['next' => 'https://acme.mailcoach.app/api/email-lists?page=2'],
+            ]),
+        ]);
+
+        $props = (new Mailcoach)->render($this->form([]))->toArray()['props'];
+
+        $this->assertEquals([
+            ['value' => 'list-one', 'label' => 'Newsletter'],
+            ['value' => 'list-two', 'label' => 'Product Updates'],
+        ], $props['meta']['list']['options']);
+    }
+
+    #[Test]
     public function it_renders_the_setup_instructions_when_unconfigured()
     {
         config(['forms-pro.connections.mailcoach' => null]);
