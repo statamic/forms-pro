@@ -50,7 +50,7 @@ class AppendRowToGoogleSheet implements ShouldQueue
             $sheets->append($this->spreadsheet(), $title, $this->row($values, $columns, $this->anchor($headers)));
         } catch (GoogleSheetsException $e) {
             if (! $e->isRetryable()) {
-                Cache::forget($this->cacheKey());
+                Cache::forget($this->cacheKey($sheets));
             }
 
             match (true) {
@@ -67,7 +67,7 @@ class AppendRowToGoogleSheet implements ShouldQueue
      */
     private function sheet(GoogleSheetsClient $sheets): array
     {
-        return Cache::remember($this->cacheKey(), now()->addMinutes(5), fn () => $this->fetchSheet($sheets));
+        return Cache::remember($this->cacheKey($sheets), now()->addMinutes(5), fn () => $this->fetchSheet($sheets));
     }
 
     private function fetchSheet(GoogleSheetsClient $sheets): array
@@ -212,8 +212,8 @@ class AppendRowToGoogleSheet implements ShouldQueue
         return (int) $this->config['tab'];
     }
 
-    private function cacheKey(): string
+    private function cacheKey(GoogleSheetsClient $sheets): string
     {
-        return "forms-pro.google-sheets.sheet.{$this->spreadsheet()}.{$this->tab()}";
+        return "forms-pro.google-sheets.sheet.{$sheets->fingerprint()}.{$this->spreadsheet()}.{$this->tab()}";
     }
 }
