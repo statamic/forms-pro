@@ -47,6 +47,16 @@ class SubscribeToMailcoachTest extends TestCase
     }
 
     #[Test]
+    public function it_doesnt_subscribe_when_the_email_field_is_blank()
+    {
+        Http::fake();
+
+        $this->subscribe(['email' => null]);
+
+        Http::assertNothingSent();
+    }
+
+    #[Test]
     public function it_sends_the_names_from_the_configured_fields()
     {
         $payload = $this->payload(
