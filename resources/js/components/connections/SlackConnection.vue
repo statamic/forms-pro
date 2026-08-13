@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import axios from 'axios';
-import { nanoid as uniqid } from 'nanoid';
 import { keys } from '@statamic/cms/api';
-import { ConnectionList, ConnectionLogic, conditionsSummary, deepClone } from '@statamic/cms';
+import { ConnectionRows, ConnectionRules, conditionsSummary, connectionRows } from '@statamic/cms';
 import { Alert, Badge, Button, Description, Heading, Icon, Label, PublishContainer, PublishFields, PublishFieldsProvider, Subheading } from '@statamic/cms/ui';
 import SlackSetupInstructions from './SlackSetupInstructions.vue';
 
@@ -26,41 +25,10 @@ const props = defineProps({
     apiError: String,
 });
 
-const dirtyKey = 'slack-connection';
-
 const errors = ref<object>({});
 const saving = ref<boolean>(false);
 const saveBinding = ref<ReturnType<typeof keys.bindGlobal> | null>(null);
-
-const notifications = ref<SlackNotification[]>(props.config.map((config: object): SlackNotification => ({
-    id: config.id,
-    enabled: config.enabled ?? true,
-    conditions: (config.conditions ?? []).map((condition: object) => ({ ...condition, _id: uniqid() })),
-    values: props.notifications[config.id]?.values,
-    meta: props.notifications[config.id]?.meta,
-})));
-
-const addNotification = (): void => notifications.value.push({
-    id: uniqid(),
-    enabled: true,
-    conditions: [],
-    values: deepClone(props.defaults.values),
-    meta: deepClone(props.defaults.meta),
-});
-
-const duplicateNotification = (notification: SlackNotification) => {
-    const index = notifications.value.indexOf(notification);
-
-    notifications.value.splice(index + 1, 0, {
-        id: uniqid(),
-        enabled: notification.enabled,
-        conditions: notification.conditions.map((condition) => ({ ...condition, _id: uniqid() })),
-        values: deepClone(notification.values),
-        meta: deepClone(notification.meta),
-    });
-};
-
-const removeNotification = (notification: SlackNotification) => (notifications.value = notifications.value.filter((item) => item !== notification));
+const notifications = ref<SlackNotification[]>(connectionRows(props.config, props.notifications));
 
 const channelName = (notification: SlackNotification): string => props.defaults.meta.channel.options.find((channel) => channel.value === notification.values.channel)?.label;
 
@@ -86,7 +54,7 @@ const save = (): void => {
             configs: notifications.value.map(({ values, meta, ...config }) => ({ ...config, ...values })),
         })
         .then(() => {
-            Statamic.$dirty.remove(dirtyKey);
+            Statamic.$dirty.remove('connection');
             Statamic.$toast.success(__('Saved'));
         })
         .catch((e) => {
@@ -100,8 +68,6 @@ const save = (): void => {
         .finally(() => (saving.value = false));
 };
 
-watch(notifications, () => Statamic.$dirty.add(dirtyKey), { deep: true });
-
 onMounted(() => {
     saveBinding.value = keys.bindGlobal(['mod+s'], (e) => {
         e.preventDefault();
@@ -109,10 +75,7 @@ onMounted(() => {
     });
 });
 
-onUnmounted(() => {
-    Statamic.$dirty.remove(dirtyKey);
-    saveBinding.value?.destroy();
-});
+onUnmounted(() => saveBinding.value?.destroy());
 </script>
 
 <template>
@@ -125,23 +88,21 @@ onUnmounted(() => {
 
     <div v-if="isConfigured">
         <Alert v-if="apiError" variant="error" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Heading :text="__('forms-pro::messages.slack_connection_api_error')" />
+            <Heading :text="__('forms-pro::messages.slack_api_error')" />
             <Description :text="__(apiError)" class="mt-1" />
         </Alert>
 
         <Label :text="__('Notifications')" class="mb-2" />
 
-        <ConnectionList
+        <ConnectionRows
             v-model="notifications"
+            :defaults
+            :has-error
             :add-label="__('Add Notification')"
             :empty-heading="__('No notifications yet')"
-            :empty-description="__('forms-pro::messages.slack_connection_description')"
+            :empty-description="__('forms-pro::messages.slack_description')"
             :delete-heading="__('Delete Slack Notification')"
-            :delete-description="__('forms-pro::messages.slack_connection_delete_confirmation')"
-            :has-error
-            @add="addNotification"
-            @duplicate="duplicateNotification"
-            @remove="removeNotification"
+            :delete-description="__('forms-pro::messages.slack_delete_confirmation')"
         >
             <template #header="{ item: notification, collapsed }">
                 <Badge size="lg" pill color="white" class="px-3 text-gray-950 gap-1">
@@ -154,7 +115,7 @@ onUnmounted(() => {
             </template>
 
             <template #default="{ item: notification, index }">
-                <ConnectionLogic
+                <ConnectionRules
                     v-model:conditions="notification.conditions"
                     :always-label="__('Always send')"
                     :if-label="__('Send if...')"
@@ -175,9 +136,9 @@ onUnmounted(() => {
                             </PublishContainer>
                         </div>
                     </template>
-                </ConnectionLogic>
+                </ConnectionRules>
             </template>
-        </ConnectionList>
+        </ConnectionRows>
     </div>
 
     <SlackSetupInstructions v-else />
