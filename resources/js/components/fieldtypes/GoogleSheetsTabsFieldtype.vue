@@ -28,7 +28,11 @@ const placeholder = computed(() => {
     return __('forms-pro::messages.google_sheets_tab_placeholder');
 });
 
+let latestFetch = 0;
+
 const fetchTabs = () => {
+    const fetch = ++latestFetch;
+
     error.value = null;
     tabs.value = {};
 
@@ -43,6 +47,8 @@ const fetchTabs = () => {
     axios
         .get(props.config.url, { params: { spreadsheet: spreadsheet.value } })
         .then(({ data }) => {
+            if (fetch !== latestFetch) return;
+
             error.value = data.error;
             tabs.value = data.tabs;
 
@@ -50,8 +56,8 @@ const fetchTabs = () => {
                 update(null);
             }
         })
-        .catch(() => (error.value = __('Something went wrong')))
-        .finally(() => (loading.value = false));
+        .catch(() => fetch === latestFetch && (error.value = __('Something went wrong')))
+        .finally(() => fetch === latestFetch && (loading.value = false));
 };
 
 watch(spreadsheet, fetchTabs);
