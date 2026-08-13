@@ -2,6 +2,7 @@
 
 namespace Statamic\FormsPro\Http\Controllers\CP;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Statamic\FormsPro\FormConnections\GoogleSheets;
 use Statamic\FormsPro\FormConnections\GoogleSheets\GoogleSheetsException;
@@ -18,7 +19,7 @@ class GoogleSheetsTabsController extends CpController
             GoogleSheets::forgetTabs($request->spreadsheet);
 
             return ['tabs' => GoogleSheets::tabs($request->spreadsheet), 'error' => null];
-        } catch (GoogleSheetsException $e) {
+        } catch (ConnectionException|GoogleSheetsException $e) {
             return ['tabs' => [], 'error' => $e->getMessage()];
         }
     }
