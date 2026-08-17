@@ -2,6 +2,7 @@
 
 namespace Statamic\FormsPro\Fieldtypes;
 
+use Faker\Factory;
 use Illuminate\Support\Collection;
 use Statamic\Dictionaries\Countries;
 use Statamic\Dictionaries\Item;
@@ -123,7 +124,7 @@ class Address extends Fieldtype
 
     public function fakeValue(): mixed
     {
-        $faker = class_exists(\Faker\Factory::class) ? \Faker\Factory::create() : null;
+        $faker = class_exists(Factory::class) ? Factory::create() : null;
         $countries = array_keys(static::countryOptions());
 
         return [
