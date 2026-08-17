@@ -383,6 +383,46 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_pretends_the_submission_succeeded_when_it_silently_fails()
+    {
+        $form = $this->createForm();
+
+        $this
+            ->postJson(route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'main']), [
+                'name' => 'Han Solo',
+                'email' => 'han@example.com',
+                'honeypot' => 'gotcha',
+            ])
+            ->assertOk()
+            ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
+            ->assertSessionHas('automagic_form_submitted', true);
+
+        $this->assertCount(0, $form->submissions());
+    }
+
+    #[Test]
+    public function it_forgets_the_partial_submission_when_the_final_page_silently_fails()
+    {
+        $form = $this->createMultiPageForm();
+
+        $this->postJson(route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'page_1']), [
+            'name' => 'Han Solo',
+        ]);
+
+        $this
+            ->postJson(route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'page_2']), [
+                'email' => 'han@example.com',
+                'honeypot' => 'gotcha',
+            ])
+            ->assertOk()
+            ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
+            ->assertSessionHas('automagic_form_submitted', true)
+            ->assertSessionMissing('form.contact.partial_submission');
+
+        $this->assertNull($form->submissions()->first(fn ($submission) => ! $submission->isPartial()));
+    }
+
+    #[Test]
     public function it_returns_validation_errors_when_the_submission_is_invalid()
     {
         $form = $this->createForm();

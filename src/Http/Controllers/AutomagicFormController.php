@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Exceptions\NotFoundHttpException;
+use Statamic\Exceptions\SilentFormFailureException;
 use Statamic\Facades;
 use Statamic\Fields\Tab;
 use Statamic\Forms\Logic\PageLogic;
@@ -89,7 +90,17 @@ class AutomagicFormController extends Controller
             return response()->noContent(headers: ['Precognition-Success' => 'true']);
         }
 
-        $result = $action->submit($request->all(), $request->allFiles());
+        try {
+            $result = $action->submit($request->all(), $request->allFiles());
+        } catch (SilentFormFailureException) {
+            $this->forgetPartialSubmission($form);
+
+            $request->session()->flash('automagic_form_submitted', true);
+
+            return [
+                'redirect' => AutomagicForms::route('success', ['form' => $form->handle()]),
+            ];
+        }
 
         $result->isFinalized()
             ? $this->forgetPartialSubmission($form)
