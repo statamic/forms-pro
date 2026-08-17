@@ -64,6 +64,16 @@ class SendTwilioMessageTest extends TestCase
     }
 
     #[Test]
+    public function it_parses_antlers_in_the_body()
+    {
+        Http::fake(['api.twilio.com/*' => Http::response(['sid' => 'SM123', 'status' => 'queued'], 201)]);
+
+        $this->send($this->form(), ['name' => 'Jack Black'], ['body' => 'New enquiry from {{ name }}']);
+
+        Http::assertSent(fn (Request $request) => $request['Body'] === 'New enquiry from Jack Black');
+    }
+
+    #[Test]
     public function it_texts_the_number_from_a_form_field()
     {
         Http::fake(['api.twilio.com/*' => Http::response(['sid' => 'SM123'], 201)]);

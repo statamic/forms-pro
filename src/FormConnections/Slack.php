@@ -119,6 +119,7 @@ class Slack extends Connection
                                     'field' => [
                                         'type' => 'text',
                                         'display' => __('Heading'),
+                                        'instructions' => __('forms-pro::messages.slack_heading_instructions'),
                                         'validate' => ['max:2000'],
                                     ],
                                 ],
