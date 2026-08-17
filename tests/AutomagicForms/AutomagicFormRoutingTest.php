@@ -60,7 +60,7 @@ YAML;
         Facades\Form::all()->each->delete();
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->app['files']->delete(resource_path('sites.yaml'));
 
