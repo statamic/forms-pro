@@ -4,26 +4,27 @@ namespace Statamic\FormsPro\Listeners;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\ValidationException;
 use Statamic\Events\FormSubmitted;
 
 class VerifyTurnstile
 {
-    public function handle(FormSubmitted $event): ?bool
+    public function handle(FormSubmitted $event): void
     {
         $siteKey = config('forms-pro.turnstile.site_key');
         $secretKey = config('forms-pro.turnstile.secret_key');
 
         if (! $siteKey || ! $secretKey) {
-            return null;
+            return;
         }
 
         $token = request()->input('cf-turnstile-response');
 
-        if (! is_string($token) || $token === '') {
-            return false;
+        if (! is_string($token) || $token === '' || ! $this->verifiedByCloudflare($token, $secretKey)) {
+            throw ValidationException::withMessages([
+                'cf-turnstile-response' => __('Verification failed. Please try again.'),
+            ]);
         }
-
-        return $this->verifiedByCloudflare($token, $secretKey) ? null : false;
     }
 
     private function verifiedByCloudflare(string $token, string $secretKey): bool
