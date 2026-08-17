@@ -21,18 +21,27 @@ const loadApi = (): Promise<TurnstileApi> =>
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue';
 
-const props = defineProps<{
-	siteKey: string;
-}>();
-
 const emit = defineEmits<{
 	token: [token: string | null];
+}>();
+
+const props = defineProps<{
+	siteKey: string;
 }>();
 
 const widget = useTemplateRef<HTMLDivElement>('widget');
 
 let turnstile: TurnstileApi | null = null;
 let widgetId: string | null = null;
+
+const reset = (): void => {
+	if (! widgetId) return;
+
+	emit('token', null);
+	turnstile?.reset(widgetId);
+};
+
+defineExpose({ reset });
 
 onMounted(async () => {
 	turnstile = await loadApi();
@@ -49,15 +58,6 @@ onMounted(async () => {
 onBeforeUnmount(() => {
 	if (widgetId) turnstile?.remove(widgetId);
 });
-
-const reset = (): void => {
-	if (! widgetId) return;
-
-	emit('token', null);
-	turnstile?.reset(widgetId);
-};
-
-defineExpose({ reset });
 </script>
 
 <template>
