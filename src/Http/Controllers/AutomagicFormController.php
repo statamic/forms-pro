@@ -63,6 +63,9 @@ class AutomagicFormController extends Controller
             'blueprint' => $blueprint->toPublishArray(),
             'values' => $fields->values(),
             'meta' => $fields->meta(),
+            'turnstileSiteKey' => config('forms-pro.turnstile.secret_key')
+                ? config('forms-pro.turnstile.site_key')
+                : null,
         ]);
     }
 

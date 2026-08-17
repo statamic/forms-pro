@@ -2,6 +2,7 @@
 import { router, Head } from '@statamic/cms/inertia';
 import { PublishContainer, PublishSections, TabProvider, Button } from '@statamic/cms/ui';
 import AutomagicFormLayout from './Layout.vue';
+import Turnstile from './Turnstile.vue';
 import { ref, computed, useTemplateRef, nextTick, watch, onMounted, onBeforeUnmount } from 'vue';
 import axios from 'axios';
 
@@ -23,14 +24,17 @@ const props = defineProps<{
     blueprint: object;
     values: object;
     meta: object;
+    turnstileSiteKey?: string;
 }>();
 
 const errors = ref<object>({});
 const loading = ref<boolean>(false);
 const meta = ref<object>(props.meta);
 const values = ref<object>(props.values);
+const turnstileToken = ref<string | null>(null);
 const container = useTemplateRef<InstanceType<typeof PublishContainer>>('container');
 
+const waitingForTurnstile = computed<boolean>(() => !!props.turnstileSiteKey && !turnstileToken.value);
 const isFirstPage = computed<boolean>(() => props.currentPage.id === props.pages[0].id);
 const allPagesHaveCustomLabels = computed<boolean>(() => props.pages.every((page: Page) => page.display));
 
@@ -78,8 +82,14 @@ const toFormData = (values: object): FormData => {
 const submit = () => {
     loading.value = true;
 
+    const formData = toFormData(values.value);
+
+    if (turnstileToken.value) {
+        formData.append('cf-turnstile-response', turnstileToken.value);
+    }
+
     axios
-        .post(props.action, toFormData(values.value))
+        .post(props.action, formData)
         .then((response) => {
             container.value.clearDirtyState();
             nextTick(() => router.visit(response.data.redirect));
@@ -186,7 +196,7 @@ let submitBinding;
 onMounted(() => {
     submitBinding = Statamic.$keys.bindGlobal('mod+enter', (e) => {
         e.preventDefault();
-        if (!loading.value) submit();
+        if (!loading.value && !waitingForTurnstile.value) submit();
     });
 });
 
@@ -217,6 +227,13 @@ onBeforeUnmount(() => {
                 </template>
             </PublishContainer>
 
+            <Turnstile
+                v-if="turnstileSiteKey"
+                :site-key="turnstileSiteKey"
+                class="mt-10 flex justify-center"
+                @token="turnstileToken = $event"
+            />
+
             <div class="mt-10 flex justify-center gap-2.5">
                 <Button
                     v-if="!isFirstPage && currentPage.previous_page_label"
@@ -232,7 +249,7 @@ onBeforeUnmount(() => {
                     variant="primary"
                     class="border-0! ring-0! shadow-none!"
                     style="--theme-color-primary: var(--automagic-brand, var(--theme-color-gray-950))"
-                    :disabled="loading"
+                    :disabled="loading || waitingForTurnstile"
                     :loading="loading"
                     :text="__(currentPage.button_label)"
                     @click="submit"
