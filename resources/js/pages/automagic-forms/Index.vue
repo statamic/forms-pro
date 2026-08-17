@@ -33,6 +33,7 @@ const meta = ref<object>(props.meta);
 const values = ref<object>(props.values);
 const turnstileToken = ref<string | null>(null);
 const container = useTemplateRef<InstanceType<typeof PublishContainer>>('container');
+const turnstileWidget = useTemplateRef<InstanceType<typeof Turnstile>>('turnstileWidget');
 
 const waitingForTurnstile = computed<boolean>(() => !!props.turnstileSiteKey && !turnstileToken.value);
 const isFirstPage = computed<boolean>(() => props.currentPage.id === props.pages[0].id);
@@ -103,6 +104,11 @@ const submit = () => {
 
 			if (status === 422) {
 				errors.value = error.response.data.errors;
+
+				if (errors.value['cf-turnstile-response']) {
+					turnstileWidget.value?.reset();
+				}
+
 				return;
 			}
 
@@ -197,12 +203,17 @@ onBeforeUnmount(() => {
                 </template>
             </PublishContainer>
 
-            <Turnstile
-                v-if="turnstileSiteKey"
-                :site-key="turnstileSiteKey"
-                class="mt-10 flex justify-center"
-                @token="turnstileToken = $event"
-            />
+            <template v-if="turnstileSiteKey">
+                <Turnstile
+                    ref="turnstileWidget"
+                    :site-key="turnstileSiteKey"
+                    class="mt-10 flex justify-center"
+                    @token="turnstileToken = $event"
+                />
+                <p v-if="errors['cf-turnstile-response']" class="mt-2 text-center text-sm text-red-500">
+                    {{ errors['cf-turnstile-response'][0] }}
+                </p>
+            </template>
 
             <div class="mt-10 flex justify-center gap-2.5">
                 <Button

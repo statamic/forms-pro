@@ -76,7 +76,7 @@ class AutomagicFormTurnstileTest extends TestCase
     }
 
     #[Test]
-    public function submission_is_silently_rejected_when_the_token_is_missing()
+    public function submission_fails_validation_when_the_token_is_missing()
     {
         $form = $this->createForm();
 
@@ -87,9 +87,8 @@ class AutomagicFormTurnstileTest extends TestCase
                 'name' => 'Han Solo',
                 'email' => 'han@example.com',
             ])
-            ->assertOk()
-            ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
-            ->assertSessionHas('automagic_form_submitted', true);
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('cf-turnstile-response');
 
         $this->assertCount(0, $form->submissions());
 
@@ -97,7 +96,7 @@ class AutomagicFormTurnstileTest extends TestCase
     }
 
     #[Test]
-    public function submission_is_silently_rejected_when_verification_fails()
+    public function submission_fails_validation_when_verification_fails()
     {
         $form = $this->createForm();
 
@@ -109,9 +108,8 @@ class AutomagicFormTurnstileTest extends TestCase
                 'email' => 'han@example.com',
                 'cf-turnstile-response' => 'a-token',
             ])
-            ->assertOk()
-            ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
-            ->assertSessionHas('automagic_form_submitted', true);
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('cf-turnstile-response');
 
         $this->assertCount(0, $form->submissions());
     }
