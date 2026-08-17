@@ -80,7 +80,7 @@ class VerifyTurnstileTest extends TestCase
     }
 
     #[Test]
-    public function submission_is_silently_rejected_when_the_token_is_missing()
+    public function submission_fails_validation_when_the_token_is_missing()
     {
         $this->createForm();
 
@@ -88,8 +88,7 @@ class VerifyTurnstileTest extends TestCase
 
         $this
             ->post('/!/forms/contact', ['email' => 'gandalf@shire.me'])
-            ->assertSessionHasNoErrors()
-            ->assertLocation('/');
+            ->assertSessionHasErrorsIn('form.contact', 'cf-turnstile-response');
 
         $this->assertCount(0, Form::find('contact')->submissions());
 
@@ -97,7 +96,7 @@ class VerifyTurnstileTest extends TestCase
     }
 
     #[Test]
-    public function submission_is_silently_rejected_when_verification_fails()
+    public function submission_fails_validation_when_verification_fails()
     {
         $this->createForm();
 
@@ -108,14 +107,13 @@ class VerifyTurnstileTest extends TestCase
                 'email' => 'gandalf@shire.me',
                 'cf-turnstile-response' => 'a-token',
             ])
-            ->assertSessionHasNoErrors()
-            ->assertLocation('/');
+            ->assertSessionHasErrorsIn('form.contact', 'cf-turnstile-response');
 
         $this->assertCount(0, Form::find('contact')->submissions());
     }
 
     #[Test]
-    public function submission_is_silently_rejected_when_cloudflare_is_unreachable()
+    public function submission_fails_validation_when_cloudflare_is_unreachable()
     {
         $this->createForm();
 
@@ -126,8 +124,7 @@ class VerifyTurnstileTest extends TestCase
                 'email' => 'gandalf@shire.me',
                 'cf-turnstile-response' => 'a-token',
             ])
-            ->assertSessionHasNoErrors()
-            ->assertLocation('/');
+            ->assertSessionHasErrorsIn('form.contact', 'cf-turnstile-response');
 
         $this->assertCount(0, Form::find('contact')->submissions());
     }
