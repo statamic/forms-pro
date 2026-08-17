@@ -1,6 +1,7 @@
 <script lang="ts">
 type TurnstileApi = {
 	render: (element: HTMLElement, options: object) => string;
+	reset: (widgetId: string) => void;
 	remove: (widgetId: string) => void;
 };
 
@@ -48,6 +49,15 @@ onMounted(async () => {
 onBeforeUnmount(() => {
 	if (widgetId) turnstile?.remove(widgetId);
 });
+
+const reset = (): void => {
+	if (! widgetId) return;
+
+	emit('token', null);
+	turnstile?.reset(widgetId);
+};
+
+defineExpose({ reset });
 </script>
 
 <template>
