@@ -12,11 +12,7 @@ class Turnstile extends Tags
         $siteKey = config('forms-pro.turnstile.site_key');
         $secretKey = config('forms-pro.turnstile.secret_key');
 
-        if (! $siteKey || ! $secretKey) {
-            return '';
-        }
-
-        if ($this->onIntermediatePage()) {
+        if (! $siteKey || ! $secretKey || $this->onIntermediatePage()) {
             return '';
         }
 
@@ -27,6 +23,11 @@ class Turnstile extends Tags
      * Multi-page forms only verify Turnstile when they're finalized, which can
      * only happen on the last page, so earlier pages skip the widget. JS-driven
      * forms render every page up-front, so they always keep it.
+     */
+
+    /**
+     * We only want to render the Turnstile widget on the last page.
+     * JS-driven forms render every page up-front, so they always keep it.
      */
     private function onIntermediatePage(): bool
     {
