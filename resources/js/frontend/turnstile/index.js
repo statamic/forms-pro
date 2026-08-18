@@ -32,14 +32,9 @@ function bind(widget, turnstile) {
         if (!token) event.preventDefault();
     }, { capture: true });
 
-    // Alpine-driven forms submit intermediate pages from a button click handler,
-    // so disabling their buttons would block moving between pages. They rely on
-    // the submit gate above instead.
-    const buttons = form.hasAttribute('x-data')
-        ? []
-        : form.querySelectorAll('button:not([type=button]):not([type=reset]), input[type=submit]');
-
-    const gate = (allowed) => buttons.forEach((button) => (button.disabled = !allowed));
+    const gate = (allowed) => form
+        .querySelectorAll('button:not([type=button]):not([type=reset]), input[type=submit]')
+        .forEach((button) => (button.disabled = !allowed));
 
     gate(false);
 

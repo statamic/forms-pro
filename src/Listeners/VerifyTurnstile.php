@@ -20,9 +20,13 @@ class VerifyTurnstile
 
         $token = request()->input('cf-turnstile-response');
 
-        if (! is_string($token) || $token === '' || ! $this->verifiedByCloudflare($token, $secretKey)) {
+        if (
+            ! is_string($token)
+            || $token === ''
+            || ! $this->verifiedByCloudflare($token, $secretKey)
+        ) {
             throw ValidationException::withMessages([
-                'cf-turnstile-response' => __('Verification failed. Please try again.'),
+                'cf-turnstile-response' => __('forms-pro::validation.cloudflare_turnstile_response'),
             ]);
         }
     }

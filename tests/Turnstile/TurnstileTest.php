@@ -37,6 +37,55 @@ class TurnstileTest extends TestCase
     }
 
     #[Test]
+    public function it_renders_nothing_on_intermediate_pages_of_multi_page_forms()
+    {
+        config([
+            'forms-pro.turnstile.site_key' => 'site-key',
+            'forms-pro.turnstile.secret_key' => 'secret-key',
+        ]);
+
+        $context = [
+            'pages' => [['id' => 'one'], ['id' => 'two'], ['id' => 'three']],
+            'page' => ['id' => 'one'],
+        ];
+
+        $this->assertSame('', (string) Parse::template('{{ turnstile }}', $context, trusted: true));
+    }
+
+    #[Test]
+    public function it_renders_the_widget_on_the_last_page_of_multi_page_forms()
+    {
+        config([
+            'forms-pro.turnstile.site_key' => 'site-key',
+            'forms-pro.turnstile.secret_key' => 'secret-key',
+        ]);
+
+        $context = [
+            'pages' => [['id' => 'one'], ['id' => 'two'], ['id' => 'three']],
+            'page' => ['id' => 'three'],
+        ];
+
+        $this->assertStringContainsString('data-forms-pro-turnstile', (string) Parse::template('{{ turnstile }}', $context, trusted: true));
+    }
+
+    #[Test]
+    public function it_renders_the_widget_on_intermediate_pages_when_using_a_js_driver()
+    {
+        config([
+            'forms-pro.turnstile.site_key' => 'site-key',
+            'forms-pro.turnstile.secret_key' => 'secret-key',
+        ]);
+
+        $context = [
+            'js_driver' => 'forms_pro_alpine',
+            'pages' => [['id' => 'one'], ['id' => 'two'], ['id' => 'three']],
+            'page' => ['id' => 'one'],
+        ];
+
+        $this->assertStringContainsString('data-forms-pro-turnstile', (string) Parse::template('{{ turnstile }}', $context, trusted: true));
+    }
+
+    #[Test]
     #[DataProvider('incompleteConfigurations')]
     public function it_renders_nothing_until_both_keys_are_configured(?string $siteKey, ?string $secretKey)
     {
