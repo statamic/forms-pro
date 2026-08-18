@@ -26,7 +26,7 @@ class VerifyTurnstile
             || ! $this->verifiedByCloudflare($token, $secretKey)
         ) {
             throw ValidationException::withMessages([
-                'cf-turnstile-response' => __('Cloudflare Turnstile verification failed. Please try again.'),
+                'cf-turnstile-response' => __('forms-pro::validation.cloudflare_turnstile_response'),
             ]);
         }
     }
