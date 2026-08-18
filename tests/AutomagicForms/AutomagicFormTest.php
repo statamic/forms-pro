@@ -3,7 +3,7 @@
 namespace Tests\AutomagicForms;
 
 use Event;
-use Illuminate\Testing\TestResponse;
+use Inertia\Testing\AssertableInertia as Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form;
@@ -30,13 +30,14 @@ class AutomagicFormTest extends TestCase
         $this->createForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('component', 'forms-pro::AutomagicForm/Index')
-            ->assertJsonPath('props.title', 'Contact')
-            ->assertJsonPath('props.currentPage.id', 'main')
-            ->assertJsonPath('props.action', route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'main']))
-            ->assertJsonPath('props.previousPageUrl', null);
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('forms-pro::AutomagicForm/Index')
+                ->where('title', 'Contact')
+                ->where('currentPage.id', 'main')
+                ->where('action', route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'main']))
+                ->where('previousPageUrl', null));
     }
 
     #[Test]
@@ -58,7 +59,7 @@ class AutomagicFormTest extends TestCase
         $this->createForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
             ->assertNotFound();
     }
 
@@ -66,7 +67,7 @@ class AutomagicFormTest extends TestCase
     public function it_404s_when_the_form_does_not_exist()
     {
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'unknown']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'unknown']))
             ->assertNotFound();
     }
 
@@ -76,7 +77,7 @@ class AutomagicFormTest extends TestCase
         $this->createMultiPageForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_99']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_99']))
             ->assertNotFound();
     }
 
@@ -86,7 +87,7 @@ class AutomagicFormTest extends TestCase
         $this->createForm(automagic: false);
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
             ->assertNotFound();
     }
 
@@ -98,11 +99,12 @@ class AutomagicFormTest extends TestCase
         Addon::get('statamic/forms-pro')->settings()->set(['brand_color' => '#bada55', 'background' => 'bamboo'])->save();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('props.settings.brandColor', '#bada55')
-            ->assertJsonPath('props.settings.background', 'bamboo')
-            ->assertJsonPath('props.settings.logoUrl', null);
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('settings.brandColor', '#bada55')
+                ->where('settings.background', 'bamboo')
+                ->where('settings.logoUrl', null));
     }
 
     #[Test]
@@ -115,10 +117,11 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('props.values.name', 'Han Solo')
-            ->assertJsonPath('props.values.email', 'han@example.com');
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('values.name', 'Han Solo')
+                ->where('values.email', 'han@example.com'));
     }
 
     #[Test]
@@ -138,9 +141,9 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('props.values.when', '2026-07-20T00:00:00.000Z');
+            ->assertInertia(fn (Assert $page) => $page->where('values.when', '2026-07-20T00:00:00.000Z'));
     }
 
     #[Test]
@@ -153,10 +156,11 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_2']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_2']))
             ->assertOk()
-            ->assertJsonPath('props.currentPage.id', 'page_2')
-            ->assertJsonPath('props.previousPageUrl', route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_1']));
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('currentPage.id', 'page_2')
+                ->where('previousPageUrl', route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_1'])));
     }
 
     #[Test]
@@ -169,9 +173,9 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_3']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_3']))
             ->assertOk()
-            ->assertJsonPath('props.previousPageUrl', route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_1']));
+            ->assertInertia(fn (Assert $page) => $page->where('previousPageUrl', route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_1'])));
     }
 
     #[Test]
@@ -184,9 +188,9 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_2']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_2']))
             ->assertOk()
-            ->assertJsonPath('props.previousPageUrl', null);
+            ->assertInertia(fn (Assert $page) => $page->where('previousPageUrl', null));
     }
 
     #[Test]
@@ -195,7 +199,7 @@ class AutomagicFormTest extends TestCase
         $this->createMultiPageForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_2']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_2']))
             ->assertRedirect(route('statamic.forms-pro.form.default.index', ['form' => 'contact']));
     }
 
@@ -205,9 +209,9 @@ class AutomagicFormTest extends TestCase
         $this->createMultiPageForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_1']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_1']))
             ->assertOk()
-            ->assertJsonPath('props.currentPage.id', 'page_1');
+            ->assertInertia(fn (Assert $page) => $page->where('currentPage.id', 'page_1'));
     }
 
     #[Test]
@@ -216,9 +220,9 @@ class AutomagicFormTest extends TestCase
         $this->createForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'main']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'main']))
             ->assertOk()
-            ->assertJsonPath('props.currentPage.id', 'main');
+            ->assertInertia(fn (Assert $page) => $page->where('currentPage.id', 'main'));
     }
 
     #[Test]
@@ -232,9 +236,9 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => $page]))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => $page]))
             ->assertOk()
-            ->assertJsonPath('props.progress', $progress);
+            ->assertInertia(fn (Assert $page) => $page->where('progress', $progress));
     }
 
     public static function progressProvider(): array
@@ -257,9 +261,9 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => $page]))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => $page]))
             ->assertOk()
-            ->assertJsonPath('props.progress', $progress);
+            ->assertInertia(fn (Assert $page) => $page->where('progress', $progress));
     }
 
     public static function branchingProgressProvider(): array
@@ -276,9 +280,9 @@ class AutomagicFormTest extends TestCase
         $this->createForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('props.progress', null);
+            ->assertInertia(fn (Assert $page) => $page->where('progress', null));
     }
 
     #[Test]
@@ -291,9 +295,9 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_2']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_2']))
             ->assertOk()
-            ->assertJsonPath('props.progress', null);
+            ->assertInertia(fn (Assert $page) => $page->where('progress', null));
     }
 
     #[Test]
@@ -302,7 +306,7 @@ class AutomagicFormTest extends TestCase
         $this->createForm()->set('require_login', true)->save();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
             ->assertRedirect(route('statamic.forms-pro.form.default.restricted', ['form' => 'contact']));
     }
 
@@ -312,11 +316,12 @@ class AutomagicFormTest extends TestCase
         $this->createForm()->set('require_login', true)->save();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.restricted', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.restricted', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('component', 'forms-pro::AutomagicForm/Restricted')
-            ->assertJsonPath('props.title', 'Contact')
-            ->assertJsonPath('props.message', 'You must be logged in to submit this form.');
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('forms-pro::AutomagicForm/Restricted')
+                ->where('title', 'Contact')
+                ->where('message', 'You must be logged in to submit this form.'));
     }
 
     #[Test]
@@ -328,9 +333,9 @@ class AutomagicFormTest extends TestCase
             ->save();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.restricted', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.restricted', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('props.message', 'Please sign in first.');
+            ->assertInertia(fn (Assert $page) => $page->where('message', 'Please sign in first.'));
     }
 
     #[Test]
@@ -339,7 +344,7 @@ class AutomagicFormTest extends TestCase
         $this->createForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.restricted', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.restricted', ['form' => 'contact']))
             ->assertRedirect(route('statamic.forms-pro.form.default.index', ['form' => 'contact']));
     }
 
@@ -591,15 +596,16 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(['automagic_form_submitted' => true])
-            ->inertia(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('component', 'forms-pro::AutomagicForm/Success')
-            ->assertJsonPath('props.title', 'Contact')
-            ->assertJsonPath('props.heading', 'Nice one!')
-            ->assertJsonPath('props.message', 'We got your submission.')
-            ->assertJsonPath('props.showReset', true)
-            ->assertJsonPath('props.resetLabel', 'Start over')
-            ->assertJsonPath('props.resetUrl', route('statamic.forms-pro.form.default.index', ['form' => 'contact']));
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('forms-pro::AutomagicForm/Success')
+                ->where('title', 'Contact')
+                ->where('heading', 'Nice one!')
+                ->where('message', 'We got your submission.')
+                ->where('showReset', true)
+                ->where('resetLabel', 'Start over')
+                ->where('resetUrl', route('statamic.forms-pro.form.default.index', ['form' => 'contact'])));
     }
 
     #[Test]
@@ -609,12 +615,13 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(['automagic_form_submitted' => true])
-            ->inertia(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('props.heading', 'Thank you!')
-            ->assertJsonPath('props.message', 'Your submission has been received.')
-            ->assertJsonPath('props.showReset', false)
-            ->assertJsonPath('props.resetLabel', 'Fill out the form again');
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('heading', 'Thank you!')
+                ->where('message', 'Your submission has been received.')
+                ->where('showReset', false)
+                ->where('resetLabel', 'Fill out the form again'));
     }
 
     #[Test]
@@ -623,7 +630,7 @@ class AutomagicFormTest extends TestCase
         $this->createForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
             ->assertRedirect(route('statamic.forms-pro.form.default.index', ['form' => 'contact']));
     }
 
@@ -636,7 +643,7 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(['automagic_form_submitted' => true])
-            ->inertia(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
             ->assertNotFound();
     }
 
@@ -644,7 +651,7 @@ class AutomagicFormTest extends TestCase
     public function it_404s_when_the_success_page_form_does_not_exist()
     {
         $this
-            ->inertia(route('statamic.forms-pro.form.default.success', ['form' => 'unknown']))
+            ->get(route('statamic.forms-pro.form.default.success', ['form' => 'unknown']))
             ->assertNotFound();
     }
 
@@ -655,13 +662,8 @@ class AutomagicFormTest extends TestCase
 
         $this
             ->withSession(['automagic_form_submitted' => true])
-            ->inertia(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
             ->assertNotFound();
-    }
-
-    private function inertia(string $url): TestResponse
-    {
-        return $this->get($url, ['X-Inertia' => 'true']);
     }
 
     private function createForm(bool $automagic = true): Form

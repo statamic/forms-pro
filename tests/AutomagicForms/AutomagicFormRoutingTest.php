@@ -2,7 +2,7 @@
 
 namespace Tests\AutomagicForms;
 
-use Illuminate\Testing\TestResponse;
+use Inertia\Testing\AssertableInertia as Assert;
 use Orchestra\Testbench\Attributes\DefineEnvironment;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Data\Localization;
@@ -89,9 +89,9 @@ YAML;
         $this->createForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('props.site.handle', 'default');
+            ->assertInertia(fn (Assert $page) => $page->where('site.handle', 'default'));
     }
 
     #[Test]
@@ -100,9 +100,9 @@ YAML;
         $this->createForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.french.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.french.index', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('props.site.handle', 'french');
+            ->assertInertia(fn (Assert $page) => $page->where('site.handle', 'french'));
     }
 
     #[Test]
@@ -127,7 +127,7 @@ YAML;
         $this->createForm();
 
         $this
-            ->inertia('http://staging.example.com/get-in-touch/contact')
+            ->get('http://staging.example.com/get-in-touch/contact')
             ->assertOk();
     }
 
@@ -155,9 +155,9 @@ YAML;
         $this->createForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.french.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.french.index', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('props.site.handle', 'french');
+            ->assertInertia(fn (Assert $page) => $page->where('site.handle', 'french'));
     }
 
     #[Test]
@@ -183,11 +183,6 @@ YAML;
             route('statamic.forms-pro.form.french.index', ['form' => 'contact'], absolute: false),
             (new FormLinkType)->resolve('contact', $parent, localize: true)
         );
-    }
-
-    private function inertia(string $url): TestResponse
-    {
-        return $this->get($url, ['X-Inertia' => 'true']);
     }
 
     private function createForm(): Form
