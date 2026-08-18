@@ -279,6 +279,21 @@ class AddressTest extends TestCase
         );
     }
 
+    #[Test]
+    public function it_generates_a_fake_value()
+    {
+        $value = $this->fieldtype(['default_country' => 'GB'])->fakeValue();
+
+        $this->assertIsString($value['line_1']);
+        $this->assertNotEmpty($value['line_1']);
+        $this->assertNull($value['line_2']);
+        $this->assertIsString($value['city']);
+        $this->assertNotEmpty($value['city']);
+        $this->assertIsString($value['region']);
+        $this->assertIsString($value['postcode']);
+        $this->assertSame('GB', $value['country']);
+    }
+
     private function fieldtype(array $config = []): Address
     {
         $field = new Field('address', array_merge(['type' => 'address'], $config));
