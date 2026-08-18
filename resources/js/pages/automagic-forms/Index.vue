@@ -35,8 +35,10 @@ const turnstileToken = ref<string | null>(null);
 const container = useTemplateRef<InstanceType<typeof PublishContainer>>('container');
 const turnstileWidget = useTemplateRef<InstanceType<typeof Turnstile>>('turnstileWidget');
 
-const waitingForTurnstile = computed<boolean>(() => !!props.turnstileSiteKey && !turnstileToken.value);
 const isFirstPage = computed<boolean>(() => props.currentPage.id === props.pages[0].id);
+const isLastPage = computed<boolean>(() => props.currentPage.id === props.pages[props.pages.length - 1].id);
+const showTurnstile = computed<boolean>(() => !!props.turnstileSiteKey && isLastPage.value);
+const waitingForTurnstile = computed<boolean>(() => showTurnstile.value && !turnstileToken.value);
 const allPagesHaveCustomLabels = computed<boolean>(() => props.pages.every((page: Page) => page.display));
 
 const titleClasses = computed<string[]>(() => [
@@ -233,7 +235,7 @@ onBeforeUnmount(() => {
                 </template>
             </PublishContainer>
 
-            <template v-if="turnstileSiteKey">
+            <template v-if="showTurnstile">
                 <Turnstile
                     ref="turnstileWidget"
                     :site-key="turnstileSiteKey"
