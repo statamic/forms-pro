@@ -3,7 +3,7 @@
 namespace Tests\AutomagicForms;
 
 use Illuminate\Support\Facades\Http;
-use Illuminate\Testing\TestResponse;
+use Inertia\Testing\AssertableInertia as Assert;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Facades;
@@ -32,9 +32,9 @@ class AutomagicFormTurnstileTest extends TestCase
         $this->createForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('props.turnstileSiteKey', 'site-key');
+            ->assertInertia(fn (Assert $page) => $page->where('turnstileSiteKey', 'site-key'));
     }
 
     #[Test]
@@ -45,9 +45,9 @@ class AutomagicFormTurnstileTest extends TestCase
         $this->createForm();
 
         $this
-            ->inertia(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
             ->assertOk()
-            ->assertJsonPath('props.turnstileSiteKey', null);
+            ->assertInertia(fn (Assert $page) => $page->where('turnstileSiteKey', null));
     }
 
     #[Test]
@@ -146,11 +146,6 @@ class AutomagicFormTurnstileTest extends TestCase
         $this->assertFalse($submission->isPartial());
         $this->assertEquals('Han Solo', $submission->get('name'));
         $this->assertEquals('han@example.com', $submission->get('email'));
-    }
-
-    private function inertia(string $url): TestResponse
-    {
-        return $this->get($url, ['X-Inertia' => 'true']);
     }
 
     private function createForm(): Form
