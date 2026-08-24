@@ -41,6 +41,17 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_tells_robots_not_to_index_the_form_page()
+    {
+        $this->createForm();
+
+        $this
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->assertOk()
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    #[Test]
     public function it_generates_urls_using_the_configured_route()
     {
         $this->createForm();

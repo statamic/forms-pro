@@ -2,6 +2,7 @@
 
 namespace Statamic\FormsPro\Http\Middleware;
 
+use Closure;
 use Illuminate\Http\Request;
 use Statamic\Facades\Addon;
 use Statamic\Facades\AssetContainer;
@@ -10,6 +11,15 @@ use Statamic\Statamic;
 
 class HandleInertiaRequests extends \Statamic\Http\Middleware\CP\HandleInertiaRequests
 {
+    public function handle(Request $request, Closure $next)
+    {
+        $response = parent::handle($request, $next);
+
+        $response->headers->set('X-Robots-Tag', 'noindex, nofollow');
+
+        return $response;
+    }
+
     public function share(Request $request): array
     {
         $parent = parent::share($request);
