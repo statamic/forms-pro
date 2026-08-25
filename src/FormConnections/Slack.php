@@ -39,6 +39,11 @@ class Slack extends Connection
         return count($form->connections()->get('slack', []));
     }
 
+    public function isConfigured(): bool
+    {
+        return (bool) config('forms-pro.connections.slack.token');
+    }
+
     public function finalized(Submission $submission): object|array
     {
         return collect($submission->form()->connections()->get('slack'))
@@ -51,7 +56,7 @@ class Slack extends Connection
     public function render(Form $form): VueComponent
     {
         $channels = [];
-        $isConfigured = (bool) config('forms-pro.connections.slack.token');
+        $isConfigured = $this->isConfigured();
 
         try {
             $channels = $isConfigured ? $this->channels() : [];

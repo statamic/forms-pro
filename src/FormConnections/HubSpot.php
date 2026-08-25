@@ -39,6 +39,11 @@ class HubSpot extends Connection
         return File::get(__DIR__.'/../../resources/svg/hubspot.svg');
     }
 
+    public function isConfigured(): bool
+    {
+        return (bool) config('forms-pro.connections.hubspot.access_token');
+    }
+
     public function finalized(Submission $submission): object|array
     {
         $config = $submission->form()->connections()->get('hubspot', []);
@@ -77,7 +82,7 @@ class HubSpot extends Connection
     public function render(Form $form): VueComponent
     {
         $account = ['forms' => [], 'subscriptions' => []];
-        $isConfigured = (bool) config('forms-pro.connections.hubspot.access_token');
+        $isConfigured = $this->isConfigured();
 
         try {
             if ($isConfigured) {
@@ -124,7 +129,7 @@ class HubSpot extends Connection
     public function preProcess(array $config, Form $form): array
     {
         try {
-            $account = config('forms-pro.connections.hubspot.access_token')
+            $account = $this->isConfigured()
                 ? $this->account()
                 : ['forms' => [], 'subscriptions' => []];
         } catch (ConnectionException|HubSpotException) {

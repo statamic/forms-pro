@@ -35,6 +35,11 @@ class Kit extends Connection
         return File::get(__DIR__.'/../../resources/svg/kit.svg');
     }
 
+    public function isConfigured(): bool
+    {
+        return (bool) config('forms-pro.connections.kit.api_key');
+    }
+
     public function finalized(Submission $submission): object|array
     {
         $config = $submission->form()->connections()->get('kit', []);
@@ -59,7 +64,7 @@ class Kit extends Connection
     public function render(Form $form): VueComponent
     {
         $account = ['forms' => [], 'tags' => [], 'custom_fields' => []];
-        $isConfigured = (bool) config('forms-pro.connections.kit.api_key');
+        $isConfigured = $this->isConfigured();
 
         try {
             if ($isConfigured) {

@@ -43,6 +43,11 @@ class Mailchimp extends Connection
         return File::get(__DIR__.'/../../resources/svg/mailchimp.svg');
     }
 
+    public function isConfigured(): bool
+    {
+        return (bool) config('forms-pro.connections.mailchimp.api_key');
+    }
+
     public function finalized(Submission $submission): object|array
     {
         $config = $submission->form()->connections()->get('mailchimp', []);
@@ -67,7 +72,7 @@ class Mailchimp extends Connection
     public function render(Form $form): VueComponent
     {
         $audiences = [];
-        $isConfigured = (bool) config('forms-pro.connections.mailchimp.api_key');
+        $isConfigured = $this->isConfigured();
 
         try {
             if ($isConfigured) {
@@ -106,7 +111,7 @@ class Mailchimp extends Connection
     {
         $audiences = [];
 
-        if (config('forms-pro.connections.mailchimp.api_key')) {
+        if ($this->isConfigured()) {
             try {
                 $audiences = $this->audiences();
             } catch (ConnectionException|MailchimpException) {

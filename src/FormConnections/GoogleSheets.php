@@ -37,6 +37,11 @@ class GoogleSheets extends Connection
         return File::get(__DIR__.'/../../resources/svg/google-sheets.svg');
     }
 
+    public function isConfigured(): bool
+    {
+        return (bool) config('forms-pro.connections.google_sheets.credentials');
+    }
+
     public function finalized(Submission $submission): object|array
     {
         $config = $submission->form()->connections()->get('google_sheets', []);
@@ -52,7 +57,7 @@ class GoogleSheets extends Connection
     {
         $tabs = [];
         $config = $form->connections()->get('google_sheets', []);
-        $isConfigured = (bool) config('forms-pro.connections.google_sheets.credentials');
+        $isConfigured = $this->isConfigured();
 
         try {
             if ($isConfigured) {

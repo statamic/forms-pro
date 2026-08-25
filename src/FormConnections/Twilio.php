@@ -40,6 +40,13 @@ class Twilio extends Connection
         return count($form->connections()->get('twilio', []));
     }
 
+    public function isConfigured(): bool
+    {
+        return config('forms-pro.connections.twilio.account_sid')
+            && config('forms-pro.connections.twilio.api_key')
+            && config('forms-pro.connections.twilio.api_secret');
+    }
+
     public function finalized(Submission $submission): object|array
     {
         return collect($submission->form()->connections()->get('twilio'))
@@ -52,10 +59,7 @@ class Twilio extends Connection
     public function render(Form $form): VueComponent
     {
         $senders = [];
-
-        $isConfigured = config('forms-pro.connections.twilio.account_sid')
-            && config('forms-pro.connections.twilio.api_key')
-            && config('forms-pro.connections.twilio.api_secret');
+        $isConfigured = $this->isConfigured();
 
         try {
             if ($isConfigured) {

@@ -35,6 +35,12 @@ class Mailcoach extends Connection
         return File::get(__DIR__.'/../../resources/svg/mailcoach.svg');
     }
 
+    public function isConfigured(): bool
+    {
+        return config('forms-pro.connections.mailcoach.api_url')
+            && config('forms-pro.connections.mailcoach.token');
+    }
+
     public function finalized(Submission $submission): object|array
     {
         $config = $submission->form()->connections()->get('mailcoach', []);
@@ -81,12 +87,6 @@ class Mailcoach extends Connection
             'isConfigured' => $isConfigured,
             'apiError' => $apiError ?? null,
         ]);
-    }
-
-    private function isConfigured(): bool
-    {
-        return config('forms-pro.connections.mailcoach.api_url')
-            && config('forms-pro.connections.mailcoach.token');
     }
 
     private function lists(): array
