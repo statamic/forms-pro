@@ -3,6 +3,8 @@ import { computed } from 'vue';
 import { Alert, Description, Heading, PublishContainer, PublishFields, PublishFieldsProvider } from '@statamic/cms/ui';
 import HubSpotSetupInstructions from './HubSpotSetupInstructions.vue';
 
+defineEmits(['update:modelValue']);
+
 const props = defineProps({
     form: Object,
     modelValue: { type: Object, default: () => ({}) },
@@ -81,6 +83,7 @@ const missingSubscription = computed<boolean>(() => {
             :meta
             :extra-values="extraValues"
             :track-dirty-state="false"
+            @update:model-value="$emit('update:modelValue', $event)"
         >
             <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
                 <PublishFields />

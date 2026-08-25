@@ -2,6 +2,8 @@
 import { Alert, Description, Heading, PublishContainer, PublishFields, PublishFieldsProvider } from '@statamic/cms/ui';
 import MailcoachSetupInstructions from './MailcoachSetupInstructions.vue';
 
+defineEmits(['update:modelValue']);
+
 defineProps({
     form: Object,
     modelValue: { type: Object, default: () => ({}) },
@@ -20,7 +22,14 @@ defineProps({
             <Description :text="__(apiError)" class="mt-1" />
         </Alert>
 
-        <PublishContainer :errors :blueprint :model-value="modelValue" :meta :track-dirty-state="false">
+        <PublishContainer
+            :errors
+            :blueprint
+            :model-value="modelValue"
+            :meta
+            :track-dirty-state="false"
+            @update:model-value="$emit('update:modelValue', $event)"
+        >
             <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
                 <PublishFields />
             </PublishFieldsProvider>
