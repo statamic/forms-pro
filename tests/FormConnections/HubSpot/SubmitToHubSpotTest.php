@@ -175,6 +175,23 @@ class SubmitToHubSpotTest extends TestCase
     }
 
     #[Test]
+    public function it_ignores_stale_consent_config_for_a_form_that_doesnt_collect_consent()
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'marketing' => true],
+            [
+                'consent_to_process_field' => 'marketing',
+                'legitimate_interest_subscription' => 3314676590,
+                'communications' => [
+                    ['subscription' => 3314676590, 'field' => 'marketing'],
+                ],
+            ],
+        );
+
+        $this->assertArrayNotHasKey('legalConsentOptions', $payload);
+    }
+
+    #[Test]
     public function it_sends_communication_consent_from_the_mapped_fields()
     {
         $this->fake(definition: $this->definition(['legalConsentOptions' => $this->explicitConsent()]));
