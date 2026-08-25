@@ -3,9 +3,9 @@
 namespace Statamic\FormsPro\FormConnections;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
@@ -14,7 +14,6 @@ use Statamic\FormsPro\FormConnections\Concerns\ReadsSubmissionValues;
 use Statamic\FormsPro\FormConnections\Kit\KitClient;
 use Statamic\FormsPro\FormConnections\Kit\KitException;
 use Statamic\FormsPro\FormConnections\Kit\SubscribeToKit;
-use Statamic\FormsPro\Http\Controllers\CP\KitConnectionController;
 use Statamic\Support\Arr;
 use Statamic\Support\VueComponent;
 
@@ -83,13 +82,52 @@ class Kit extends Connection
             ->preProcess();
 
         return VueComponent::render('kit-connection', [
-            'action' => cp_route('forms.connect.kit.update', $form->handle()),
             'blueprint' => $blueprint->toPublishArray(),
-            'values' => $fields->values()->all(),
             'meta' => $fields->meta()->all(),
             'isConfigured' => $isConfigured,
             'apiError' => $apiError ?? null,
         ]);
+    }
+
+    public function preProcess(array $config, Form $form): array
+    {
+        return static::blueprint($form)->fields()
+            ->addValues($config)
+            ->preProcess()
+            ->values()
+            ->all();
+    }
+
+    public function rules(Form $form): array
+    {
+        $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
+
+        return [
+            'form' => ['nullable', 'integer'],
+            'email_field' => ['required', $isFormField],
+            'first_name_field' => ['nullable', $isFormField],
+            'consent_field' => ['nullable', $isFormField],
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['integer', 'distinct'],
+            'custom_fields' => ['nullable', 'array'],
+            'custom_fields.*.key' => ['required', 'string', 'distinct'],
+            'custom_fields.*.value' => ['required', $isFormField],
+        ];
+    }
+
+    public function process(array $data, Form $form): array
+    {
+        $config = static::blueprint($form)->fields()
+            ->addValues($data)
+            ->process()
+            ->values()
+            ->all();
+
+        $config['custom_fields'] = collect(Arr::get($config, 'custom_fields'))
+            ->map(fn (array $customField) => Arr::except($customField, 'id'))
+            ->all() ?: null;
+
+        return Arr::removeNullValues($config);
     }
 
     public static function blueprint(Form $form, array $forms = [], array $tags = [], array $customFields = []): \Statamic\Fields\Blueprint
@@ -199,10 +237,5 @@ class Kit extends Connection
                 ],
             ],
         ]);
-    }
-
-    public function routes(Router $router): void
-    {
-        $router->patch('/', [KitConnectionController::class, 'update'])->name('update');
     }
 }

@@ -3,9 +3,9 @@
 namespace Statamic\FormsPro\FormConnections;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
@@ -14,7 +14,6 @@ use Statamic\FormsPro\FormConnections\Concerns\ReadsSubmissionValues;
 use Statamic\FormsPro\FormConnections\Mailcoach\MailcoachClient;
 use Statamic\FormsPro\FormConnections\Mailcoach\MailcoachException;
 use Statamic\FormsPro\FormConnections\Mailcoach\SubscribeToMailcoach;
-use Statamic\FormsPro\Http\Controllers\CP\MailcoachConnectionController;
 use Statamic\Support\Arr;
 use Statamic\Support\VueComponent;
 
@@ -59,20 +58,12 @@ class Mailcoach extends Connection
 
     public function render(Form $form): VueComponent
     {
-        $isConfigured = config('forms-pro.connections.mailcoach.api_url')
-            && config('forms-pro.connections.mailcoach.token');
-
         $lists = [];
+        $isConfigured = $this->isConfigured();
 
         try {
             if ($isConfigured) {
-                $mailcoach = app(MailcoachClient::class);
-
-                $lists = Cache::remember(
-                    "forms-pro.mailcoach.email-lists.{$mailcoach->fingerprint()}",
-                    now()->addMinutes(5),
-                    fn () => $mailcoach->lists()
-                );
+                $lists = $this->lists();
             }
         } catch (ConnectionException|MailcoachException $e) {
             $apiError = $e->getMessage();
@@ -85,13 +76,77 @@ class Mailcoach extends Connection
             ->preProcess();
 
         return VueComponent::render('mailcoach-connection', [
-            'action' => cp_route('forms.connect.mailcoach.update', $form->handle()),
             'blueprint' => $blueprint->toPublishArray(),
-            'values' => $fields->values()->all(),
             'meta' => $fields->meta()->all(),
             'isConfigured' => $isConfigured,
             'apiError' => $apiError ?? null,
         ]);
+    }
+
+    private function isConfigured(): bool
+    {
+        return config('forms-pro.connections.mailcoach.api_url')
+            && config('forms-pro.connections.mailcoach.token');
+    }
+
+    private function lists(): array
+    {
+        $mailcoach = app(MailcoachClient::class);
+
+        return Cache::remember(
+            "forms-pro.mailcoach.email-lists.{$mailcoach->fingerprint()}",
+            now()->addMinutes(5),
+            fn () => $mailcoach->lists()
+        );
+    }
+
+    public function preProcess(array $config, Form $form): array
+    {
+        try {
+            $lists = $this->isConfigured() ? $this->lists() : [];
+        } catch (ConnectionException|MailcoachException) {
+            $lists = [];
+        }
+
+        return static::blueprint($form, $lists)->fields()
+            ->addValues($config)
+            ->preProcess()
+            ->values()
+            ->all();
+    }
+
+    public function rules(Form $form): array
+    {
+        $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
+
+        return [
+            'list' => ['required', 'uuid'],
+            'email_field' => ['required', $isFormField],
+            'first_name_field' => ['nullable', $isFormField],
+            'last_name_field' => ['nullable', $isFormField],
+            'consent_field' => ['nullable', $isFormField],
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['string'],
+            'attributes' => ['nullable', 'array'],
+            'attributes.*.key' => ['required', 'string', 'distinct'],
+            'attributes.*.value' => ['required', $isFormField],
+            'skip_confirmation' => ['boolean'],
+        ];
+    }
+
+    public function process(array $data, Form $form): array
+    {
+        $config = static::blueprint($form)->fields()
+            ->addValues($data)
+            ->process()
+            ->values()
+            ->all();
+
+        $config['attributes'] = collect(Arr::get($config, 'attributes'))
+            ->map(fn (array $attribute) => Arr::except($attribute, 'id'))
+            ->all() ?: null;
+
+        return Arr::removeNullValues($config);
     }
 
     public static function blueprint(Form $form, array $lists = []): \Statamic\Fields\Blueprint
@@ -216,10 +271,5 @@ class Mailcoach extends Connection
                 ],
             ],
         ]);
-    }
-
-    public function routes(Router $router): void
-    {
-        $router->patch('/', [MailcoachConnectionController::class, 'update'])->name('update');
     }
 }

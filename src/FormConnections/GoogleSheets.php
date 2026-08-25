@@ -6,6 +6,8 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
@@ -13,7 +15,8 @@ use Statamic\Forms\Connections\Connection;
 use Statamic\FormsPro\FormConnections\GoogleSheets\AppendRowToGoogleSheet;
 use Statamic\FormsPro\FormConnections\GoogleSheets\GoogleSheetsClient;
 use Statamic\FormsPro\FormConnections\GoogleSheets\GoogleSheetsException;
-use Statamic\FormsPro\Http\Controllers\CP\GoogleSheetsConnectionController;
+use Statamic\FormsPro\FormConnections\GoogleSheets\Rules\SpreadsheetTab;
+use Statamic\FormsPro\FormConnections\GoogleSheets\Rules\SpreadsheetUrl;
 use Statamic\FormsPro\Http\Controllers\CP\GoogleSheetsTabsController;
 use Statamic\Support\Arr;
 use Statamic\Support\VueComponent;
@@ -47,9 +50,9 @@ class GoogleSheets extends Connection
 
     public function render(Form $form): VueComponent
     {
+        $tabs = [];
         $config = $form->connections()->get('google_sheets', []);
         $isConfigured = (bool) config('forms-pro.connections.google_sheets.credentials');
-        $tabs = [];
 
         try {
             if ($isConfigured) {
@@ -70,9 +73,7 @@ class GoogleSheets extends Connection
             ->preProcess();
 
         return VueComponent::render('google-sheets-connection', [
-            'action' => cp_route('forms.connect.google_sheets.update', $form->handle()),
             'blueprint' => $blueprint->toPublishArray(),
-            'values' => $fields->values()->all(),
             'meta' => $fields->meta()->all(),
             'isConfigured' => $isConfigured,
             'serviceAccount' => $serviceAccount ?? null,
@@ -103,6 +104,45 @@ class GoogleSheets extends Connection
     private static function tabsCacheKey(GoogleSheetsClient $client, ?string $id): string
     {
         return "forms-pro.google-sheets.tabs.{$client->fingerprint()}.{$id}";
+    }
+
+    public function preProcess(array $config, Form $form): array
+    {
+        return static::blueprint($form)->fields()
+            ->addValues($config)
+            ->preProcess()
+            ->values()
+            ->all();
+    }
+
+    public function rules(Form $form): array
+    {
+        $reserved = $form->formFields()->fields()->keys()->intersect(array_keys(static::metaColumns()));
+
+        throw_if($reserved->isNotEmpty(), ValidationException::withMessages([
+            'fields' => __('forms-pro::validation.google_sheets_reserved_column', ['field' => $reserved->first()]),
+        ]));
+
+        return [
+            'spreadsheet' => ['required', new SpreadsheetUrl],
+            'tab' => ['required', 'integer', new SpreadsheetTab],
+            'fields' => ['nullable', 'array'],
+            'fields.*' => ['string', 'distinct', Rule::in(array_keys(static::columns($form)))],
+        ];
+    }
+
+    public function process(array $data, Form $form): array
+    {
+        $config = static::blueprint($form)->fields()
+            ->addValues([
+                ...Arr::removeNullValues($data),
+                'tab' => (int) Arr::get($data, 'tab'),
+            ])
+            ->process()
+            ->values()
+            ->all();
+
+        return Arr::removeNullValues($config);
     }
 
     public static function blueprint(Form $form, array $tabs = []): \Statamic\Fields\Blueprint
@@ -182,6 +222,5 @@ class GoogleSheets extends Connection
     public function routes(Router $router): void
     {
         $router->get('tabs', GoogleSheetsTabsController::class)->name('tabs');
-        $router->patch('/', [GoogleSheetsConnectionController::class, 'update'])->name('update');
     }
 }

@@ -5,6 +5,8 @@ namespace Tests\FormConnections\Twilio;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
 use Statamic\Facades\Form;
@@ -108,7 +110,7 @@ class TwilioConnectionTest extends TestCase
         $component = (new Twilio)->render($this->form())->toArray();
 
         $this->assertEquals('twilio-connection', $component['name']);
-        $this->assertEquals(cp_route('forms.connect.twilio.update', $this->form()->handle()), $component['props']['action']);
+        $this->assertEquals(['blueprint', 'meta', 'defaults', 'isConfigured', 'apiError'], array_keys($component['props']));
         $this->assertTrue($component['props']['isConfigured']);
 
         $this->assertEquals([
@@ -175,6 +177,140 @@ class TwilioConnectionTest extends TestCase
         $props = (new Twilio)->render($this->form())->toArray()['props'];
 
         $this->assertStringContainsString('Could not resolve host.', $props['apiError']);
+    }
+
+    #[Test]
+    public function it_pre_processes_the_configs()
+    {
+        $form = $this->form([
+            [
+                'id' => 'one',
+                'to' => '+447700900123',
+                'from' => '+14155552671',
+                'body' => 'First',
+                'conditions' => [['field' => 'enquiry_type', 'operator' => 'equals', 'value' => 'sales', 'join' => 'and']],
+            ],
+            ['id' => 'two', 'to' => 'field:phone', 'from' => '+14155552671', 'body' => 'Second', 'enabled' => false],
+        ]);
+
+        $configs = (new Twilio)->preProcess($form->connections()->get('twilio'), $form);
+
+        $this->assertEquals('one', $configs[0]['id']);
+        $this->assertTrue($configs[0]['enabled']);
+        $this->assertEquals('+447700900123', $configs[0]['to']);
+        $this->assertEquals('First', $configs[0]['body']);
+        $this->assertNotEmpty($configs[0]['conditions'][0]['_id']);
+        $this->assertEquals('two', $configs[1]['id']);
+        $this->assertFalse($configs[1]['enabled']);
+        $this->assertEquals([], $configs[1]['conditions']);
+    }
+
+    #[Test]
+    public function it_validates_the_configs()
+    {
+        $validator = Validator::make([
+            [
+                'id' => 'abc',
+                'to' => '+447700900123',
+                'from' => '+14155552671',
+                'body' => 'New enquiry',
+                'country_code' => '+44',
+                'enabled' => true,
+                'conditions' => [['field' => 'enquiry_type', 'operator' => 'equals', 'value' => 'sales', 'join' => 'and']],
+            ],
+        ], (new Twilio)->rules($this->form()));
+
+        $this->assertTrue($validator->passes());
+    }
+
+    #[Test]
+    #[DataProvider('invalidConfigs')]
+    public function it_rejects_invalid_configs($configs, $errors)
+    {
+        $validator = Validator::make($configs, (new Twilio)->rules($this->form()));
+
+        $this->assertTrue($validator->fails());
+
+        foreach ($errors as $key) {
+            $this->assertTrue($validator->errors()->has($key));
+        }
+    }
+
+    public static function invalidConfigs(): array
+    {
+        $valid = ['to' => '+447700900123', 'from' => '+14155552671', 'body' => 'New enquiry'];
+
+        return [
+            'config not an array' => [['nope'], ['0']],
+            'missing recipient' => [[array_diff_key($valid, ['to' => ''])], ['0.to']],
+            'recipient without a country code' => [[[...$valid, 'to' => '07700900123']], ['0.to']],
+            'recipient naming an unknown field' => [[[...$valid, 'to' => 'field:nope']], ['0.to']],
+            'missing sender' => [[array_diff_key($valid, ['from' => ''])], ['0.from']],
+            'sender that isnt a number or service' => [[[...$valid, 'from' => 'STATAMIC']], ['0.from']],
+            'missing body' => [[array_diff_key($valid, ['body' => ''])], ['0.body']],
+            'body over the segment limit' => [[[...$valid, 'body' => str_repeat('a', 1601)]], ['0.body']],
+            'dialling code without a plus' => [[[...$valid, 'country_code' => '44']], ['0.country_code']],
+        ];
+    }
+
+    #[Test]
+    public function it_processes_the_configs()
+    {
+        $form = $this->form();
+
+        $this->assertEquals([
+            ['id' => 'def', 'to' => '+447700900124', 'from' => '+14155552671', 'body' => 'New', 'enabled' => false, 'conditions' => [
+                ['field' => 'enquiry_type', 'operator' => 'equals', 'value' => 'sales', 'join' => 'and'],
+            ]],
+            ['id' => 'ghi', 'to' => 'field:phone', 'from' => 'MG0123456789abcdef0123456789abcdef', 'body' => 'Thanks!', 'country_code' => '+44'],
+        ], (new Twilio)->process([
+            ['id' => 'def', 'to' => '+447700900124', 'from' => '+14155552671', 'body' => 'New', 'enabled' => false, 'conditions' => [
+                ['_id' => 'vue-row', 'field' => 'enquiry_type', 'operator' => 'equals', 'value' => 'sales', 'join' => 'and'],
+                ['field' => null, 'operator' => 'equals', 'value' => 'incomplete', 'join' => 'and'],
+            ]],
+            ['id' => 'ghi', 'to' => 'field:phone', 'from' => 'MG0123456789abcdef0123456789abcdef', 'body' => 'Thanks!', 'country_code' => '+44', 'enabled' => true],
+        ], $form));
+    }
+
+    #[Test]
+    public function it_doesnt_persist_the_client_row_state()
+    {
+        $form = $this->form();
+
+        $this->assertEquals([
+            ['id' => 'abc', 'to' => '+447700900123', 'from' => '+14155552671', 'body' => 'New enquiry'],
+        ], (new Twilio)->process([
+            ['_id' => 'vue-row', 'id' => 'abc', 'to' => '+447700900123', 'from' => '+14155552671', 'body' => 'New enquiry'],
+        ], $form));
+    }
+
+    #[Test]
+    public function it_generates_an_id_for_configs_that_dont_have_one()
+    {
+        $config = (new Twilio)->process([
+            ['to' => '+447700900123', 'from' => '+14155552671', 'body' => 'New enquiry'],
+        ], $this->form())[0];
+
+        $this->assertNotEmpty($config['id']);
+        $this->assertEquals('+447700900123', $config['to']);
+    }
+
+    #[Test]
+    public function it_removes_null_values_from_configs()
+    {
+        $this->assertEquals([[
+            'id' => 'abc',
+            'to' => '+447700900123',
+            'from' => '+14155552671',
+            'body' => 'New enquiry',
+        ]], (new Twilio)->process([[
+            'id' => 'abc',
+            'to' => '+447700900123',
+            'from' => '+14155552671',
+            'body' => 'New enquiry',
+            'country_code' => null,
+            'enabled' => null,
+        ]], $this->form()));
     }
 
     private function form(?array $configs = null): FormContract

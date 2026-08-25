@@ -3,9 +3,9 @@
 namespace Statamic\FormsPro\FormConnections;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
@@ -14,7 +14,6 @@ use Statamic\FormsPro\FormConnections\Concerns\ReadsSubmissionValues;
 use Statamic\FormsPro\FormConnections\HubSpot\HubSpotClient;
 use Statamic\FormsPro\FormConnections\HubSpot\HubSpotException;
 use Statamic\FormsPro\FormConnections\HubSpot\SubmitToHubSpot;
-use Statamic\FormsPro\Http\Controllers\CP\HubSpotConnectionController;
 use Statamic\Support\Arr;
 use Statamic\Support\VueComponent;
 
@@ -77,16 +76,12 @@ class HubSpot extends Connection
 
     public function render(Form $form): VueComponent
     {
-        $hubspot = app(HubSpotClient::class);
         $account = ['forms' => [], 'subscriptions' => []];
         $isConfigured = (bool) config('forms-pro.connections.hubspot.access_token');
 
         try {
             if ($isConfigured) {
-                $account = Cache::remember("forms-pro.hubspot.account.{$hubspot->fingerprint()}", now()->addMinutes(5), fn (): array => [
-                    'forms' => $hubspot->forms(),
-                    'subscriptions' => $this->subscriptions($hubspot),
-                ]);
+                $account = $this->account();
             }
         } catch (ConnectionException|HubSpotException $e) {
             $apiError = $e->getMessage();
@@ -99,13 +94,21 @@ class HubSpot extends Connection
             ->preProcess();
 
         return VueComponent::render('hubspot-connection', [
-            'action' => cp_route('forms.connect.hubspot.update', $form->handle()),
             'blueprint' => $blueprint->toPublishArray(),
-            'values' => $fields->values()->all(),
             'meta' => $fields->meta()->all(),
             'hubspotForms' => $account['forms'],
             'isConfigured' => $isConfigured,
             'apiError' => $apiError ?? null,
+        ]);
+    }
+
+    private function account(): array
+    {
+        $hubspot = app(HubSpotClient::class);
+
+        return Cache::remember("forms-pro.hubspot.account.{$hubspot->fingerprint()}", now()->addMinutes(5), fn (): array => [
+            'forms' => $hubspot->forms(),
+            'subscriptions' => $this->subscriptions($hubspot),
         ]);
     }
 
@@ -116,6 +119,53 @@ class HubSpot extends Connection
         } catch (ConnectionException|HubSpotException) {
             return [];
         }
+    }
+
+    public function preProcess(array $config, Form $form): array
+    {
+        try {
+            $account = config('forms-pro.connections.hubspot.access_token')
+                ? $this->account()
+                : ['forms' => [], 'subscriptions' => []];
+        } catch (ConnectionException|HubSpotException) {
+            $account = ['forms' => [], 'subscriptions' => []];
+        }
+
+        return static::blueprint($form, $account['forms'], $account['subscriptions'])->fields()
+            ->addValues($config)
+            ->preProcess()
+            ->values()
+            ->all();
+    }
+
+    public function rules(Form $form): array
+    {
+        $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
+
+        return [
+            'form' => ['required', 'uuid'],
+            'email_field' => ['required', $isFormField],
+            'consent_field' => ['nullable', $isFormField],
+            'consent_to_process_field' => ['nullable', $isFormField],
+            'legitimate_interest_subscription' => ['nullable', 'integer'],
+            'properties' => ['nullable', 'array'],
+            'properties.*.key' => ['required', 'string', 'distinct', Rule::notIn(['email'])],
+            'properties.*.value' => ['required', $isFormField],
+            'communications' => ['nullable', 'array'],
+            'communications.*.subscription' => ['required', 'integer', 'distinct'],
+            'communications.*.field' => ['required', $isFormField],
+        ];
+    }
+
+    public function process(array $data, Form $form): array
+    {
+        $config = static::blueprint($form)->fields()
+            ->addValues($data)
+            ->process()
+            ->values()
+            ->all();
+
+        return Arr::removeNullValues($config);
     }
 
     public static function blueprint(Form $form, array $forms = [], array $subscriptions = []): \Statamic\Fields\Blueprint
@@ -211,10 +261,5 @@ class HubSpot extends Connection
                 ],
             ],
         ]);
-    }
-
-    public function routes(Router $router): void
-    {
-        $router->patch('/', [HubSpotConnectionController::class, 'update'])->name('update');
     }
 }

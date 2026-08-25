@@ -3,6 +3,9 @@
 namespace Tests\FormConnections\GoogleSheets;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
 use Statamic\Facades\Form;
@@ -73,24 +76,12 @@ class GoogleSheetsConnectionTest extends TestCase
         $component = (new GoogleSheets)->render($this->form())->toArray();
 
         $this->assertEquals('google-sheets-connection', $component['name']);
-        $this->assertEquals(cp_route('forms.connect.google_sheets.update', 'contact_us'), $component['props']['action']);
+        $this->assertEquals(['blueprint', 'meta', 'isConfigured', 'serviceAccount', 'apiError'], array_keys($component['props']));
         $this->assertTrue($component['props']['isConfigured']);
         $this->assertEquals(self::SERVICE_ACCOUNT, $component['props']['serviceAccount']);
         $this->assertNull($component['props']['apiError']);
 
         Http::assertNothingSent();
-    }
-
-    #[Test]
-    public function it_renders_the_saved_spreadsheet_address()
-    {
-        Http::fake([...$this->fakeAccessToken(), 'sheets.googleapis.com/*' => Http::response(['sheets' => []])]);
-
-        $form = $this->form(['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 0]);
-
-        $props = (new GoogleSheets)->render($form)->toArray()['props'];
-
-        $this->assertEquals(self::SPREADSHEET_URL, $props['values']['spreadsheet']);
     }
 
     #[Test]
@@ -158,6 +149,161 @@ class GoogleSheetsConnectionTest extends TestCase
         $this->assertTrue($props['isConfigured']);
         $this->assertNull($props['serviceAccount']);
         $this->assertEquals('The [FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS] environment variable is not a valid service account key.', $props['apiError']);
+    }
+
+    #[Test]
+    public function it_pre_processes_the_config()
+    {
+        $form = $this->form(['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 184, 'fields' => ['email', 'submitted_at']]);
+
+        $config = (new GoogleSheets)->preProcess($form->connections()->get('google_sheets'), $form);
+
+        $this->assertEquals([
+            'spreadsheet' => self::SPREADSHEET_URL,
+            'tab' => 184,
+            'fields' => ['email', 'submitted_at'],
+        ], $config);
+    }
+
+    #[Test]
+    public function it_validates_the_config()
+    {
+        $this->fake();
+
+        $validator = Validator::make([
+            'spreadsheet' => self::SPREADSHEET_URL,
+            'tab' => 184,
+            'fields' => ['email', 'submitted_at'],
+        ], (new GoogleSheets)->rules($this->form()));
+
+        $this->assertTrue($validator->passes());
+    }
+
+    #[Test]
+    #[DataProvider('invalidConfigs')]
+    public function it_rejects_invalid_configs(array $config, array $errors)
+    {
+        $this->fake();
+
+        $validator = Validator::make($config, (new GoogleSheets)->rules($this->form()));
+
+        $this->assertTrue($validator->fails());
+
+        foreach ($errors as $key) {
+            $this->assertTrue($validator->errors()->has($key));
+        }
+    }
+
+    public static function invalidConfigs(): array
+    {
+        return [
+            'missing spreadsheet' => [['tab' => 0], ['spreadsheet']],
+            'spreadsheet that isnt an address' => [['spreadsheet' => 'nope', 'tab' => 0], ['spreadsheet']],
+            'missing tab' => [['spreadsheet' => self::SPREADSHEET], ['tab']],
+            'tab that isnt in the spreadsheet' => [['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 999], ['tab']],
+            'tab that isnt a number' => [['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 'Archive'], ['tab']],
+            'unknown column' => [
+                ['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 0, 'fields' => ['nope']],
+                ['fields.0'],
+            ],
+            'the same column twice' => [
+                ['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 0, 'fields' => ['email', 'email']],
+                ['fields.0', 'fields.1'],
+            ],
+        ];
+    }
+
+    #[Test]
+    public function it_rejects_a_spreadsheet_it_cant_open()
+    {
+        $this->fake(['sheets.googleapis.com/*' => Http::response([
+            'error' => ['code' => 404, 'status' => 'NOT_FOUND', 'message' => 'Requested entity was not found.'],
+        ], 404)]);
+
+        try {
+            Validator::make([
+                'spreadsheet' => self::SPREADSHEET_URL,
+                'tab' => 0,
+            ], (new GoogleSheets)->rules($this->form()))->validate();
+
+            $this->fail('A validation exception was not thrown.');
+        } catch (ValidationException $e) {
+            $this->assertEquals(["Couldn't open that spreadsheet. Check the address and make sure it's shared with "
+                .self::SERVICE_ACCOUNT.' as an Editor.'], $e->errors()['spreadsheet']);
+        }
+    }
+
+    #[Test]
+    public function it_rejects_a_form_with_a_field_named_after_a_column_it_adds()
+    {
+        Http::fake();
+
+        $form = $this->form(fields: [
+            ['handle' => 'email', 'field' => ['type' => 'text']],
+            ['handle' => 'submitted_at', 'field' => ['type' => 'date']],
+        ]);
+
+        try {
+            (new GoogleSheets)->rules($form);
+
+            $this->fail('A validation exception was not thrown.');
+        } catch (ValidationException $e) {
+            $this->assertEquals(['This form has a field called submitted_at, which clashes with a column this connection adds. Rename the field to use this connection.'], $e->errors()['fields']);
+        }
+
+        Http::assertNothingSent();
+    }
+
+    #[Test]
+    public function it_processes_the_config()
+    {
+        $this->assertEquals([
+            'spreadsheet' => self::SPREADSHEET_URL,
+            'tab' => 184,
+            'fields' => ['email', 'submitted_at'],
+        ], (new GoogleSheets)->process([
+            'spreadsheet' => self::SPREADSHEET_URL,
+            'tab' => '184',
+            'fields' => ['email', 'submitted_at'],
+        ], $this->form()));
+    }
+
+    #[Test]
+    public function it_stores_the_address_exactly_as_it_was_pasted()
+    {
+        $pasted = 'https://docs.google.com/spreadsheets/d/'.self::SPREADSHEET.'/edit?gid=184#gid=184';
+
+        $config = (new GoogleSheets)->process(['spreadsheet' => $pasted, 'tab' => 0], $this->form());
+
+        $this->assertEquals(['spreadsheet' => $pasted, 'tab' => 0], $config);
+    }
+
+    #[Test]
+    public function it_removes_null_values_from_the_config()
+    {
+        $this->assertEquals([
+            'spreadsheet' => self::SPREADSHEET_URL,
+            'tab' => 184,
+        ], (new GoogleSheets)->process([
+            'spreadsheet' => self::SPREADSHEET_URL,
+            'tab' => 184,
+            'fields' => null,
+        ], $this->form()));
+    }
+
+    private function fake(array $overrides = []): void
+    {
+        Http::fake([
+            ...$this->fakeAccessToken(),
+            'sheets.googleapis.com/*' => Http::response([
+                'properties' => ['title' => 'Q3 Leads'],
+                'sheets' => [
+                    ['properties' => ['sheetId' => 0, 'title' => 'Leads 2026']],
+                    ['properties' => ['sheetId' => 184, 'title' => 'Archive']],
+                ],
+            ]),
+            ...$overrides,
+        ]);
     }
 
     private function form(?array $config = null, ?array $fields = null): FormContract

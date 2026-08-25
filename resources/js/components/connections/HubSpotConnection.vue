@@ -1,37 +1,27 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, useTemplateRef } from 'vue';
-import axios from 'axios';
-import { keys } from '@statamic/cms/api';
-import { Alert, Button, Description, Heading, Icon, PublishContainer, PublishFields, PublishFieldsProvider } from '@statamic/cms/ui';
+import { computed } from 'vue';
+import { Alert, Description, Heading, PublishContainer, PublishFields, PublishFieldsProvider } from '@statamic/cms/ui';
 import HubSpotSetupInstructions from './HubSpotSetupInstructions.vue';
 
 const props = defineProps({
     form: Object,
-    config: Object,
-    action: String,
+    modelValue: { type: Object, default: () => ({}) },
+    errors: { type: Object, default: () => ({}) },
     blueprint: Object,
-    values: Object,
     meta: Object,
     hubspotForms: { type: [Object, Array], default: () => ({}) },
     isConfigured: Boolean,
     apiError: String,
 });
 
-const container = useTemplateRef('container');
-
-const errors = ref<object>({});
-const saving = ref<boolean>(false);
-const values = ref<object>({ ...props.values });
-const saveBinding = ref<ReturnType<typeof keys.bindGlobal> | null>(null);
-
-const hubspotForm = computed(() => props.hubspotForms?.[values.value.form]);
+const hubspotForm = computed(() => props.hubspotForms?.[props.modelValue.form]);
 
 const extraValues = computed<object>(() => ({
     consent_type: hubspotForm.value?.consent?.type ?? 'none',
 }));
 
 const missingConsentToProcess = computed<boolean>(
-    () => hubspotForm.value?.consent?.type === 'explicit_consent_to_process' && !values.value.consent_to_process_field,
+    () => hubspotForm.value?.consent?.type === 'explicit_consent_to_process' && !props.modelValue.consent_to_process_field,
 );
 
 const missingCommunications = computed<boolean>(() => {
@@ -39,7 +29,7 @@ const missingCommunications = computed<boolean>(() => {
 
     if (!consent || ['none', 'legitimate_interest'].includes(consent.type)) return false;
 
-    return Boolean(consent.checkboxes?.length) && !(values.value.communications ?? []).length;
+    return Boolean(consent.checkboxes?.length) && !(props.modelValue.communications ?? []).length;
 });
 
 const missingSubscription = computed<boolean>(() => {
@@ -48,51 +38,12 @@ const missingSubscription = computed<boolean>(() => {
     return (
         consent?.type === 'legitimate_interest' &&
         (consent.subscription_ids ?? []).length > 1 &&
-        !values.value.legitimate_interest_subscription
+        !props.modelValue.legitimate_interest_subscription
     );
 });
-
-const save = (): void => {
-    if (saving.value) return;
-
-    errors.value = {};
-    saving.value = true;
-
-    axios
-        .patch(props.action, container.value.visibleValues)
-        .then(() => {
-            container.value.clearDirtyState();
-            Statamic.$toast.success(__('Saved'));
-        })
-        .catch((e) => {
-            if (e.response?.status === 422) {
-                errors.value = e.response.data.errors;
-                Statamic.$toast.error(e.response.data.message);
-            } else {
-                Statamic.$toast.error(__('Something went wrong'));
-            }
-        })
-        .finally(() => (saving.value = false));
-};
-
-onMounted(() => {
-    saveBinding.value = keys.bindGlobal(['mod+s'], (e) => {
-        e.preventDefault();
-        save();
-    });
-});
-
-onUnmounted(() => saveBinding.value?.destroy());
 </script>
 
 <template>
-    <Teleport v-if="isConfigured" to="#form-layout-actions">
-        <Button variant="primary" :aria-label="__('Save')" :disabled="saving" @click="save">
-            <Icon name="save" class="sm:hidden" />
-            <span class="hidden sm:inline">{{ __('Save') }}</span>
-        </Button>
-    </Teleport>
-
     <div v-if="isConfigured">
         <Alert v-if="apiError" variant="error" icon="alert-warning-exclamation-mark" class="mb-6">
             <Heading :text="__('forms-pro::messages.hubspot_api_error')" />
@@ -124,12 +75,12 @@ onUnmounted(() => saveBinding.value?.destroy());
         </Alert>
 
         <PublishContainer
-            ref="container"
-            :blueprint
-            v-model="values"
-            :meta
             :errors
+            :blueprint
+            :model-value="modelValue"
+            :meta
             :extra-values="extraValues"
+            :track-dirty-state="false"
         >
             <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
                 <PublishFields />

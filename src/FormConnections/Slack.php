@@ -3,7 +3,6 @@
 namespace Statamic\FormsPro\FormConnections;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Statamic\Contracts\Forms\Form;
@@ -11,10 +10,12 @@ use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connections\Connection;
 use Statamic\Forms\Connections\ConnectionLogic;
+use Statamic\FormsPro\FormConnections\Slack\Rules\SlackChannel;
 use Statamic\FormsPro\FormConnections\Slack\SendSlackMessage;
 use Statamic\FormsPro\FormConnections\Slack\SlackClient;
 use Statamic\FormsPro\FormConnections\Slack\SlackException;
-use Statamic\FormsPro\Http\Controllers\CP\SlackConnectionController;
+use Statamic\Support\Arr;
+use Statamic\Support\Str;
 use Statamic\Support\VueComponent;
 
 use function Statamic\trans as __;
@@ -49,12 +50,12 @@ class Slack extends Connection
 
     public function render(Form $form): VueComponent
     {
+        $channels = [];
         $isConfigured = (bool) config('forms-pro.connections.slack.token');
 
         try {
             $channels = $isConfigured ? $this->channels() : [];
         } catch (ConnectionException|SlackException $e) {
-            $channels = [];
             $apiError = $e->getMessage();
         }
 
@@ -62,17 +63,11 @@ class Slack extends Connection
         $fields = $blueprint->fields()->preProcess();
 
         return VueComponent::render('slack-connection', [
-            'action' => cp_route('forms.connect.slack.update', $form->handle()),
             'blueprint' => $blueprint->toPublishArray(),
-            'notifications' => collect($form->connections()->get('slack'))
-                ->mapWithKeys(function (array $config) use ($fields): array {
-                    $fields = $fields->addValues($config)->preProcess();
-
-                    return [$config['id'] => [
-                        'values' => $fields->values()->all(),
-                        'meta' => $fields->meta()->all(),
-                    ]];
-                })
+            'meta' => collect($form->connections()->get('slack'))
+                ->mapWithKeys(fn (array $config): array => [
+                    $config['id'] => $fields->addValues($config)->preProcess()->meta()->all(),
+                ])
                 ->all(),
             'defaults' => [
                 'values' => $fields->values()->all(),
@@ -92,6 +87,60 @@ class Slack extends Connection
             now()->addMinutes(5),
             fn () => $slack->channels()->all()
         );
+    }
+
+    public function preProcess(array $config, Form $form): array
+    {
+        $fields = static::blueprint($form)->fields();
+
+        return collect($config)
+            ->map(fn (array $config): array => [
+                'id' => $config['id'],
+                'enabled' => Arr::get($config, 'enabled') !== false,
+                'conditions' => ConnectionLogic::preProcess(Arr::get($config, 'conditions') ?? []),
+                ...$fields->addValues($config)->preProcess()->values()->all(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function rules(Form $form): array
+    {
+        return [
+            '*' => ['array'],
+            '*.channel' => ['required', new SlackChannel],
+            '*.heading' => ['nullable', 'string', 'max:2000'],
+            '*.enabled' => ['nullable', 'boolean'],
+            '*.conditions' => ['nullable', 'array'],
+            '*.conditions.*' => ['array'],
+        ];
+    }
+
+    public function process(array $data, Form $form): array
+    {
+        $fields = static::blueprint($form)->fields();
+
+        return collect($data)
+            ->map(function (array $config) use ($fields): array {
+                $config = Arr::removeNullValues($config);
+
+                $values = $fields
+                    ->addValues($config)
+                    ->process()
+                    ->values()
+                    ->all();
+
+                return Arr::removeNullValues([
+                    'id' => Arr::get($config, 'id') ?? Str::random(8),
+                    ...$values,
+                    'enabled' => Arr::get($config, 'enabled') === false ? false : null,
+                    'include_fields' => Arr::get($values, 'include_fields') === false ? false : null,
+                    'link_to_submission' => Arr::get($values, 'link_to_submission') === false ? false : null,
+                    'conditions' => ConnectionLogic::process(Arr::get($config, 'conditions') ?? []),
+                ]);
+            })
+            ->values()
+            ->all();
     }
 
     public static function blueprint(Form $form, array $channels = []): \Statamic\Fields\Blueprint
@@ -162,10 +211,5 @@ class Slack extends Connection
                 ],
             ],
         ]);
-    }
-
-    public function routes(Router $router): void
-    {
-        $router->patch('/', [SlackConnectionController::class, 'update'])->name('update');
     }
 }

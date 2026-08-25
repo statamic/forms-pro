@@ -6,15 +6,17 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Validation\NestedRules;
+use Illuminate\Validation\Rule;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connections\Connection;
+use Statamic\FormsPro\Fieldtypes\MailchimpGroupOption;
 use Statamic\FormsPro\FormConnections\Concerns\ReadsSubmissionValues;
 use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
 use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpException;
 use Statamic\FormsPro\FormConnections\Mailchimp\SubscribeToMailchimp;
-use Statamic\FormsPro\Http\Controllers\CP\MailchimpConnectionController;
 use Statamic\FormsPro\Http\Controllers\CP\MailchimpGroupsController;
 use Statamic\FormsPro\Http\Controllers\CP\MailchimpMarketingPermissionsController;
 use Statamic\FormsPro\Http\Controllers\CP\MailchimpMergeFieldsController;
@@ -64,19 +66,12 @@ class Mailchimp extends Connection
 
     public function render(Form $form): VueComponent
     {
-        $isConfigured = (bool) config('forms-pro.connections.mailchimp.api_key');
-
         $audiences = [];
+        $isConfigured = (bool) config('forms-pro.connections.mailchimp.api_key');
 
         try {
             if ($isConfigured) {
-                $mailchimp = app(MailchimpClient::class);
-
-                $audiences = Cache::remember(
-                    "forms-pro.mailchimp.audiences.{$mailchimp->fingerprint()}",
-                    now()->addMinutes(5),
-                    fn () => $mailchimp->audiences()
-                );
+                $audiences = $this->audiences();
             }
         } catch (ConnectionException|MailchimpException $e) {
             $apiError = $e->getMessage();
@@ -89,13 +84,96 @@ class Mailchimp extends Connection
             ->preProcess();
 
         return VueComponent::render('mailchimp-connection', [
-            'action' => cp_route('forms.connect.mailchimp.update', $form->handle()),
             'blueprint' => $blueprint->toPublishArray(),
-            'values' => $fields->values()->all(),
             'meta' => $fields->meta()->all(),
             'isConfigured' => $isConfigured,
             'apiError' => $apiError ?? null,
         ]);
+    }
+
+    private function audiences(): array
+    {
+        $mailchimp = app(MailchimpClient::class);
+
+        return Cache::remember(
+            "forms-pro.mailchimp.audiences.{$mailchimp->fingerprint()}",
+            now()->addMinutes(5),
+            fn () => $mailchimp->audiences()
+        );
+    }
+
+    public function preProcess(array $config, Form $form): array
+    {
+        $audiences = [];
+
+        if (config('forms-pro.connections.mailchimp.api_key')) {
+            try {
+                $audiences = $this->audiences();
+            } catch (ConnectionException|MailchimpException) {
+            }
+        }
+
+        return static::blueprint($form, $audiences)->fields()
+            ->addValues($config)
+            ->preProcess()
+            ->values()
+            ->all();
+    }
+
+    public function rules(Form $form): array
+    {
+        $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
+
+        return [
+            'list' => ['required', 'alpha_num:ascii'],
+            'email_field' => ['required', $isFormField],
+            'first_name_field' => ['nullable', $isFormField],
+            'last_name_field' => ['nullable', $isFormField],
+            'consent_field' => ['nullable', $isFormField],
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['string'],
+            'merge_fields' => ['nullable', 'array'],
+            'merge_fields.*.key' => ['required', 'string', 'distinct', 'regex:/^[A-Z0-9_]+$/', Rule::notIn(self::DEDICATED_MERGE_TAGS)],
+            'merge_fields.*.value' => ['required', $isFormField],
+            'groups' => ['nullable', 'array'],
+            'groups.*.group' => ['required', 'string', 'distinct'],
+            'groups.*.field' => ['required', $isFormField],
+            'groups.*.option' => $this->groupOptionRules($form),
+            'marketing_permissions' => ['nullable', 'array'],
+            'marketing_permissions.*.permission' => ['required', 'string', 'distinct'],
+            'marketing_permissions.*.field' => ['required', $isFormField],
+            'skip_confirmation' => ['boolean'],
+        ];
+    }
+
+    /**
+     * A group mapped to a field with options needs to say which one, otherwise it would
+     * be applied whenever any option is chosen. Fields without options don't.
+     */
+    private function groupOptionRules(Form $form): NestedRules
+    {
+        $fieldsWithOptions = array_keys((new MailchimpGroupOption)->fieldsWithOptions($form));
+
+        return Rule::forEach(fn ($value, $attribute, $data, $group): array => in_array(Arr::get($group, 'field'), $fieldsWithOptions)
+            ? ['required', 'string']
+            : ['nullable', 'string']);
+    }
+
+    public function process(array $data, Form $form): array
+    {
+        $config = static::blueprint($form)->fields()
+            ->addValues($data)
+            ->process()
+            ->values()
+            ->all();
+
+        foreach (['merge_fields', 'groups'] as $grid) {
+            $config[$grid] = collect(Arr::get($config, $grid))
+                ->map(fn (array $row) => Arr::except($row, 'id'))
+                ->all() ?: null;
+        }
+
+        return Arr::removeNullValues($config);
     }
 
     public static function blueprint(Form $form, array $audiences = []): \Statamic\Fields\Blueprint
@@ -282,6 +360,5 @@ class Mailchimp extends Connection
         $router->get('merge-fields', MailchimpMergeFieldsController::class)->name('merge-fields');
         $router->get('groups', MailchimpGroupsController::class)->name('groups');
         $router->get('marketing-permissions', MailchimpMarketingPermissionsController::class)->name('marketing-permissions');
-        $router->patch('/', [MailchimpConnectionController::class, 'update'])->name('update');
     }
 }

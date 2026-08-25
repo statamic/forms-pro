@@ -4,6 +4,7 @@ namespace Tests\FormConnections\HubSpot;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
@@ -122,6 +123,18 @@ class HubSpotConnectionTest extends TestCase
 
         $this->assertArrayNotHasKey('hutk', $context);
         $this->assertArrayNotHasKey('pageUri', $context);
+    }
+
+    #[Test]
+    public function it_renders_the_vue_component()
+    {
+        $this->fakeAccount();
+
+        $component = (new HubSpot)->render($this->form())->toArray();
+
+        $this->assertEquals('hubspot-connection', $component['name']);
+        $this->assertEquals(['blueprint', 'meta', 'hubspotForms', 'isConfigured', 'apiError'], array_keys($component['props']));
+        $this->assertTrue($component['props']['isConfigured']);
     }
 
     #[Test]
@@ -245,6 +258,135 @@ class HubSpotConnectionTest extends TestCase
         (new HubSpot)->render($this->form());
 
         Http::assertSentCount(4);
+    }
+
+    #[Test]
+    public function it_pre_processes_the_config()
+    {
+        $this->fakeAccount();
+
+        $config = (new HubSpot)->preProcess(['form' => self::FORM, 'email_field' => 'email'], $this->form());
+
+        $this->assertEquals(self::FORM, $config['form']);
+        $this->assertEquals('email', $config['email_field']);
+    }
+
+    #[Test]
+    public function it_preselects_the_form_when_pre_processing_an_empty_config()
+    {
+        $this->fakeAccount();
+
+        $this->assertEquals(self::FORM, (new HubSpot)->preProcess([], $this->form())['form']);
+    }
+
+    #[Test]
+    public function it_validates_the_config()
+    {
+        $validator = Validator::make([
+            'form' => self::FORM,
+            'email_field' => 'email',
+            'consent_field' => 'marketing',
+            'consent_to_process_field' => 'marketing',
+            'legitimate_interest_subscription' => 3314676590,
+            'properties' => [['key' => 'firstname', 'value' => 'first_name']],
+            'communications' => [['subscription' => 3314676590, 'field' => 'marketing']],
+        ], (new HubSpot)->rules($this->form()));
+
+        $this->assertTrue($validator->passes());
+    }
+
+    #[Test]
+    #[DataProvider('invalidConfigs')]
+    public function it_rejects_invalid_configs(array $config, array $errors)
+    {
+        $validator = Validator::make($config, (new HubSpot)->rules($this->form()));
+
+        $this->assertTrue($validator->fails());
+
+        foreach ($errors as $key) {
+            $this->assertTrue($validator->errors()->has($key));
+        }
+    }
+
+    public static function invalidConfigs(): array
+    {
+        return [
+            'missing form' => [['email_field' => 'email'], ['form']],
+            'form that isnt a uuid' => [['form' => 'contact-us', 'email_field' => 'email'], ['form']],
+            'missing email field' => [['form' => self::FORM], ['email_field']],
+            'unknown email field' => [['form' => self::FORM, 'email_field' => 'nope'], ['email_field']],
+            'unknown consent field' => [
+                ['form' => self::FORM, 'email_field' => 'email', 'consent_field' => 'nope'],
+                ['consent_field'],
+            ],
+            'email as a property' => [
+                ['form' => self::FORM, 'email_field' => 'email', 'properties' => [['key' => 'email', 'value' => 'first_name']]],
+                ['properties.0.key'],
+            ],
+            'the same property twice' => [
+                ['form' => self::FORM, 'email_field' => 'email', 'properties' => [
+                    ['key' => 'firstname', 'value' => 'first_name'],
+                    ['key' => 'firstname', 'value' => 'email'],
+                ]],
+                ['properties.0.key', 'properties.1.key'],
+            ],
+            'property with an unknown form field' => [
+                ['form' => self::FORM, 'email_field' => 'email', 'properties' => [['key' => 'firstname', 'value' => 'nope']]],
+                ['properties.0.value'],
+            ],
+            'property without a value' => [
+                ['form' => self::FORM, 'email_field' => 'email', 'properties' => [['key' => 'firstname']]],
+                ['properties.0.value'],
+            ],
+            'subscription that isnt an id' => [
+                ['form' => self::FORM, 'email_field' => 'email', 'communications' => [['subscription' => 'marketing', 'field' => 'marketing']]],
+                ['communications.0.subscription'],
+            ],
+            'the same subscription twice' => [
+                ['form' => self::FORM, 'email_field' => 'email', 'communications' => [
+                    ['subscription' => 3314676590, 'field' => 'marketing'],
+                    ['subscription' => 3314676590, 'field' => 'first_name'],
+                ]],
+                ['communications.0.subscription', 'communications.1.subscription'],
+            ],
+            'communication with an unknown form field' => [
+                ['form' => self::FORM, 'email_field' => 'email', 'communications' => [['subscription' => 3314676590, 'field' => 'nope']]],
+                ['communications.0.field'],
+            ],
+        ];
+    }
+
+    #[Test]
+    public function it_processes_the_config()
+    {
+        $config = [
+            'form' => self::FORM,
+            'email_field' => 'email',
+            'consent_field' => 'marketing',
+            'consent_to_process_field' => 'marketing',
+            'legitimate_interest_subscription' => 3314676590,
+            'properties' => [['key' => 'firstname', 'value' => 'first_name']],
+            'communications' => [['subscription' => 3314676590, 'field' => 'marketing']],
+        ];
+
+        $this->assertEquals($config, (new HubSpot)->process($config, $this->form()));
+    }
+
+    #[Test]
+    public function it_doesnt_persist_empty_values()
+    {
+        $this->assertEquals([
+            'form' => self::FORM,
+            'email_field' => 'email',
+        ], (new HubSpot)->process([
+            'form' => self::FORM,
+            'email_field' => 'email',
+            'consent_field' => null,
+            'consent_to_process_field' => null,
+            'legitimate_interest_subscription' => null,
+            'properties' => [],
+            'communications' => [],
+        ], $this->form()));
     }
 
     private function definition(): array

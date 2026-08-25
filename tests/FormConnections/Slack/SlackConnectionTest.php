@@ -5,6 +5,7 @@ namespace Tests\FormConnections\Slack;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades\Form;
@@ -121,7 +122,7 @@ class SlackConnectionTest extends TestCase
         $component = (new Slack)->render($form)->toArray();
 
         $this->assertEquals('slack-connection', $component['name']);
-        $this->assertEquals(cp_route('forms.connect.slack.update', 'test'), $component['props']['action']);
+        $this->assertEquals(['blueprint', 'meta', 'defaults', 'isConfigured', 'apiError'], array_keys($component['props']));
         $this->assertTrue($component['props']['isConfigured']);
     }
 
@@ -217,5 +218,131 @@ class SlackConnectionTest extends TestCase
         (new Slack)->render($form);
 
         Http::assertSentCount(2);
+    }
+
+    #[Test]
+    public function it_pre_processes_the_configs()
+    {
+        $form = tap(Form::make('test')->connections(['slack' => [
+            [
+                'id' => 'one',
+                'channel' => 'C0123ABCDEF',
+                'heading' => 'First',
+                'conditions' => [['field' => 'name', 'operator' => 'equals', 'value' => 'Bob', 'join' => 'and']],
+            ],
+            ['id' => 'two', 'channel' => 'C0456DEFGHI', 'enabled' => false],
+        ]]))->save();
+
+        $configs = (new Slack)->preProcess($form->connections()->get('slack'), $form);
+
+        $this->assertEquals('one', $configs[0]['id']);
+        $this->assertTrue($configs[0]['enabled']);
+        $this->assertEquals('C0123ABCDEF', $configs[0]['channel']);
+        $this->assertEquals('First', $configs[0]['heading']);
+        $this->assertNotEmpty($configs[0]['conditions'][0]['_id']);
+        $this->assertEquals('two', $configs[1]['id']);
+        $this->assertFalse($configs[1]['enabled']);
+        $this->assertEquals([], $configs[1]['conditions']);
+    }
+
+    #[Test]
+    public function it_validates_the_configs()
+    {
+        $form = tap(Form::make('test'))->save();
+
+        $validator = Validator::make([
+            [
+                'id' => 'abc',
+                'channel' => 'C0123ABCDEF',
+                'heading' => 'New submission',
+                'enabled' => true,
+                'conditions' => [['field' => 'name', 'operator' => 'equals', 'value' => 'Bob', 'join' => 'and']],
+            ],
+        ], (new Slack)->rules($form));
+
+        $this->assertTrue($validator->passes());
+    }
+
+    #[Test]
+    #[DataProvider('invalidConfigs')]
+    public function it_rejects_invalid_configs($configs, $errors)
+    {
+        $form = tap(Form::make('test'))->save();
+
+        $validator = Validator::make($configs, (new Slack)->rules($form));
+
+        $this->assertTrue($validator->fails());
+
+        foreach ($errors as $key) {
+            $this->assertTrue($validator->errors()->has($key));
+        }
+    }
+
+    public static function invalidConfigs(): array
+    {
+        return [
+            'config not an array' => [['nope'], ['0']],
+            'config without a channel' => [[['enabled' => true]], ['0.channel']],
+            'config with a channel name' => [[['channel' => '#enquiries']], ['0.channel']],
+        ];
+    }
+
+    #[Test]
+    public function it_processes_the_configs()
+    {
+        $form = tap(Form::make('test'))->save();
+
+        $this->assertEquals([
+            ['id' => 'def', 'channel' => 'C0456DEFGHI', 'enabled' => false, 'conditions' => [
+                ['field' => 'name', 'operator' => 'equals', 'value' => 'Bob', 'join' => 'and'],
+            ]],
+            ['id' => 'ghi', 'channel' => 'C0789JKLMNO', 'include_fields' => false, 'link_to_submission' => false],
+            ['id' => 'jkl', 'channel' => 'C0123ABCDEF'],
+        ], (new Slack)->process([
+            ['id' => 'def', 'channel' => 'C0456DEFGHI', 'enabled' => false, 'conditions' => [
+                ['_id' => 'vue-row', 'field' => 'name', 'operator' => 'equals', 'value' => 'Bob', 'join' => 'and'],
+            ]],
+            ['id' => 'ghi', 'channel' => 'C0789JKLMNO', 'include_fields' => false, 'link_to_submission' => false],
+            ['id' => 'jkl', 'channel' => 'C0123ABCDEF', 'enabled' => true, 'include_fields' => true, 'link_to_submission' => true],
+        ], $form));
+    }
+
+    #[Test]
+    public function it_doesnt_persist_the_client_row_state()
+    {
+        $form = tap(Form::make('test'))->save();
+
+        $this->assertEquals([
+            ['id' => 'abc', 'channel' => 'C0123ABCDEF'],
+        ], (new Slack)->process([
+            ['_id' => 'vue-row', 'id' => 'abc', 'channel' => 'C0123ABCDEF'],
+        ], $form));
+    }
+
+    #[Test]
+    public function it_generates_an_id_for_configs_that_dont_have_one()
+    {
+        $form = tap(Form::make('test'))->save();
+
+        $config = (new Slack)->process([['channel' => 'C0123ABCDEF']], $form)[0];
+
+        $this->assertNotEmpty($config['id']);
+        $this->assertEquals('C0123ABCDEF', $config['channel']);
+    }
+
+    #[Test]
+    public function it_removes_null_values_from_configs()
+    {
+        $form = tap(Form::make('test'))->save();
+
+        $this->assertEquals([[
+            'id' => 'abc',
+            'channel' => 'C0123ABCDEF',
+        ]], (new Slack)->process([[
+            'id' => 'abc',
+            'channel' => 'C0123ABCDEF',
+            'heading' => null,
+            'enabled' => null,
+        ]], $form));
     }
 }

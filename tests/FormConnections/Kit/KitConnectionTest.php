@@ -3,6 +3,7 @@
 namespace Tests\FormConnections\Kit;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
@@ -96,9 +97,9 @@ class KitConnectionTest extends TestCase
 
         $props = (new Kit)->render($this->form(['form' => self::FORM, 'email_field' => 'email']))->toArray()['props'];
 
+        $this->assertEquals(['blueprint', 'meta', 'isConfigured', 'apiError'], array_keys($props));
         $this->assertTrue($props['isConfigured']);
         $this->assertNull($props['apiError']);
-        $this->assertEquals(self::FORM, $props['values']['form']);
 
         $this->assertEquals([
             ['value' => (string) self::FORM, 'label' => 'Newsletter'],
@@ -174,6 +175,110 @@ class KitConnectionTest extends TestCase
         Http::assertSentCount(6);
     }
 
+    #[Test]
+    public function it_pre_processes_the_config()
+    {
+        $config = (new Kit)->preProcess([
+            'form' => self::FORM,
+            'email_field' => 'email',
+            'custom_fields' => [['key' => 'last_name', 'value' => 'name']],
+        ], $this->form());
+
+        $this->assertEquals(self::FORM, $config['form']);
+        $this->assertEquals('email', $config['email_field']);
+        $this->assertNotEmpty($config['custom_fields'][0]['_id']);
+    }
+
+    #[Test]
+    public function it_validates_the_config()
+    {
+        $validator = Validator::make([
+            'form' => self::FORM,
+            'email_field' => 'email',
+            'first_name_field' => 'name',
+            'consent_field' => 'consent',
+            'tags' => [22367468, 22367469],
+            'custom_fields' => [['key' => 'last_name', 'value' => 'name']],
+        ], (new Kit)->rules($this->form()));
+
+        $this->assertTrue($validator->passes());
+    }
+
+    #[Test]
+    #[DataProvider('invalidConfigs')]
+    public function it_rejects_invalid_configs(array $config, array $errors)
+    {
+        $validator = Validator::make($config, (new Kit)->rules($this->form()));
+
+        $this->assertTrue($validator->fails());
+
+        foreach ($errors as $key) {
+            $this->assertTrue($validator->errors()->has($key));
+        }
+    }
+
+    public static function invalidConfigs(): array
+    {
+        return [
+            'missing email field' => [[], ['email_field']],
+            'unknown email field' => [['email_field' => 'nope'], ['email_field']],
+            'kit form that isnt an id' => [['form' => 'newsletter', 'email_field' => 'email'], ['form']],
+            'tag that isnt an id' => [['email_field' => 'email', 'tags' => ['newsletter']], ['tags.0']],
+            'the same tag twice' => [
+                ['email_field' => 'email', 'tags' => [22367468, 22367468]],
+                ['tags.0', 'tags.1'],
+            ],
+            'unknown consent field' => [['email_field' => 'email', 'consent_field' => 'nope'], ['consent_field']],
+            'custom field without a key' => [
+                ['email_field' => 'email', 'custom_fields' => [['value' => 'name']]],
+                ['custom_fields.0.key'],
+            ],
+            'the same custom field key twice' => [
+                ['email_field' => 'email', 'custom_fields' => [
+                    ['key' => 'last_name', 'value' => 'name'],
+                    ['key' => 'last_name', 'value' => 'email'],
+                ]],
+                ['custom_fields.0.key', 'custom_fields.1.key'],
+            ],
+            'custom field with an unknown form field' => [
+                ['email_field' => 'email', 'custom_fields' => [['key' => 'last_name', 'value' => 'nope']]],
+                ['custom_fields.0.value'],
+            ],
+            'custom field without a value' => [
+                ['email_field' => 'email', 'custom_fields' => [['key' => 'last_name']]],
+                ['custom_fields.0.value'],
+            ],
+        ];
+    }
+
+    #[Test]
+    public function it_processes_the_config()
+    {
+        $config = [
+            'form' => self::FORM,
+            'email_field' => 'email',
+            'first_name_field' => 'name',
+            'consent_field' => 'consent',
+            'tags' => [22367468, 22367469],
+            'custom_fields' => [['key' => 'last_name', 'value' => 'name']],
+        ];
+
+        $this->assertEquals($config, (new Kit)->process($config, $this->form()));
+    }
+
+    #[Test]
+    public function it_doesnt_persist_empty_values()
+    {
+        $this->assertEquals(['email_field' => 'email'], (new Kit)->process([
+            'form' => null,
+            'email_field' => 'email',
+            'first_name_field' => null,
+            'consent_field' => null,
+            'tags' => [],
+            'custom_fields' => [],
+        ], $this->form()));
+    }
+
     private function fakeAccount(): void
     {
         Http::fake([
@@ -195,6 +300,7 @@ class KitConnectionTest extends TestCase
     {
         $form = Form::make('test')->formFields([
             'fields' => [
+                ['handle' => 'name', 'field' => ['type' => 'text']],
                 ['handle' => 'email', 'field' => ['type' => 'text']],
                 ['handle' => 'consent', 'field' => ['type' => 'toggle']],
             ],

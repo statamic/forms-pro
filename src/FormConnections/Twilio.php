@@ -3,7 +3,6 @@
 namespace Statamic\FormsPro\FormConnections;
 
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Statamic\Contracts\Forms\Form;
@@ -11,10 +10,13 @@ use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connections\Connection;
 use Statamic\Forms\Connections\ConnectionLogic;
+use Statamic\FormsPro\FormConnections\Twilio\Rules\TwilioRecipient;
+use Statamic\FormsPro\FormConnections\Twilio\Rules\TwilioSender;
 use Statamic\FormsPro\FormConnections\Twilio\SendTwilioMessage;
 use Statamic\FormsPro\FormConnections\Twilio\TwilioClient;
 use Statamic\FormsPro\FormConnections\Twilio\TwilioException;
-use Statamic\FormsPro\Http\Controllers\CP\TwilioConnectionController;
+use Statamic\Support\Arr;
+use Statamic\Support\Str;
 use Statamic\Support\VueComponent;
 
 use function Statamic\trans as __;
@@ -71,17 +73,11 @@ class Twilio extends Connection
         $fields = $blueprint->fields()->preProcess();
 
         return VueComponent::render('twilio-connection', [
-            'action' => cp_route('forms.connect.twilio.update', $form->handle()),
             'blueprint' => $blueprint->toPublishArray(),
-            'notifications' => collect($form->connections()->get('twilio'))
-                ->mapWithKeys(function (array $config) use ($fields): array {
-                    $fields = $fields->addValues($config)->preProcess();
-
-                    return [$config['id'] => [
-                        'values' => $fields->values()->all(),
-                        'meta' => $fields->meta()->all(),
-                    ]];
-                })
+            'meta' => collect($form->connections()->get('twilio'))
+                ->mapWithKeys(fn (array $config): array => [
+                    $config['id'] => $fields->addValues($config)->preProcess()->meta()->all(),
+                ])
                 ->all(),
             'defaults' => [
                 'values' => $fields->values()->all(),
@@ -90,6 +86,60 @@ class Twilio extends Connection
             'isConfigured' => $isConfigured,
             'apiError' => $apiError ?? null,
         ]);
+    }
+
+    public function preProcess(array $config, Form $form): array
+    {
+        $fields = static::blueprint($form)->fields();
+
+        return collect($config)
+            ->map(fn (array $config): array => [
+                'id' => $config['id'],
+                'enabled' => Arr::get($config, 'enabled') !== false,
+                'conditions' => ConnectionLogic::preProcess(Arr::get($config, 'conditions') ?? []),
+                ...$fields->addValues($config)->preProcess()->values()->all(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function rules(Form $form): array
+    {
+        return [
+            '*' => ['array'],
+            '*.to' => ['required', new TwilioRecipient($form)],
+            '*.from' => ['required', new TwilioSender],
+            '*.body' => ['required', 'string', 'max:1600'],
+            '*.country_code' => ['nullable', 'string', 'regex:/^\+[1-9]\d{0,3}$/'],
+            '*.enabled' => ['nullable', 'boolean'],
+            '*.conditions' => ['nullable', 'array'],
+            '*.conditions.*' => ['array'],
+        ];
+    }
+
+    public function process(array $data, Form $form): array
+    {
+        $fields = static::blueprint($form)->fields();
+
+        return collect($data)
+            ->map(function (array $config) use ($fields): array {
+                $config = Arr::removeNullValues($config);
+
+                $values = $fields
+                    ->addValues($config)
+                    ->process()
+                    ->values()
+                    ->all();
+
+                return Arr::removeNullValues([
+                    'id' => Arr::get($config, 'id') ?? Str::random(8),
+                    ...$values,
+                    'enabled' => Arr::get($config, 'enabled') === false ? false : null,
+                    'conditions' => ConnectionLogic::process(Arr::get($config, 'conditions') ?? []),
+                ]);
+            })
+            ->values()
+            ->all();
     }
 
     public static function blueprint(Form $form, array $senders = []): \Statamic\Fields\Blueprint
@@ -152,10 +202,5 @@ class Twilio extends Connection
                 ],
             ],
         ]);
-    }
-
-    public function routes(Router $router): void
-    {
-        $router->patch('/', [TwilioConnectionController::class, 'update'])->name('update');
     }
 }

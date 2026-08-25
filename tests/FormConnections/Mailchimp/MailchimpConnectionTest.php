@@ -4,6 +4,7 @@ namespace Tests\FormConnections\Mailchimp;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
@@ -109,11 +110,13 @@ class MailchimpConnectionTest extends TestCase
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
-        $props = (new Mailchimp)->render($this->form(['list' => self::AUDIENCE, 'email_field' => 'email']))->toArray()['props'];
+        $component = (new Mailchimp)->render($this->form(['list' => self::AUDIENCE, 'email_field' => 'email']))->toArray();
+        $props = $component['props'];
 
+        $this->assertEquals('mailchimp-connection', $component['name']);
+        $this->assertEquals(['blueprint', 'meta', 'isConfigured', 'apiError'], array_keys($props));
         $this->assertTrue($props['isConfigured']);
         $this->assertNull($props['apiError']);
-        $this->assertEquals(self::AUDIENCE, $props['values']['list']);
         $this->assertEquals([['value' => self::AUDIENCE, 'label' => 'Newsletter']], $props['meta']['list']['options']);
     }
 
@@ -169,15 +172,37 @@ class MailchimpConnectionTest extends TestCase
     }
 
     #[Test]
+    public function it_pre_processes_the_config()
+    {
+        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
+            ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
+        ]])]);
+
+        $form = $this->form([
+            'list' => self::AUDIENCE,
+            'email_field' => 'email',
+            'tags' => ['newsletter'],
+            'skip_confirmation' => true,
+        ]);
+
+        $config = (new Mailchimp)->preProcess($form->connections()->get('mailchimp'), $form);
+
+        $this->assertEquals(self::AUDIENCE, $config['list']);
+        $this->assertEquals('email', $config['email_field']);
+        $this->assertEquals(['newsletter'], $config['tags']);
+        $this->assertTrue($config['skip_confirmation']);
+    }
+
+    #[Test]
     public function it_preselects_the_audience_when_theres_only_one()
     {
         Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
-        $props = (new Mailchimp)->render($this->form([]))->toArray()['props'];
+        $config = (new Mailchimp)->preProcess([], $this->form([]));
 
-        $this->assertEquals(self::AUDIENCE, $props['values']['list']);
+        $this->assertEquals(self::AUDIENCE, $config['list']);
     }
 
     #[Test]
@@ -188,17 +213,169 @@ class MailchimpConnectionTest extends TestCase
             ['id' => 'f6e5d4c3b2', 'name' => 'Customers'],
         ]])]);
 
-        $props = (new Mailchimp)->render($this->form([]))->toArray()['props'];
+        $config = (new Mailchimp)->preProcess([], $this->form([]));
 
-        $this->assertNull($props['values']['list']);
+        $this->assertNull($config['list']);
+    }
+
+    #[Test]
+    public function it_validates_the_config()
+    {
+        $validator = Validator::make([
+            'list' => self::AUDIENCE,
+            'email_field' => 'email',
+            'first_name_field' => 'name',
+            'consent_field' => 'consent',
+            'tags' => ['newsletter'],
+            'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
+            'groups' => [['group' => '4e4b2bc6ae', 'field' => 'consent', 'option' => 'news']],
+            'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'consent']],
+            'skip_confirmation' => true,
+        ], (new Mailchimp)->rules($this->form([])));
+
+        $this->assertTrue($validator->passes());
+    }
+
+    #[Test]
+    #[DataProvider('invalidConfigs')]
+    public function it_rejects_invalid_configs(array $config, array $errors)
+    {
+        $validator = Validator::make($config, (new Mailchimp)->rules($this->form([])));
+
+        $this->assertTrue($validator->fails());
+
+        foreach ($errors as $key) {
+            $this->assertTrue($validator->errors()->has($key));
+        }
+    }
+
+    public static function invalidConfigs(): array
+    {
+        return [
+            'missing audience' => [['email_field' => 'email'], ['list']],
+            'audience with a path separator' => [['list' => 'a1b2c3d4e5/members', 'email_field' => 'email'], ['list']],
+            'audience with a query string' => [['list' => 'a1b2c3d4e5?count=1000', 'email_field' => 'email'], ['list']],
+            'missing email field' => [['list' => self::AUDIENCE], ['email_field']],
+            'unknown email field' => [['list' => self::AUDIENCE, 'email_field' => 'nope'], ['email_field']],
+            'unknown consent field' => [['list' => self::AUDIENCE, 'email_field' => 'email', 'consent_field' => 'nope'], ['consent_field']],
+            'merge field without a key' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['value' => 'name']]],
+                ['merge_fields.0.key'],
+            ],
+            'merge field without a value' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'COMPANY']]],
+                ['merge_fields.0.value'],
+            ],
+            'lowercase merge tag' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'company', 'value' => 'name']]],
+                ['merge_fields.0.key'],
+            ],
+            'merge field with an unknown form field' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'COMPANY', 'value' => 'nope']]],
+                ['merge_fields.0.value'],
+            ],
+            'the same merge tag twice' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [
+                    ['key' => 'COMPANY', 'value' => 'name'],
+                    ['key' => 'COMPANY', 'value' => 'email'],
+                ]],
+                ['merge_fields.0.key', 'merge_fields.1.key'],
+            ],
+            'merge tag handled by a dedicated field' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['key' => 'FNAME', 'value' => 'name']]],
+                ['merge_fields.0.key'],
+            ],
+            'group without a form field' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'groups' => [['group' => '4e4b2bc6ae']]],
+                ['groups.0.field'],
+            ],
+            'the same group twice' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'groups' => [
+                    ['group' => '4e4b2bc6ae', 'field' => 'consent'],
+                    ['group' => '4e4b2bc6ae', 'field' => 'name'],
+                ]],
+                ['groups.0.group', 'groups.1.group'],
+            ],
+            'group without an option when the form field has some' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'groups' => [['group' => '4e4b2bc6ae', 'field' => 'interests']]],
+                ['groups.0.option'],
+            ],
+            'group with an unknown form field' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'groups' => [['group' => '4e4b2bc6ae', 'field' => 'nope']]],
+                ['groups.0.field'],
+            ],
+            'marketing permission without a field' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'marketing_permissions' => [['permission' => 'd60cef6b1f']]],
+                ['marketing_permissions.0.field'],
+            ],
+            'marketing permission with an unknown form field' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'nope']]],
+                ['marketing_permissions.0.field'],
+            ],
+            'the same marketing permission twice' => [
+                ['list' => self::AUDIENCE, 'email_field' => 'email', 'marketing_permissions' => [
+                    ['permission' => 'd60cef6b1f', 'field' => 'consent'],
+                    ['permission' => 'd60cef6b1f', 'field' => 'name'],
+                ]],
+                ['marketing_permissions.0.permission', 'marketing_permissions.1.permission'],
+            ],
+        ];
+    }
+
+    #[Test]
+    public function it_processes_the_config()
+    {
+        $this->assertEquals([
+            'list' => self::AUDIENCE,
+            'email_field' => 'email',
+            'first_name_field' => 'name',
+            'consent_field' => 'consent',
+            'tags' => ['newsletter'],
+            'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
+            'groups' => [['group' => '4e4b2bc6ae', 'field' => 'consent', 'option' => 'news']],
+            'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'consent']],
+            'skip_confirmation' => true,
+        ], (new Mailchimp)->process([
+            'list' => self::AUDIENCE,
+            'email_field' => 'email',
+            'first_name_field' => 'name',
+            'consent_field' => 'consent',
+            'tags' => ['newsletter'],
+            'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
+            'groups' => [['group' => '4e4b2bc6ae', 'field' => 'consent', 'option' => 'news']],
+            'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'consent']],
+            'skip_confirmation' => true,
+        ], $this->form([])));
+    }
+
+    #[Test]
+    public function it_doesnt_persist_empty_values()
+    {
+        $this->assertEquals([
+            'list' => self::AUDIENCE,
+            'email_field' => 'email',
+            'skip_confirmation' => false,
+        ], (new Mailchimp)->process([
+            'list' => self::AUDIENCE,
+            'email_field' => 'email',
+            'first_name_field' => null,
+            'last_name_field' => null,
+            'consent_field' => null,
+            'tags' => [],
+            'merge_fields' => [],
+            'marketing_permissions' => [],
+            'skip_confirmation' => false,
+        ], $this->form([])));
     }
 
     private function form(array $config): FormContract
     {
         return tap(Form::make('test')->formFields([
             'fields' => [
+                ['handle' => 'name', 'field' => ['type' => 'text']],
                 ['handle' => 'email', 'field' => ['type' => 'text']],
                 ['handle' => 'consent', 'field' => ['type' => 'toggle']],
+                ['handle' => 'interests', 'field' => ['type' => 'checkboxes', 'options' => ['news' => 'News']]],
             ],
         ])->connections(['mailchimp' => $config]))->save();
     }
