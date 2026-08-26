@@ -1,0 +1,9 @@
+node_modules
+vendor
+resources/dist
+resources/dist-frontend
+package-lock.json
+composer.lock
+CHANGELOG.md
+*.php
+*.antlers.html
