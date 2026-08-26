@@ -4,11 +4,14 @@
     "dev": "rm -rf resources/dist/build && vite",
     "build": "vite build",
     "frontend-dev": "vite -c vite-frontend.config.js",
-    "frontend-build": "vite build -c vite-frontend.config.js"
+    "frontend-build": "vite build -c vite-frontend.config.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@statamic/cms": "file:./vendor/statamic/cms/resources/dist-package",
     "laravel-vite-plugin": "^3.0.0",
+    "prettier": "^3.9.6",
     "vite": "^8.0.0"
   }
 }

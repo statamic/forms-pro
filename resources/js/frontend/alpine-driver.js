@@ -18,11 +18,11 @@ export default function alpineDriver(data = {}, config = {}) {
             visited: [initialPage],
 
             get page() {
-                return this.pages.find(page => page.id === this.currentPage);
+                return this.pages.find((page) => page.id === this.currentPage);
             },
 
             get pageIndex() {
-                return this.pages.findIndex(page => page.id === this.currentPage);
+                return this.pages.findIndex((page) => page.id === this.currentPage);
             },
 
             get isFirstPage() {
@@ -86,7 +86,7 @@ export default function alpineDriver(data = {}, config = {}) {
                         this.errors = result.error ?? {};
                     }
                 } catch (error) {
-                    console.error("Forms Pro: Failed to submit the page:", error);
+                    console.error('Forms Pro: Failed to submit the page:', error);
                 } finally {
                     this.submitting = false;
                 }
