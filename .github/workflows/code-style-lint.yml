@@ -8,7 +8,8 @@ permissions:
   pull-requests: read # required by tj-actions/changed-files when use_rest_api: true
 
 jobs:
-  lint-code-styling: # zizmor: ignore[anonymous-definition]
+  pint:
+    name: Pint
     runs-on: ubuntu-latest
 
     steps:
@@ -33,8 +34,8 @@ jobs:
           verboseMode: true
           pintVersion: 1.29.0
 
-  lint-js-code-styling:
-    name: Lint JS code style issues
+  prettier:
+    name: Prettier
     runs-on: ubuntu-latest
 
     permissions:
@@ -51,5 +52,5 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check JS code style issues
+      - name: Check code style issues
         run: npx --yes "prettier@$(node -p 'require("./package.json").devDependencies.prettier')" --check .
