@@ -110,10 +110,15 @@ const clearErrorsFor = (fields: string[]): void => {
 let validationTimeout: ReturnType<typeof setTimeout>;
 let validationController: AbortController;
 
-const validate = (fields: string[]): void => {
+// Fields stay pending until a request actually validates them. Rescheduling the debounce with only
+// the latest field would otherwise drop the previous one, leaving it silently unvalidated.
+const pendingFields = new Set<string>();
+
+const validate = (): void => {
 	validationController?.abort();
 	validationController = new AbortController();
 
+	const fields = [...pendingFields];
 	const payload = Object.fromEntries(Object.entries(values.value).filter(([handle]) => !fileFields.value.includes(handle)));
 
 	axios.post(props.action, payload, {
@@ -123,10 +128,15 @@ const validate = (fields: string[]): void => {
 		},
 		signal: validationController.signal,
 	})
-		.then(() => clearErrorsFor(fields))
+		.then(() => {
+			fields.forEach(handle => pendingFields.delete(handle));
+			clearErrorsFor(fields);
+		})
 		.catch(error => {
+			// Aborted and failed requests leave their fields pending, so the next one validates them too.
 			if (axios.isCancel(error) || error.response?.status !== 422) return;
 
+			fields.forEach(handle => pendingFields.delete(handle));
 			clearErrorsFor(fields);
 			errors.value = { ...errors.value, ...error.response.data.errors };
 		});
@@ -141,10 +151,13 @@ watch(values, (current) => {
 
 	if (! changed.length) return;
 
-	changed.forEach(handle => snapshot[handle] = JSON.stringify(current[handle]));
+	changed.forEach(handle => {
+		snapshot[handle] = JSON.stringify(current[handle]);
+		pendingFields.add(handle);
+	});
 
 	clearTimeout(validationTimeout);
-	validationTimeout = setTimeout(() => validate(changed), 400);
+	validationTimeout = setTimeout(validate, 400);
 }, { deep: true });
 
 let submitBinding;
