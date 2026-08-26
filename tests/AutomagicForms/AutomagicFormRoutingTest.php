@@ -2,6 +2,7 @@
 
 namespace Tests\AutomagicForms;
 
+use Illuminate\Support\Facades\Route;
 use Inertia\Testing\AssertableInertia as Assert;
 use Orchestra\Testbench\Attributes\DefineEnvironment;
 use PHPUnit\Framework\Attributes\Test;
@@ -15,6 +16,8 @@ use Tests\TestCase;
 class AutomagicFormRoutingTest extends TestCase
 {
     use PreventsSavingStacheItemsToDisk;
+
+    private bool $enabled = true;
 
     private string $sites = <<<'YAML'
 default:
@@ -33,7 +36,7 @@ YAML;
 
         $app['config']->set('statamic.system.multisite', true);
         $app['config']->set('statamic.editions.pro', true);
-        $app['config']->set('forms-pro.automagic_forms.enabled', true);
+        $app['config']->set('forms-pro.automagic_forms.enabled', $this->enabled);
         $app['config']->set('forms-pro.automagic_forms.route', 'get-in-touch');
 
         $app['files']->put(resource_path('sites.yaml'), $this->sites);
@@ -51,6 +54,11 @@ french:
     url: http://french.example.com/
     locale: fr_FR
 YAML;
+    }
+
+    protected function disableAutomagicForms(): void
+    {
+        $this->enabled = false;
     }
 
     protected function setUp(): void
@@ -183,6 +191,16 @@ YAML;
             route('statamic.forms-pro.form.french.index', ['form' => 'contact'], absolute: false),
             (new FormLinkType)->resolve('contact', $parent, localize: true)
         );
+    }
+
+    #[Test]
+    #[DefineEnvironment('disableAutomagicForms')]
+    public function it_doesnt_register_routes_when_automagic_forms_are_disabled()
+    {
+        $this->createForm();
+
+        $this->assertFalse(Route::has('statamic.forms-pro.form.default.index'));
+        $this->assertFalse(Route::has('statamic.forms-pro.form.french.index'));
     }
 
     private function createForm(): Form

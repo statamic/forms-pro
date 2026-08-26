@@ -3,9 +3,14 @@
 use Illuminate\Support\Facades\Route;
 use Statamic\Facades\Site;
 use Statamic\Facades\URL;
+use Statamic\FormsPro\AutomagicForms\AutomagicForms;
 use Statamic\FormsPro\Http\Controllers\AutomagicFormController;
 use Statamic\FormsPro\Http\Middleware\HandleInertiaRequests;
 use Statamic\Http\Middleware\HandleFormPrecognitiveRequests;
+
+if (! AutomagicForms::enabled()) {
+    return;
+}
 
 $hosts = Site::all()->map(fn ($site) => parse_url($site->url(), PHP_URL_HOST))->filter()->unique();
 
