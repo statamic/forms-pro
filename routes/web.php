@@ -27,6 +27,6 @@ Site::all()->each(function (Statamic\Sites\Site $site) use ($hosts): void {
             Route::get('/success', 'submitted')->name('success');
             Route::get('/restricted', 'restricted')->name('restricted');
             Route::get('/{page?}', 'index')->name('index');
-            Route::post('/{page}', 'store')->middleware(HandleFormPrecognitiveRequests::class)->name('store');
+            Route::post('/{page}', 'store')->middleware([HandleFormPrecognitiveRequests::class, 'throttle:statamic.forms'])->name('store');
         });
 });

@@ -96,6 +96,11 @@ const submit = () => {
 				return;
 			}
 
+			if (status === 429) {
+				Statamic.$toast.error(__('Too many attempts. Please wait a moment and try again.'));
+				return;
+			}
+
 			Statamic.$toast.error(__('Something went wrong'));
 		})
 		.finally(() => loading.value = false);
@@ -109,12 +114,16 @@ const clearErrorsFor = (fields: string[]): void => {
 
 let validationTimeout: ReturnType<typeof setTimeout>;
 let validationController: AbortController;
+let validationThrottled = false;
 
 // Fields stay pending until a request actually validates them. Rescheduling the debounce with only
 // the latest field would otherwise drop the previous one, leaving it silently unvalidated.
 const pendingFields = new Set<string>();
 
 const validate = (): void => {
+	// An in-flight request can resolve and clear everything before the debounce fires.
+	if (! pendingFields.size) return;
+
 	validationController?.abort();
 	validationController = new AbortController();
 
@@ -129,12 +138,27 @@ const validate = (): void => {
 		signal: validationController.signal,
 	})
 		.then(() => {
+			validationThrottled = false;
 			fields.forEach(handle => pendingFields.delete(handle));
 			clearErrorsFor(fields);
 		})
 		.catch(error => {
 			// Aborted and failed requests leave their fields pending, so the next one validates them too.
-			if (axios.isCancel(error) || error.response?.status !== 422) return;
+			if (axios.isCancel(error)) return;
+
+			const status = error.response?.status;
+
+			// Once rate limited, every subsequent keystroke would toast again until the limit resets.
+			if (status === 429) {
+				if (! validationThrottled) {
+					validationThrottled = true;
+					Statamic.$toast.error(__('Too many attempts. Please wait a moment and try again.'));
+				}
+
+				return;
+			}
+
+			if (status !== 422) return;
 
 			fields.forEach(handle => pendingFields.delete(handle));
 			clearErrorsFor(fields);
@@ -157,7 +181,7 @@ watch(values, (current) => {
 	});
 
 	clearTimeout(validationTimeout);
-	validationTimeout = setTimeout(validate, 400);
+	validationTimeout = setTimeout(validate, 1000);
 }, { deep: true });
 
 let submitBinding;

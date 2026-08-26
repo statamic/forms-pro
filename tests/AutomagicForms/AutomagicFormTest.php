@@ -501,6 +501,54 @@ class AutomagicFormTest extends TestCase
             ->assertJsonMissingValidationErrors('name');
     }
 
+    // The limits come from the statamic.forms limiter: 10 submissions and 30 precognitive requests per minute.
+
+    #[Test]
+    public function it_throttles_form_submissions()
+    {
+        $form = $this->createForm();
+        $url = route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'main']);
+
+        for ($i = 0; $i < 10; $i++) {
+            $this->postJson($url, ['name' => '', 'email' => ''])->assertStatus(422);
+        }
+
+        $this->postJson($url, ['name' => '', 'email' => ''])->assertStatus(429);
+
+        $this->assertCount(0, $form->submissions());
+    }
+
+    #[Test]
+    public function it_throttles_precognitive_requests()
+    {
+        $this->createForm();
+        $url = route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'main']);
+
+        for ($i = 0; $i < 30; $i++) {
+            $this->postJson($url, ['name' => '', 'email' => ''], ['Precognition' => 'true'])->assertStatus(422);
+        }
+
+        $this->postJson($url, ['name' => '', 'email' => ''], ['Precognition' => 'true'])->assertStatus(429);
+    }
+
+    #[Test]
+    public function it_throttles_precognitive_requests_separately_from_submissions()
+    {
+        $this->createForm();
+        $url = route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'main']);
+
+        for ($i = 0; $i < 10; $i++) {
+            $this->postJson($url, ['name' => '', 'email' => ''])->assertStatus(422);
+        }
+
+        $this->postJson($url, ['name' => '', 'email' => ''])->assertStatus(429);
+
+        $this
+            ->postJson($url, ['name' => 'Han Solo', 'email' => 'han@example.com'], ['Precognition' => 'true'])
+            ->assertNoContent()
+            ->assertHeader('Precognition-Success', 'true');
+    }
+
     #[Test]
     public function it_advances_to_the_next_page_without_finalizing()
     {
