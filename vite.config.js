@@ -6,9 +6,7 @@ export default defineConfig({
     plugins: [
         statamic(),
         laravel({
-            input: [
-                'resources/js/cp.js',
-            ],
+            input: ['resources/js/cp.js'],
             refresh: true,
             publicDirectory: 'resources/dist',
             hotFile: 'resources/dist/hot',
