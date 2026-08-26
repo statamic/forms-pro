@@ -114,7 +114,6 @@ const clearErrorsFor = (fields: string[]): void => {
 
 let validationTimeout: ReturnType<typeof setTimeout>;
 let validationController: AbortController;
-let validationThrottled = false;
 
 // Fields stay pending until a request actually validates them. Rescheduling the debounce with only
 // the latest field would otherwise drop the previous one, leaving it silently unvalidated.
@@ -138,27 +137,12 @@ const validate = (): void => {
 		signal: validationController.signal,
 	})
 		.then(() => {
-			validationThrottled = false;
 			fields.forEach(handle => pendingFields.delete(handle));
 			clearErrorsFor(fields);
 		})
 		.catch(error => {
-			// Aborted and failed requests leave their fields pending, so the next one validates them too.
-			if (axios.isCancel(error)) return;
-
-			const status = error.response?.status;
-
-			// Once rate limited, every subsequent keystroke would toast again until the limit resets.
-			if (status === 429) {
-				if (! validationThrottled) {
-					validationThrottled = true;
-					Statamic.$toast.error(__('Too many attempts. Please wait a moment and try again.'));
-				}
-
-				return;
-			}
-
-			if (status !== 422) return;
+			// Silent by design. The fields stay pending, and submitting validates everything anyway.
+			if (axios.isCancel(error) || error.response?.status !== 422) return;
 
 			fields.forEach(handle => pendingFields.delete(handle));
 			clearErrorsFor(fields);
