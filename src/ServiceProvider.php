@@ -39,7 +39,7 @@ class ServiceProvider extends AddonServiceProvider
         ], 'forms-pro-fields');
 
         if (AutomagicForms::enabled()) {
-            $this->registerSettingsBlueprint(Settings::blueprint());
+            $this->registerSettingsBlueprint(fn () => Settings::blueprint());
 
             $this->bootAutomagicForms();
         }

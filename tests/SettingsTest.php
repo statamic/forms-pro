@@ -3,10 +3,9 @@
 namespace Tests;
 
 use PHPUnit\Framework\Attributes\Test;
+use Statamic\Facades\Addon;
 use Statamic\Facades\AssetContainer;
-use Statamic\Facades\Blueprint;
 use Statamic\Facades\User;
-use Statamic\FormsPro\Settings;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
 
 class SettingsTest extends TestCase
@@ -42,6 +41,6 @@ class SettingsTest extends TestCase
     {
         $this->actingAs(User::make()->makeSuper());
 
-        return Blueprint::make()->setContents(Settings::blueprint())->field('logo')->fieldtype();
+        return Addon::get('statamic/forms-pro')->settingsBlueprint()->field('logo')->fieldtype();
     }
 }
