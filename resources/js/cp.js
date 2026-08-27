@@ -10,7 +10,7 @@ Statamic.booting(() => {
     Statamic.$inertia.register('forms-pro::AutomagicForm/Success', AutomagicFormSuccess);
     Statamic.$inertia.register('forms-pro::AutomagicForm/Restricted', AutomagicFormRestricted);
 
-    Statamic.component('address-fieldtype', AddressFieldtype);
+    Statamic.$components.register('address-fieldtype', AddressFieldtype);
     Statamic.$components.register('automagic_form_url-fieldtype', AutomagicFormUrlFieldtype);
     Statamic.$components.register('automagic_form_background-fieldtype', AutomagicFormBackgroundFieldtype);
 });
