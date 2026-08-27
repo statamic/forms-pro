@@ -35,4 +35,14 @@ class FormLinkTypeTest extends TestCase
     {
         $this->assertNull((new FormLinkType)->resolve('unknown'));
     }
+
+    #[Test]
+    public function it_translates_its_title()
+    {
+        $this->assertEquals('Form', (new FormLinkType)->title());
+
+        app('translator')->addLines(['*.Form' => 'Formulier'], app()->getLocale());
+
+        $this->assertEquals('Formulier', (new FormLinkType)->title());
+    }
 }

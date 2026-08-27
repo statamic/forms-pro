@@ -9,12 +9,9 @@ use Statamic\Fieldtypes\Link\LinkType;
 
 class FormLinkType extends LinkType
 {
-    protected ?string $icon = 'forms';
+    protected static ?string $title = 'Form';
 
-    public function title(): string
-    {
-        return 'Form';
-    }
+    protected ?string $icon = 'forms';
 
     public function resolve(string $id, $parent = null, bool $localize = false): mixed
     {
