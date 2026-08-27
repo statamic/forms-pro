@@ -175,6 +175,41 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_defaults_the_previous_page_label_when_the_button_is_enabled_without_one()
+    {
+        $form = $this->createMultiPageFormWithPreviousButton(['show_previous_button' => true]);
+
+        $this->assertPreviousPageLabel($form, 'Previous Page');
+    }
+
+    #[Test]
+    public function it_uses_a_custom_previous_page_label()
+    {
+        $form = $this->createMultiPageFormWithPreviousButton([
+            'show_previous_button' => true,
+            'previous_page_label' => 'Go back',
+        ]);
+
+        $this->assertPreviousPageLabel($form, 'Go back');
+    }
+
+    #[Test]
+    public function it_has_no_previous_page_label_when_the_button_is_disabled()
+    {
+        $form = $this->createMultiPageFormWithPreviousButton(['show_previous_button' => false]);
+
+        $this->assertPreviousPageLabel($form, null);
+    }
+
+    #[Test]
+    public function it_shows_the_previous_button_for_a_legacy_page_with_only_a_label()
+    {
+        $form = $this->createMultiPageFormWithPreviousButton(['previous_page_label' => 'Back']);
+
+        $this->assertPreviousPageLabel($form, 'Back');
+    }
+
+    #[Test]
     public function it_links_back_to_the_page_the_logic_routed_from_rather_than_the_previous_one()
     {
         $form = $this->createBranchingForm();
@@ -736,6 +771,35 @@ class AutomagicFormTest extends TestCase
                     ['handle' => 'email', 'field' => ['type' => 'text', 'validate' => ['required', 'email']]],
                 ],
             ]))->save();
+    }
+
+    private function createMultiPageFormWithPreviousButton(array $config): Form
+    {
+        return tap(Facades\Form::make('contact')
+            ->title('Contact')
+            ->set('automagic_form', true)
+            ->formFields([
+                'pages' => [
+                    ['id' => 'page_1', 'sections' => [['fields' => [
+                        ['handle' => 'name', 'field' => ['type' => 'text', 'validate' => ['required']]],
+                    ]]]],
+                    array_merge($config, ['id' => 'page_2', 'sections' => [['fields' => [
+                        ['handle' => 'email', 'field' => ['type' => 'text', 'validate' => ['required', 'email']]],
+                    ]]]]),
+                ],
+            ]))->save();
+    }
+
+    private function assertPreviousPageLabel(Form $form, ?string $expected): void
+    {
+        $submission = $form->makeSubmission();
+        $submission->data(['name' => 'Han Solo'])->asPartial()->save();
+
+        $this
+            ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_2']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('currentPage.previous_page_label', $expected));
     }
 
     private function createMultiPageForm(): Form

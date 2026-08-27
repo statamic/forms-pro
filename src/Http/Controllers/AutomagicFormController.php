@@ -48,7 +48,7 @@ class AutomagicFormController extends Controller
             'id' => $tab->handle(),
             'display' => $formPages->get($tab->handle(), [])['display'] ?? null,
             'button_label' => $tab->contents()['button_label'] ?? null,
-            'previous_page_label' => $tab->contents()['previous_page_label'] ?? null,
+            'previous_page_label' => $this->previousPageLabel($tab->contents()),
         ])->values();
 
         return Inertia::render('forms-pro::AutomagicForm/Index', [
@@ -176,6 +176,19 @@ class AutomagicFormController extends Controller
         }
 
         return $pages->first();
+    }
+
+    private function previousPageLabel(array $contents): ?string
+    {
+        $show = $contents['show_previous_button'] ?? filled($contents['previous_page_label'] ?? null);
+
+        if (! $show) {
+            return null;
+        }
+
+        return filled($contents['previous_page_label'] ?? null)
+            ? $contents['previous_page_label']
+            : __('Previous Page');
     }
 
     private function previousPage(Form $form, string $currentPage, array $data): ?array
