@@ -458,7 +458,7 @@ class AutomagicFormTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
-            ->assertSessionHas('automagic_form_submitted', true);
+            ->assertSessionHas('form.contact.submitted', true);
 
         $submission = $form->submissions()->first();
 
@@ -481,7 +481,7 @@ class AutomagicFormTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
-            ->assertSessionHas('automagic_form_submitted', true);
+            ->assertSessionHas('form.contact.submitted', true);
 
         $this->assertCount(0, $form->submissions());
     }
@@ -502,7 +502,7 @@ class AutomagicFormTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
-            ->assertSessionHas('automagic_form_submitted', true)
+            ->assertSessionHas('form.contact.submitted', true)
             ->assertSessionMissing('form.contact.partial_submission');
 
         $this->assertNull($form->submissions()->first(fn ($submission) => ! $submission->isPartial()));
@@ -654,7 +654,7 @@ class AutomagicFormTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
-            ->assertSessionHas('automagic_form_submitted', true);
+            ->assertSessionHas('form.contact.submitted', true);
 
         $submission = $form->submissions()->first();
 
@@ -724,7 +724,7 @@ class AutomagicFormTest extends TestCase
             ->save();
 
         $this
-            ->withSession(['automagic_form_submitted' => true])
+            ->withSession(['form.contact.submitted' => true])
             ->get(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
@@ -743,7 +743,7 @@ class AutomagicFormTest extends TestCase
         $this->createForm();
 
         $this
-            ->withSession(['automagic_form_submitted' => true])
+            ->withSession(['form.contact.submitted' => true])
             ->get(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
@@ -764,6 +764,23 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_does_not_show_the_success_page_for_a_form_that_wasnt_submitted()
+    {
+        $this->createForm();
+
+        Facades\Form::make('newsletter')
+            ->title('Newsletter')
+            ->set('automagic_form', true)
+            ->formFields(['fields' => [['handle' => 'email', 'field' => ['type' => 'text']]]])
+            ->save();
+
+        $this
+            ->withSession(['form.contact.submitted' => true])
+            ->get(route('statamic.forms-pro.form.default.success', ['form' => 'newsletter']))
+            ->assertRedirect(route('statamic.forms-pro.form.default.index', ['form' => 'newsletter']));
+    }
+
+    #[Test]
     public function it_404s_on_the_success_page_when_automagic_forms_is_disabled()
     {
         config()->set('forms-pro.automagic_forms.enabled', false);
@@ -771,7 +788,7 @@ class AutomagicFormTest extends TestCase
         $this->createForm();
 
         $this
-            ->withSession(['automagic_form_submitted' => true])
+            ->withSession(['form.contact.submitted' => true])
             ->get(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
             ->assertNotFound();
     }
@@ -790,7 +807,7 @@ class AutomagicFormTest extends TestCase
         $this->createForm(automagic: false);
 
         $this
-            ->withSession(['automagic_form_submitted' => true])
+            ->withSession(['form.contact.submitted' => true])
             ->get(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
             ->assertNotFound();
     }

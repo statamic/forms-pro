@@ -97,7 +97,7 @@ class AutomagicFormController extends Controller
         } catch (SilentFormFailureException) {
             $this->forgetPartialSubmission($form);
 
-            $request->session()->flash('automagic_form_submitted', true);
+            $request->session()->flash("form.{$form->handle()}.submitted", true);
 
             return [
                 'redirect' => AutomagicForms::route('success', ['form' => $form->handle()]),
@@ -109,7 +109,7 @@ class AutomagicFormController extends Controller
             : $this->setPartialSubmission($form, $result->submission);
 
         if ($result->isFinalized()) {
-            $request->session()->flash('automagic_form_submitted', true);
+            $request->session()->flash("form.{$form->handle()}.submitted", true);
 
             return [
                 'redirect' => AutomagicForms::route('success', ['form' => $form->handle()]),
@@ -146,7 +146,7 @@ class AutomagicFormController extends Controller
         throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
         throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
 
-        if (! $request->session()->get('automagic_form_submitted')) {
+        if (! $request->session()->get("form.{$form->handle()}.submitted")) {
             return redirect(AutomagicForms::route('index', ['form' => $form->handle()]));
         }
 
