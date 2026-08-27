@@ -79,10 +79,19 @@ class AutomagicFormController extends Controller
             ], 403);
         }
 
-        $action->form($form);
-        $action->page(Arr::get($currentPage, 'id'));
+        $currentPageId = Arr::get($currentPage, 'id');
+        $partialSubmission = $this->getPartialSubmission($form);
 
-        if ($form->hasMultiplePages() && $partialSubmission = $this->getPartialSubmission($form)) {
+        if (! $partialSubmission && $currentPageId !== Arr::get($form->formFields()->pages()->first(), 'id')) {
+            return response()->json([
+                'redirect' => AutomagicForms::route('index', ['form' => $form->handle()]),
+            ], 403);
+        }
+
+        $action->form($form);
+        $action->page($currentPageId);
+
+        if ($form->hasMultiplePages() && $partialSubmission) {
             $action->resume($partialSubmission);
         }
 

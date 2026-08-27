@@ -620,6 +620,21 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_forbids_submitting_a_later_page_without_a_partial_submission()
+    {
+        $form = $this->createMultiPageForm();
+
+        $this
+            ->postJson(route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'page_2']), [
+                'email' => 'han@example.com',
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.index', ['form' => 'contact']));
+
+        $this->assertNull($form->submissions()->first());
+    }
+
+    #[Test]
     public function it_advances_to_the_next_page_without_finalizing()
     {
         $form = $this->createMultiPageForm();
