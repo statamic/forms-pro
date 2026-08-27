@@ -44,12 +44,14 @@ class AutomagicFormController extends Controller
         $previousPage = $this->previousPage($form, $currentPageId, $data);
         $formPages = $form->formFields()->pages()->keyBy(fn (array $page) => $page['id'] ?? 'main');
 
-        $pages = $form->blueprint()->tabs()->map(fn (Tab $tab) => [
+        $tabs = $form->blueprint()->tabs()->values();
+
+        $pages = $tabs->map(fn (Tab $tab, int $index) => [
             'id' => $tab->handle(),
             'display' => $formPages->get($tab->handle(), [])['display'] ?? null,
-            'button_label' => $tab->contents()['button_label'] ?? null,
+            'button_label' => $tab->contents()['button_label'] ?? ($index === $tabs->count() - 1 ? __('Submit') : __('Next Page')),
             'previous_page_label' => $this->previousPageLabel($tab->contents()),
-        ])->values();
+        ]);
 
         return Inertia::render('forms-pro::AutomagicForm/Index', [
             'action' => AutomagicForms::route('store', ['form' => $form->handle(), 'page' => $currentPageId]),

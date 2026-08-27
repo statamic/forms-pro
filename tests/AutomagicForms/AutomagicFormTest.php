@@ -175,6 +175,41 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_defaults_the_button_label_to_submit_on_the_last_page()
+    {
+        $this->createMultiPageForm();
+
+        $this->assertButtonLabel('page_2', 'Submit');
+    }
+
+    #[Test]
+    public function it_defaults_the_button_label_to_next_page_on_earlier_pages()
+    {
+        $this->createMultiPageForm();
+
+        $this->assertButtonLabel('page_1', 'Next Page');
+    }
+
+    #[Test]
+    public function it_defaults_the_button_label_to_submit_on_a_single_page_form()
+    {
+        $this->createForm();
+
+        $this
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('currentPage.button_label', 'Submit'));
+    }
+
+    #[Test]
+    public function it_uses_a_custom_button_label()
+    {
+        $this->createMultiPageFormWithPreviousButton(['button_label' => 'Onwards']);
+
+        $this->assertButtonLabel('page_2', 'Onwards');
+    }
+
+    #[Test]
     public function it_defaults_the_previous_page_label_when_the_button_is_enabled_without_one()
     {
         $form = $this->createMultiPageFormWithPreviousButton(['show_previous_button' => true]);
@@ -788,6 +823,20 @@ class AutomagicFormTest extends TestCase
                     ]]]]),
                 ],
             ]))->save();
+    }
+
+    private function assertButtonLabel(string $page, string $expected): void
+    {
+        $form = Facades\Form::find('contact');
+
+        $submission = $form->makeSubmission();
+        $submission->data(['name' => 'Han Solo'])->asPartial()->save();
+
+        $this
+            ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
+            ->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => $page]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $p) => $p->where('currentPage.button_label', $expected));
     }
 
     private function assertPreviousPageLabel(Form $form, ?string $expected): void

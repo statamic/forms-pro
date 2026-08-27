@@ -32,7 +32,6 @@ const values = ref<object>(props.values);
 const container = useTemplateRef<InstanceType<typeof PublishContainer>>('container');
 
 const isFirstPage = computed<boolean>(() => props.currentPage.id === props.pages[0].id);
-const isLastPage = computed<boolean>(() => props.currentPage.id === props.pages[props.pages.length - 1].id);
 const allPagesHaveCustomLabels = computed<boolean>(() => props.pages.every((page: Page) => page.display));
 
 const titleClasses = computed<string[]>(() => [
@@ -235,7 +234,7 @@ onBeforeUnmount(() => {
                     style="--theme-color-primary: var(--automagic-brand, var(--theme-color-gray-950))"
                     :disabled="loading"
                     :loading="loading"
-                    :text="currentPage.button_label ?? (isLastPage ? __('Submit') : __('Next Page'))"
+                    :text="__(currentPage.button_label)"
                     @click="submit"
                 />
             </div>
