@@ -13,7 +13,8 @@ function loadApi() {
         window.formsProTurnstileReady = () => resolve(window.turnstile);
 
         const script = document.createElement('script');
-        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=formsProTurnstileReady';
+        script.src =
+            'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=formsProTurnstileReady';
         script.async = true;
         document.head.appendChild(script);
     }));
@@ -28,13 +29,18 @@ function bind(widget, turnstile) {
 
     let token = null;
 
-    form.addEventListener('submit', (event) => {
-        if (!token) event.preventDefault();
-    }, { capture: true });
+    form.addEventListener(
+        'submit',
+        (event) => {
+            if (!token) event.preventDefault();
+        },
+        { capture: true },
+    );
 
-    const gate = (allowed) => form
-        .querySelectorAll('button:not([type=button]):not([type=reset]), input[type=submit]')
-        .forEach((button) => (button.disabled = !allowed));
+    const gate = (allowed) =>
+        form
+            .querySelectorAll('button:not([type=button]):not([type=reset]), input[type=submit]')
+            .forEach((button) => (button.disabled = !allowed));
 
     gate(false);
 
