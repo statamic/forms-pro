@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { ConnectionRows, ConnectionRules, conditionsSummary } from '@statamic/cms';
-import { Alert, Badge, Description, Heading, Icon, Label, PublishContainer, PublishFields, PublishFieldsProvider, Subheading } from '@statamic/cms/ui';
+import {
+    Alert,
+    Badge,
+    Description,
+    Heading,
+    Icon,
+    Label,
+    PublishContainer,
+    PublishFields,
+    PublishFieldsProvider,
+    Subheading,
+} from '@statamic/cms/ui';
 import TwilioSetupInstructions from './TwilioSetupInstructions.vue';
 
 defineEmits(['update:modelValue']);
@@ -20,7 +31,7 @@ const props = defineProps({
 const hasSenders = computed<boolean>(() => (props.defaults.meta.from.options ?? []).length > 0);
 
 const recipientLabel = (notification: { to?: string }): string => {
-	return props.defaults.meta.to.options?.find((option) => option.value === notification.to)?.label ?? notification.to;
+    return props.defaults.meta.to.options?.find((option) => option.value === notification.to)?.label ?? notification.to;
 };
 </script>
 
@@ -65,7 +76,9 @@ const recipientLabel = (notification: { to?: string }): string => {
                     :if-label="__('Send if...')"
                 >
                     <template #then>
-                        <div class="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+                        <div
+                            class="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
+                        >
                             <PublishContainer
                                 :errors
                                 :blueprint

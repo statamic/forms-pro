@@ -17,7 +17,9 @@ const error = ref(null);
 const loading = ref(false);
 const tabs = ref(props.config.options ?? {});
 
-const spreadsheet = computed(() => (values.value?.spreadsheet?.startsWith(spreadsheetUrl) ? values.value.spreadsheet : null));
+const spreadsheet = computed(() =>
+    values.value?.spreadsheet?.startsWith(spreadsheetUrl) ? values.value.spreadsheet : null,
+);
 
 const options = computed(() => Object.entries(tabs.value).map(([id, name]) => ({ value: Number(id), label: name })));
 

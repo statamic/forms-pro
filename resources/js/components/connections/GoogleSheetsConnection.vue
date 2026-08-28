@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { Alert, Description, Heading, Input, Label, PublishContainer, PublishFields, PublishFieldsProvider } from '@statamic/cms/ui';
+import {
+    Alert,
+    Description,
+    Heading,
+    Input,
+    Label,
+    PublishContainer,
+    PublishFields,
+    PublishFieldsProvider,
+} from '@statamic/cms/ui';
 import GoogleSheetsSetupInstructions from './GoogleSheetsSetupInstructions.vue';
 
 defineEmits(['update:modelValue']);

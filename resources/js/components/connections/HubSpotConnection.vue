@@ -23,7 +23,9 @@ const extraValues = computed<object>(() => ({
 }));
 
 const missingConsentToProcess = computed<boolean>(
-    () => hubspotForm.value?.consent?.type === 'explicit_consent_to_process' && !props.modelValue.consent_to_process_field,
+    () =>
+        hubspotForm.value?.consent?.type === 'explicit_consent_to_process' &&
+        !props.modelValue.consent_to_process_field,
 );
 
 const missingCommunications = computed<boolean>(() => {
@@ -52,7 +54,12 @@ const missingSubscription = computed<boolean>(() => {
             <Description :text="__(apiError)" class="mt-1" />
         </Alert>
 
-        <Alert v-else-if="!Object.keys(hubspotForms).length" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
+        <Alert
+            v-else-if="!Object.keys(hubspotForms).length"
+            variant="warning"
+            icon="alert-warning-exclamation-mark"
+            class="mb-6"
+        >
             <Description :text="__('forms-pro::messages.hubspot_no_forms')" />
         </Alert>
 
@@ -72,7 +79,12 @@ const missingSubscription = computed<boolean>(() => {
             <Description :text="__('forms-pro::messages.hubspot_captcha_warning')" />
         </Alert>
 
-        <Alert v-if="hubspotForm && !hubspotForm.has_email" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
+        <Alert
+            v-if="hubspotForm && !hubspotForm.has_email"
+            variant="warning"
+            icon="alert-warning-exclamation-mark"
+            class="mb-6"
+        >
             <Description :text="__('forms-pro::messages.hubspot_no_email_warning')" />
         </Alert>
 

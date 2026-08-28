@@ -22,14 +22,8 @@ watch(options, () => {
 </script>
 
 <template>
-    <Description
-        v-if="!row?.field"
-        :text="__('forms-pro::messages.mailchimp_group_option_no_field')"
-    />
-    <Description
-        v-else-if="!options.length"
-        :text="__('forms-pro::messages.mailchimp_group_option_when_checked')"
-    />
+    <Description v-if="!row?.field" :text="__('forms-pro::messages.mailchimp_group_option_no_field')" />
+    <Description v-else-if="!options.length" :text="__('forms-pro::messages.mailchimp_group_option_when_checked')" />
 
     <Combobox
         v-else

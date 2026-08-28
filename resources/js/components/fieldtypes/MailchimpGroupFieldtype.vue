@@ -20,9 +20,7 @@ const list = computed(() => values.value?.list);
 const taken = computed(() => {
     const index = props.fieldPathPrefix.split('.').pop();
 
-    return (values.value?.groups ?? [])
-        .filter((row, row_index) => String(row_index) !== index)
-        .map((row) => row.group);
+    return (values.value?.groups ?? []).filter((row, row_index) => String(row_index) !== index).map((row) => row.group);
 });
 
 const options = computed(() => {
@@ -54,7 +52,8 @@ const fetchGroups = () => {
 
     loading.value = true;
 
-    axios.get(props.config.url, { params: { list: list.value } })
+    axios
+        .get(props.config.url, { params: { list: list.value } })
         .then(({ data }) => {
             if (fetch !== latestFetch) return;
 

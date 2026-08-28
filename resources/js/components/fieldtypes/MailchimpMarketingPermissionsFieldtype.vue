@@ -61,7 +61,9 @@ const fetchPermissions = () => {
             permissions.value = data.permissions;
 
             if (data.state === 'ok') {
-                const pruned = (props.value ?? []).filter(({ permission }) => data.permissions.some(({ id }) => id === permission));
+                const pruned = (props.value ?? []).filter(({ permission }) =>
+                    data.permissions.some(({ id }) => id === permission),
+                );
 
                 if (pruned.length !== (props.value ?? []).length) {
                     update(pruned.length ? pruned : null);
@@ -76,10 +78,7 @@ watch(list, fetchPermissions, { immediate: true });
 </script>
 
 <template>
-    <Description
-        v-if="!list"
-        :text="__('forms-pro::messages.mailchimp_marketing_permissions_no_audience')"
-    />
+    <Description v-if="!list" :text="__('forms-pro::messages.mailchimp_marketing_permissions_no_audience')" />
     <div v-else-if="loading" class="flex items-center truncate gap-x-2">
         <Icon name="loading" />
         <Description :text="__('Loading')" />

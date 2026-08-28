@@ -1,7 +1,8 @@
 <script setup>
 import { Button, Description, Heading } from '@statamic/cms/ui';
 
-const stepNumber = 'mt-px flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+const stepNumber =
+    'mt-px flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300';
 
 const phoneNumbersUrl = 'https://console.twilio.com/us1/develop/phone-numbers/manage/search';
 const apiKeysUrl = 'https://console.twilio.com/us1/account/keys-credentials/api-keys';
@@ -20,21 +21,35 @@ FORMS_PRO_TWILIO_API_SECRET=your-key-secret`;
                 <span :class="stepNumber" aria-hidden="true">1</span>
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.twilio_setup_number') }}</p>
-                    <Button size="sm" icon="external-link" :href="phoneNumbersUrl" target="_blank" :text="__('Buy a number')" />
+                    <Button
+                        size="sm"
+                        icon="external-link"
+                        :href="phoneNumbersUrl"
+                        target="_blank"
+                        :text="__('Buy a number')"
+                    />
                 </div>
             </li>
             <li class="flex gap-4">
                 <span :class="stepNumber" aria-hidden="true">2</span>
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.twilio_setup_key') }}</p>
-                    <Button size="sm" icon="external-link" :href="apiKeysUrl" target="_blank" :text="__('Create an API key')" />
+                    <Button
+                        size="sm"
+                        icon="external-link"
+                        :href="apiKeysUrl"
+                        target="_blank"
+                        :text="__('Create an API key')"
+                    />
                 </div>
             </li>
             <li class="flex gap-4">
                 <span :class="stepNumber" aria-hidden="true">3</span>
                 <div class="flex-1 space-y-3">
                     <p v-html="__('forms-pro::messages.twilio_setup_env', { file: '<code>.env</code>' })" />
-                    <pre class="overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs text-gray-800 dark:border-white/10 dark:bg-gray-950/40 dark:text-gray-300"><code>{{ envVariables }}</code></pre>
+                    <pre
+                        class="overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs text-gray-800 dark:border-white/10 dark:bg-gray-950/40 dark:text-gray-300"
+                    ><code>{{ envVariables }}</code></pre>
                     <Description :text="__('forms-pro::messages.twilio_setup_developer')" />
                 </div>
             </li>

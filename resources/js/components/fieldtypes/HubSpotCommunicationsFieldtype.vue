@@ -13,7 +13,9 @@ const { values } = injectPublishContext();
 const hubspotForm = computed(() => values.value?.form);
 const hubspotFormFields = computed(() => props.meta.field);
 const checkboxes = computed(() => props.config.forms?.[hubspotForm.value]?.consent?.checkboxes ?? []);
-const mapping = computed(() => Object.fromEntries((props.value ?? []).map(({ subscription, field }) => [subscription, field])));
+const mapping = computed(() =>
+    Object.fromEntries((props.value ?? []).map(({ subscription, field }) => [subscription, field])),
+);
 
 const fieldFor = (id) => mapping.value[id] ?? null;
 

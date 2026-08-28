@@ -43,7 +43,8 @@ const fetchMergeFields = () => {
 
     loading.value = true;
 
-    axios.get(props.config.url, { params: { list: list.value } })
+    axios
+        .get(props.config.url, { params: { list: list.value } })
         .then(({ data }) => {
             if (fetch !== latestFetch) return;
 
@@ -81,12 +82,14 @@ watch(list, fetchMergeFields, { immediate: true });
                 </div>
 
                 <div v-else class="flex items-center truncate">
-                    {{ option.label }} (<code class="hidden-outside rounded-xs text-xs">{{ option.value }}</code>)
+                    {{ option.label }} (<code class="hidden-outside rounded-xs text-xs">{{ option.value }}</code
+                    >)
                 </div>
             </template>
             <template #option="option">
                 <div class="flex items-center truncate">
-                    {{ option.label }} (<code class="hidden-outside rounded-xs text-xs">{{ option.value }}</code>)
+                    {{ option.label }} (<code class="hidden-outside rounded-xs text-xs">{{ option.value }}</code
+                    >)
                 </div>
             </template>
         </Combobox>
