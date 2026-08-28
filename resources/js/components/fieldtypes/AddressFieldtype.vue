@@ -110,9 +110,10 @@ async function select(suggestion) {
     closeAutocomplete();
     autocompleteLoading.value = true;
 
-    const address = await autocompleteProvider.value.retrieve(suggestion, autocomplete.value)
+    const address = await autocompleteProvider.value
+        .retrieve(suggestion, autocomplete.value)
         .catch(() => null)
-        .finally(() => autocompleteLoading.value = false);
+        .finally(() => (autocompleteLoading.value = false));
 
     if (!address) return;
 
@@ -152,7 +153,12 @@ onBeforeUnmount(() => clearTimeout(timeout));
             :label="addressField.label"
             :read-only="isReadOnly"
         >
-            <div v-if="addressField.handle === 'line_1'" class="relative" @focusin="onFocus" @focusout="closeAutocomplete">
+            <div
+                v-if="addressField.handle === 'line_1'"
+                class="relative"
+                @focusin="onFocus"
+                @focusout="closeAutocomplete"
+            >
                 <Input
                     :id="addressField.id"
                     :model-value="value[addressField.handle]"
@@ -163,7 +169,8 @@ onBeforeUnmount(() => clearTimeout(timeout));
                         'aria-autocomplete': 'list',
                         'aria-controls': listboxId,
                         'aria-expanded': showAutocomplete,
-                        'aria-activedescendant': highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined,
+                        'aria-activedescendant':
+                            highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined,
                     }"
                     :loading="autocompleteLoading"
                     @update:model-value="lineOneUpdated"

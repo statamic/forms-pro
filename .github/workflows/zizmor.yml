@@ -4,12 +4,12 @@ on:
   push:
     branches:
       - main
-      - '*.x'
+      - "*.x"
     paths:
-      - '.github/**.yml'
+      - ".github/**.yml"
   pull_request:
     paths:
-      - '.github/**.yml'
+      - ".github/**.yml"
 
 permissions:
   contents: read
