@@ -17,15 +17,15 @@ You can try every Forms Pro feature locally for free. When you're ready, install
 
 1. Install the Forms Pro add-on via Composer:
 
-   ```bash
-   composer require statamic/forms-pro
-   ```
+    ```bash
+    composer require statamic/forms-pro
+    ```
 
 2. Publish the configuration file to `config/forms-pro.php`:
 
-   ```bash
-   php artisan vendor:publish --tag=forms-pro-config
-   ```
+    ```bash
+    php artisan vendor:publish --tag=forms-pro-config
+    ```
 
 That's it. Forms Pro's features are now ready and waiting in the Control Panel.
 
