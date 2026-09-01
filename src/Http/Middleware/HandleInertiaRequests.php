@@ -65,7 +65,7 @@ class HandleInertiaRequests extends \Statamic\Http\Middleware\CP\HandleInertiaRe
             return null;
         }
 
-        $container = AssetContainer::find(config('forms-pro.automagic_forms.asset_container') ?? AssetContainer::all()->first()?->handle());
+        $container = AssetContainer::find(config('statamic.forms-pro.automagic_forms.asset_container') ?? AssetContainer::all()->first()?->handle());
 
         return $container?->asset($path)?->url();
     }

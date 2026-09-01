@@ -21,7 +21,7 @@ You can try every Forms Pro feature locally for free. When you're ready, install
     composer require statamic/forms-pro
     ```
 
-2. Publish the configuration file to `config/forms-pro.php`:
+2. Publish the configuration file to `config/statamic/forms-pro.php`:
 
     ```bash
     php artisan vendor:publish --tag=forms-pro-config
