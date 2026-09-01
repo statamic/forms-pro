@@ -36,8 +36,8 @@ YAML;
 
         $app['config']->set('statamic.system.multisite', true);
         $app['config']->set('statamic.editions.pro', true);
-        $app['config']->set('forms-pro.automagic_forms.enabled', $this->enabled);
-        $app['config']->set('forms-pro.automagic_forms.route', 'get-in-touch');
+        $app['config']->set('statamic.forms-pro.automagic_forms.enabled', $this->enabled);
+        $app['config']->set('statamic.forms-pro.automagic_forms.route', 'get-in-touch');
 
         $app['files']->put(resource_path('sites.yaml'), $this->sites);
     }

@@ -18,6 +18,8 @@ use Statamic\Providers\AddonServiceProvider;
 
 class ServiceProvider extends AddonServiceProvider
 {
+    protected $config = false;
+
     protected $vite = [
         'input' => [
             'resources/js/cp.js',
@@ -34,6 +36,12 @@ class ServiceProvider extends AddonServiceProvider
 
     public function bootAddon()
     {
+        $this->mergeConfigFrom(__DIR__.'/../config/forms-pro.php', 'statamic.forms-pro');
+
+        $this->publishes([
+            __DIR__.'/../config/forms-pro.php' => config_path('statamic/forms-pro.php'),
+        ], 'forms-pro-config');
+
         $this->publishes([
             __DIR__.'/../resources/dist-frontend' => public_path('vendor/forms-pro/frontend'),
         ], 'forms-pro-frontend');

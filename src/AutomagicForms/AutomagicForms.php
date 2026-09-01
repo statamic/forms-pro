@@ -8,7 +8,7 @@ class AutomagicForms
 {
     public static function enabled(): bool
     {
-        return config('forms-pro.automagic_forms.enabled');
+        return config('statamic.forms-pro.automagic_forms.enabled');
     }
 
     public static function route(string $name, array $params = [], ?string $site = null, bool $absolute = true): string

@@ -145,8 +145,8 @@ class AddressTest extends TestCase
     {
         config([
             'statamic.templates.language' => $language,
-            'forms-pro.address.autocomplete.provider' => 'geoapify',
-            'forms-pro.address.autocomplete.key' => 'test-key',
+            'statamic.forms-pro.address.autocomplete.provider' => 'geoapify',
+            'statamic.forms-pro.address.autocomplete.key' => 'test-key',
         ]);
 
         $form = Form::make()->handle('contact')->formFields([
@@ -243,8 +243,8 @@ class AddressTest extends TestCase
     public function it_exposes_autocomplete_config_when_a_provider_is_configured()
     {
         config([
-            'forms-pro.address.autocomplete.provider' => 'geoapify',
-            'forms-pro.address.autocomplete.key' => 'test-key',
+            'statamic.forms-pro.address.autocomplete.provider' => 'geoapify',
+            'statamic.forms-pro.address.autocomplete.key' => 'test-key',
         ]);
 
         $data = $this->fieldtype()->extraRenderableFieldData();
@@ -269,8 +269,8 @@ class AddressTest extends TestCase
         $this->assertNull($this->fieldtype()->preload()['autocomplete']);
 
         config([
-            'forms-pro.address.autocomplete.provider' => 'google',
-            'forms-pro.address.autocomplete.key' => 'test-key',
+            'statamic.forms-pro.address.autocomplete.provider' => 'google',
+            'statamic.forms-pro.address.autocomplete.key' => 'test-key',
         ]);
 
         $this->assertEquals(
