@@ -23,7 +23,7 @@ class Settings
                                         'type' => 'assets',
                                         'display' => __('forms-pro::messages.appearance_logo'),
                                         'instructions' => __('forms-pro::messages.appearance_logo_instructions'),
-                                        'container' => config('forms-pro.automagic_forms.asset_container') ?? AssetContainer::all()->first()?->handle(),
+                                        'container' => config('statamic.forms-pro.automagic_forms.asset_container') ?? AssetContainer::all()->first()?->handle(),
                                         'mode' => 'grid',
                                         'max_files' => 1,
                                         'actions' => false,
