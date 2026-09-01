@@ -26,9 +26,9 @@ class TwilioConnectionTest extends TestCase
         parent::setUp();
 
         config([
-            'forms-pro.connections.twilio.account_sid' => self::ACCOUNT_SID,
-            'forms-pro.connections.twilio.api_key' => 'SK00000000000000000000000000000000',
-            'forms-pro.connections.twilio.api_secret' => 'secret',
+            'statamic.forms-pro.connections.twilio.account_sid' => self::ACCOUNT_SID,
+            'statamic.forms-pro.connections.twilio.api_key' => 'SK00000000000000000000000000000000',
+            'statamic.forms-pro.connections.twilio.api_secret' => 'secret',
         ]);
     }
 
@@ -124,7 +124,7 @@ class TwilioConnectionTest extends TestCase
     #[Test]
     public function it_renders_the_setup_instructions_when_unconfigured()
     {
-        config(['forms-pro.connections.twilio' => null]);
+        config(['statamic.forms-pro.connections.twilio' => null]);
 
         Http::fake();
 

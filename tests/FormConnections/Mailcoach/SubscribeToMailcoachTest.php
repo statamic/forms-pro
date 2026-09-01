@@ -27,8 +27,8 @@ class SubscribeToMailcoachTest extends TestCase
         parent::setUp();
 
         config([
-            'forms-pro.connections.mailcoach.api_url' => 'https://acme.mailcoach.app',
-            'forms-pro.connections.mailcoach.token' => 'mailcoach-token',
+            'statamic.forms-pro.connections.mailcoach.api_url' => 'https://acme.mailcoach.app',
+            'statamic.forms-pro.connections.mailcoach.token' => 'mailcoach-token',
         ]);
     }
 
@@ -205,7 +205,7 @@ class SubscribeToMailcoachTest extends TestCase
     #[Test]
     public function it_doesnt_subscribe_when_mailcoach_hasnt_been_configured()
     {
-        config(['forms-pro.connections.mailcoach.token' => null]);
+        config(['statamic.forms-pro.connections.mailcoach.token' => null]);
 
         Http::fake();
 

@@ -28,9 +28,9 @@ class SendTwilioMessageTest extends TestCase
         parent::setUp();
 
         config([
-            'forms-pro.connections.twilio.account_sid' => self::ACCOUNT_SID,
-            'forms-pro.connections.twilio.api_key' => 'SK00000000000000000000000000000000',
-            'forms-pro.connections.twilio.api_secret' => 'secret',
+            'statamic.forms-pro.connections.twilio.account_sid' => self::ACCOUNT_SID,
+            'statamic.forms-pro.connections.twilio.api_key' => 'SK00000000000000000000000000000000',
+            'statamic.forms-pro.connections.twilio.api_secret' => 'secret',
         ]);
     }
 
@@ -206,7 +206,7 @@ class SendTwilioMessageTest extends TestCase
     #[Test]
     public function it_doesnt_send_when_no_credentials_have_been_configured()
     {
-        config(['forms-pro.connections.twilio.api_secret' => null]);
+        config(['statamic.forms-pro.connections.twilio.api_secret' => null]);
 
         Http::fake();
 

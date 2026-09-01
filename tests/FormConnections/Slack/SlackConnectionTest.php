@@ -22,7 +22,7 @@ class SlackConnectionTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.slack.token' => 'xoxb-token']);
+        config(['statamic.forms-pro.connections.slack.token' => 'xoxb-token']);
     }
 
     #[Test]
@@ -154,7 +154,7 @@ class SlackConnectionTest extends TestCase
     #[Test]
     public function it_renders_the_setup_instructions_when_unconfigured()
     {
-        config(['forms-pro.connections.slack.token' => null]);
+        config(['statamic.forms-pro.connections.slack.token' => null]);
 
         Http::fake();
 
@@ -213,7 +213,7 @@ class SlackConnectionTest extends TestCase
 
         (new Slack)->render($form);
 
-        config(['forms-pro.connections.slack.token' => 'xoxb-different']);
+        config(['statamic.forms-pro.connections.slack.token' => 'xoxb-different']);
 
         (new Slack)->render($form);
 

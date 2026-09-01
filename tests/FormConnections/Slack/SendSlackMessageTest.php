@@ -28,7 +28,7 @@ class SendSlackMessageTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.slack.token' => 'xoxb-token']);
+        config(['statamic.forms-pro.connections.slack.token' => 'xoxb-token']);
     }
 
     #[Test]
@@ -356,7 +356,7 @@ class SendSlackMessageTest extends TestCase
     #[Test]
     public function it_doesnt_send_when_no_token_has_been_configured()
     {
-        config(['forms-pro.connections.slack.token' => null]);
+        config(['statamic.forms-pro.connections.slack.token' => null]);
 
         Http::fake();
 

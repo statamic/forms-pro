@@ -66,36 +66,36 @@ class ServiceProvider extends AddonServiceProvider
     private function bootConnections(): void
     {
         $this->app->bind(GoogleSheetsClient::class, fn () => new GoogleSheetsClient(
-            config('forms-pro.connections.google_sheets.credentials')
+            config('statamic.forms-pro.connections.google_sheets.credentials')
         ));
 
         EncryptCookies::except('hubspotutk');
 
         $this->app->bind(HubSpotClient::class, fn () => new HubSpotClient(
-            config('forms-pro.connections.hubspot.access_token')
+            config('statamic.forms-pro.connections.hubspot.access_token')
         ));
 
         $this->app->bind(KitClient::class, fn () => new KitClient(
-            config('forms-pro.connections.kit.api_key')
+            config('statamic.forms-pro.connections.kit.api_key')
         ));
 
         $this->app->bind(MailchimpClient::class, fn () => new MailchimpClient(
-            config('forms-pro.connections.mailchimp.api_key')
+            config('statamic.forms-pro.connections.mailchimp.api_key')
         ));
 
         $this->app->bind(MailcoachClient::class, fn () => new MailcoachClient(
-            apiUrl: config('forms-pro.connections.mailcoach.api_url'),
-            token: config('forms-pro.connections.mailcoach.token'),
+            apiUrl: config('statamic.forms-pro.connections.mailcoach.api_url'),
+            token: config('statamic.forms-pro.connections.mailcoach.token'),
         ));
 
         $this->app->bind(SlackClient::class, fn () => new SlackClient(
-            config('forms-pro.connections.slack.token')
+            config('statamic.forms-pro.connections.slack.token')
         ));
 
         $this->app->bind(TwilioClient::class, fn () => new TwilioClient(
-            accountSid: config('forms-pro.connections.twilio.account_sid'),
-            apiKey: config('forms-pro.connections.twilio.api_key'),
-            apiSecret: config('forms-pro.connections.twilio.api_secret'),
+            accountSid: config('statamic.forms-pro.connections.twilio.account_sid'),
+            apiKey: config('statamic.forms-pro.connections.twilio.api_key'),
+            apiSecret: config('statamic.forms-pro.connections.twilio.api_secret'),
         ));
     }
 

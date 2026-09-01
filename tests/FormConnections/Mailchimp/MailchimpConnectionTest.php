@@ -24,7 +24,7 @@ class MailchimpConnectionTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.mailchimp.api_key' => 'mailchimp-key-us14']);
+        config(['statamic.forms-pro.connections.mailchimp.api_key' => 'mailchimp-key-us14']);
     }
 
     #[Test]
@@ -123,7 +123,7 @@ class MailchimpConnectionTest extends TestCase
     #[Test]
     public function it_renders_the_setup_instructions_when_unconfigured()
     {
-        config(['forms-pro.connections.mailchimp.api_key' => null]);
+        config(['statamic.forms-pro.connections.mailchimp.api_key' => null]);
 
         Http::fake();
 
@@ -164,7 +164,7 @@ class MailchimpConnectionTest extends TestCase
 
         (new Mailchimp)->render($this->form([]));
 
-        config(['forms-pro.connections.mailchimp.api_key' => 'different-key-us14']);
+        config(['statamic.forms-pro.connections.mailchimp.api_key' => 'different-key-us14']);
 
         (new Mailchimp)->render($this->form([]));
 

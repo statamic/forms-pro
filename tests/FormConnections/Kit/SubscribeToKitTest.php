@@ -27,7 +27,7 @@ class SubscribeToKitTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.kit.api_key' => 'kit_apikey']);
+        config(['statamic.forms-pro.connections.kit.api_key' => 'kit_apikey']);
     }
 
     #[Test]
@@ -244,7 +244,7 @@ class SubscribeToKitTest extends TestCase
     #[Test]
     public function it_doesnt_subscribe_when_kit_hasnt_been_configured()
     {
-        config(['forms-pro.connections.kit.api_key' => null]);
+        config(['statamic.forms-pro.connections.kit.api_key' => null]);
 
         Http::fake();
 

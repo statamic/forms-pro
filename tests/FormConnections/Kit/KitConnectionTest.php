@@ -23,7 +23,7 @@ class KitConnectionTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.kit.api_key' => 'kit_apikey']);
+        config(['statamic.forms-pro.connections.kit.api_key' => 'kit_apikey']);
     }
 
     #[Test]
@@ -138,7 +138,7 @@ class KitConnectionTest extends TestCase
     #[Test]
     public function it_renders_the_setup_instructions_when_unconfigured()
     {
-        config(['forms-pro.connections.kit.api_key' => null]);
+        config(['statamic.forms-pro.connections.kit.api_key' => null]);
 
         Http::fake();
 
@@ -168,7 +168,7 @@ class KitConnectionTest extends TestCase
 
         (new Kit)->render($this->form());
 
-        config(['forms-pro.connections.kit.api_key' => 'kit_different']);
+        config(['statamic.forms-pro.connections.kit.api_key' => 'kit_different']);
 
         (new Kit)->render($this->form());
 

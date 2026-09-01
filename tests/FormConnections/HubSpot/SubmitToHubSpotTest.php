@@ -32,7 +32,7 @@ class SubmitToHubSpotTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.hubspot.access_token' => 'pat-eu1-token']);
+        config(['statamic.forms-pro.connections.hubspot.access_token' => 'pat-eu1-token']);
     }
 
     #[Test]
@@ -493,7 +493,7 @@ class SubmitToHubSpotTest extends TestCase
     #[Test]
     public function it_doesnt_submit_when_hubspot_hasnt_been_configured()
     {
-        config(['forms-pro.connections.hubspot.access_token' => null]);
+        config(['statamic.forms-pro.connections.hubspot.access_token' => null]);
 
         Http::fake();
 

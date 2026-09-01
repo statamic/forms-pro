@@ -25,7 +25,7 @@ class HubSpotConnectionTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.hubspot.access_token' => 'pat-eu1-token']);
+        config(['statamic.forms-pro.connections.hubspot.access_token' => 'pat-eu1-token']);
     }
 
     #[Test]
@@ -225,7 +225,7 @@ class HubSpotConnectionTest extends TestCase
     #[Test]
     public function it_renders_the_setup_instructions_when_unconfigured()
     {
-        config(['forms-pro.connections.hubspot.access_token' => null]);
+        config(['statamic.forms-pro.connections.hubspot.access_token' => null]);
 
         Http::fake();
 
@@ -253,7 +253,7 @@ class HubSpotConnectionTest extends TestCase
 
         (new HubSpot)->render($this->form());
 
-        config(['forms-pro.connections.hubspot.access_token' => 'pat-eu1-different']);
+        config(['statamic.forms-pro.connections.hubspot.access_token' => 'pat-eu1-different']);
 
         (new HubSpot)->render($this->form());
 

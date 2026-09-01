@@ -23,7 +23,7 @@ class ListGoogleSheetsTabsTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.google_sheets.credentials' => $this->credentials()]);
+        config(['statamic.forms-pro.connections.google_sheets.credentials' => $this->credentials()]);
     }
 
     #[Test]
@@ -116,7 +116,7 @@ class ListGoogleSheetsTabsTest extends TestCase
     #[Test]
     public function it_reports_invalid_credentials()
     {
-        config(['forms-pro.connections.google_sheets.credentials' => 'not-base64-encoded-json']);
+        config(['statamic.forms-pro.connections.google_sheets.credentials' => 'not-base64-encoded-json']);
 
         Http::fake();
 

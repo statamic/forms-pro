@@ -37,8 +37,8 @@ class Mailcoach extends Connection
 
     public function isConfigured(): bool
     {
-        return config('forms-pro.connections.mailcoach.api_url')
-            && config('forms-pro.connections.mailcoach.token');
+        return config('statamic.forms-pro.connections.mailcoach.api_url')
+            && config('statamic.forms-pro.connections.mailcoach.token');
     }
 
     public function finalized(Submission $submission): object|array

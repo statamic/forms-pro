@@ -23,7 +23,7 @@ class GoogleSheetsConnectionTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.google_sheets.credentials' => $this->credentials()]);
+        config(['statamic.forms-pro.connections.google_sheets.credentials' => $this->credentials()]);
     }
 
     #[Test]
@@ -131,7 +131,7 @@ class GoogleSheetsConnectionTest extends TestCase
     #[Test]
     public function it_renders_the_setup_instructions_when_unconfigured()
     {
-        config(['forms-pro.connections.google_sheets.credentials' => null]);
+        config(['statamic.forms-pro.connections.google_sheets.credentials' => null]);
 
         $props = (new GoogleSheets)->render($this->form())->toArray()['props'];
 
@@ -142,7 +142,7 @@ class GoogleSheetsConnectionTest extends TestCase
     #[Test]
     public function it_renders_an_api_error_when_the_credentials_are_malformed()
     {
-        config(['forms-pro.connections.google_sheets.credentials' => 'not-base64-encoded-json']);
+        config(['statamic.forms-pro.connections.google_sheets.credentials' => 'not-base64-encoded-json']);
 
         $props = (new GoogleSheets)->render($this->form())->toArray()['props'];
 

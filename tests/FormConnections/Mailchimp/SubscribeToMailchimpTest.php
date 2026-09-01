@@ -27,7 +27,7 @@ class SubscribeToMailchimpTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.mailchimp.api_key' => 'mailchimp-key-us14']);
+        config(['statamic.forms-pro.connections.mailchimp.api_key' => 'mailchimp-key-us14']);
     }
 
     #[Test]
@@ -370,7 +370,7 @@ class SubscribeToMailchimpTest extends TestCase
     #[Test]
     public function it_doesnt_subscribe_when_mailchimp_hasnt_been_configured()
     {
-        config(['forms-pro.connections.mailchimp.api_key' => null]);
+        config(['statamic.forms-pro.connections.mailchimp.api_key' => null]);
 
         Http::fake();
 
@@ -386,7 +386,7 @@ class SubscribeToMailchimpTest extends TestCase
     #[Test]
     public function it_doesnt_subscribe_when_the_api_key_has_no_datacenter_suffix()
     {
-        config(['forms-pro.connections.mailchimp.api_key' => 'keywithoutdatacenter']);
+        config(['statamic.forms-pro.connections.mailchimp.api_key' => 'keywithoutdatacenter']);
 
         Http::fake();
 

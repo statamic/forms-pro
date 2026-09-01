@@ -42,9 +42,9 @@ class Twilio extends Connection
 
     public function isConfigured(): bool
     {
-        return config('forms-pro.connections.twilio.account_sid')
-            && config('forms-pro.connections.twilio.api_key')
-            && config('forms-pro.connections.twilio.api_secret');
+        return config('statamic.forms-pro.connections.twilio.account_sid')
+            && config('statamic.forms-pro.connections.twilio.api_key')
+            && config('statamic.forms-pro.connections.twilio.api_secret');
     }
 
     public function finalized(Submission $submission): object|array

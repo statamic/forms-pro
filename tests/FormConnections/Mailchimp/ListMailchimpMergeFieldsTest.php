@@ -23,7 +23,7 @@ class ListMailchimpMergeFieldsTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.mailchimp.api_key' => 'mailchimp-key-us14']);
+        config(['statamic.forms-pro.connections.mailchimp.api_key' => 'mailchimp-key-us14']);
     }
 
     #[Test]

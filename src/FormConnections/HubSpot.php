@@ -41,7 +41,7 @@ class HubSpot extends Connection
 
     public function isConfigured(): bool
     {
-        return (bool) config('forms-pro.connections.hubspot.access_token');
+        return (bool) config('statamic.forms-pro.connections.hubspot.access_token');
     }
 
     public function finalized(Submission $submission): object|array

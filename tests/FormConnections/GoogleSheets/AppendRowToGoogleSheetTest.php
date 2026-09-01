@@ -29,7 +29,7 @@ class AppendRowToGoogleSheetTest extends TestCase
     {
         parent::setUp();
 
-        config(['forms-pro.connections.google_sheets.credentials' => $this->credentials()]);
+        config(['statamic.forms-pro.connections.google_sheets.credentials' => $this->credentials()]);
     }
 
     #[Test]
@@ -401,7 +401,7 @@ class AppendRowToGoogleSheetTest extends TestCase
     #[Test]
     public function it_throws_when_the_credentials_arent_a_service_account_key()
     {
-        config(['forms-pro.connections.google_sheets.credentials' => base64_encode(json_encode(['type' => 'authorized_user']))]);
+        config(['statamic.forms-pro.connections.google_sheets.credentials' => base64_encode(json_encode(['type' => 'authorized_user']))]);
 
         Http::fake();
 

@@ -39,7 +39,7 @@ class GoogleSheets extends Connection
 
     public function isConfigured(): bool
     {
-        return (bool) config('forms-pro.connections.google_sheets.credentials');
+        return (bool) config('statamic.forms-pro.connections.google_sheets.credentials');
     }
 
     public function finalized(Submission $submission): object|array
