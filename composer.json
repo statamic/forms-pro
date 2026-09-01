@@ -19,7 +19,7 @@
         ],
         "statamic": {
             "name": "Forms Pro",
-            "description": ""
+            "description": "Forms Pro turns forms into complete experiences and workflows — not just places to collect a name and email address."
         },
         "laravel": {
             "providers": [

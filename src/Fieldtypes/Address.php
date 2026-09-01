@@ -265,8 +265,8 @@ class Address extends Fieldtype
 
     private function autocompleteConfig(): ?array
     {
-        $provider = config('forms-pro.address.autocomplete.provider');
-        $key = config('forms-pro.address.autocomplete.key');
+        $provider = config('statamic.forms-pro.address.autocomplete.provider');
+        $key = config('statamic.forms-pro.address.autocomplete.key');
 
         if (! $provider || ! $key) {
             return null;

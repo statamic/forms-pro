@@ -65,7 +65,7 @@ class AutomagicFormTest extends TestCase
     #[Test]
     public function it_404s_when_automagic_forms_is_disabled()
     {
-        config()->set('forms-pro.automagic_forms.enabled', false);
+        config()->set('statamic.forms-pro.automagic_forms.enabled', false);
 
         $this->createForm();
 
@@ -683,7 +683,7 @@ class AutomagicFormTest extends TestCase
     #[Test]
     public function it_404s_when_submitting_a_form_when_automagic_forms_is_disabled()
     {
-        config()->set('forms-pro.automagic_forms.enabled', false);
+        config()->set('statamic.forms-pro.automagic_forms.enabled', false);
 
         $this->createForm();
 
@@ -798,7 +798,7 @@ class AutomagicFormTest extends TestCase
     #[Test]
     public function it_404s_on_the_success_page_when_automagic_forms_is_disabled()
     {
-        config()->set('forms-pro.automagic_forms.enabled', false);
+        config()->set('statamic.forms-pro.automagic_forms.enabled', false);
 
         $this->createForm();
 

@@ -27,7 +27,7 @@ class SettingsTest extends TestCase
         $this->makeAssetContainer('one');
         $this->makeAssetContainer('two');
 
-        config()->set('forms-pro.automagic_forms.asset_container', 'two');
+        config()->set('statamic.forms-pro.automagic_forms.asset_container', 'two');
 
         $this->assertEquals('two', $this->logoFieldtype()->preload()['container']['id']);
     }
