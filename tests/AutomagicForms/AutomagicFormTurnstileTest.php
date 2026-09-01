@@ -21,8 +21,8 @@ class AutomagicFormTurnstileTest extends TestCase
         Facades\Form::all()->each->delete();
 
         config([
-            'forms-pro.turnstile.site_key' => 'site-key',
-            'forms-pro.turnstile.secret_key' => 'secret-key',
+            'statamic.forms-pro.turnstile.site_key' => 'site-key',
+            'statamic.forms-pro.turnstile.secret_key' => 'secret-key',
         ]);
     }
 
@@ -40,7 +40,7 @@ class AutomagicFormTurnstileTest extends TestCase
     #[Test]
     public function the_form_page_includes_no_site_key_when_turnstile_is_not_configured()
     {
-        config(['forms-pro.turnstile.secret_key' => null]);
+        config(['statamic.forms-pro.turnstile.secret_key' => null]);
 
         $this->createForm();
 

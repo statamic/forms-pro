@@ -14,8 +14,8 @@ class TurnstileTest extends TestCase
     public function it_renders_the_widget_when_turnstile_is_configured()
     {
         config([
-            'forms-pro.turnstile.site_key' => 'site-key',
-            'forms-pro.turnstile.secret_key' => 'secret-key',
+            'statamic.forms-pro.turnstile.site_key' => 'site-key',
+            'statamic.forms-pro.turnstile.secret_key' => 'secret-key',
         ]);
 
         $html = (string) Parse::template('{{ turnstile }}', [], trusted: true);
@@ -27,8 +27,8 @@ class TurnstileTest extends TestCase
     public function it_renders_the_widget_in_blade_templates()
     {
         config([
-            'forms-pro.turnstile.site_key' => 'site-key',
-            'forms-pro.turnstile.secret_key' => 'secret-key',
+            'statamic.forms-pro.turnstile.site_key' => 'site-key',
+            'statamic.forms-pro.turnstile.secret_key' => 'secret-key',
         ]);
 
         $html = Blade::render('<s:turnstile />');
@@ -40,8 +40,8 @@ class TurnstileTest extends TestCase
     public function it_renders_nothing_on_intermediate_pages_of_multi_page_forms()
     {
         config([
-            'forms-pro.turnstile.site_key' => 'site-key',
-            'forms-pro.turnstile.secret_key' => 'secret-key',
+            'statamic.forms-pro.turnstile.site_key' => 'site-key',
+            'statamic.forms-pro.turnstile.secret_key' => 'secret-key',
         ]);
 
         $context = [
@@ -56,8 +56,8 @@ class TurnstileTest extends TestCase
     public function it_renders_the_widget_on_the_last_page_of_multi_page_forms()
     {
         config([
-            'forms-pro.turnstile.site_key' => 'site-key',
-            'forms-pro.turnstile.secret_key' => 'secret-key',
+            'statamic.forms-pro.turnstile.site_key' => 'site-key',
+            'statamic.forms-pro.turnstile.secret_key' => 'secret-key',
         ]);
 
         $context = [
@@ -72,8 +72,8 @@ class TurnstileTest extends TestCase
     public function it_renders_the_widget_on_intermediate_pages_when_using_a_js_driver()
     {
         config([
-            'forms-pro.turnstile.site_key' => 'site-key',
-            'forms-pro.turnstile.secret_key' => 'secret-key',
+            'statamic.forms-pro.turnstile.site_key' => 'site-key',
+            'statamic.forms-pro.turnstile.secret_key' => 'secret-key',
         ]);
 
         $context = [
@@ -90,8 +90,8 @@ class TurnstileTest extends TestCase
     public function it_renders_nothing_until_both_keys_are_configured(?string $siteKey, ?string $secretKey)
     {
         config([
-            'forms-pro.turnstile.site_key' => $siteKey,
-            'forms-pro.turnstile.secret_key' => $secretKey,
+            'statamic.forms-pro.turnstile.site_key' => $siteKey,
+            'statamic.forms-pro.turnstile.secret_key' => $secretKey,
         ]);
 
         $this->assertSame('', (string) Parse::template('{{ turnstile }}', [], trusted: true));

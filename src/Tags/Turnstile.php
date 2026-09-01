@@ -9,8 +9,8 @@ class Turnstile extends Tags
 {
     public function index(): string
     {
-        $siteKey = config('forms-pro.turnstile.site_key');
-        $secretKey = config('forms-pro.turnstile.secret_key');
+        $siteKey = config('statamic.forms-pro.turnstile.site_key');
+        $secretKey = config('statamic.forms-pro.turnstile.secret_key');
 
         if (! $siteKey || ! $secretKey || $this->onIntermediatePage()) {
             return '';

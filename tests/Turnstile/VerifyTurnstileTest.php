@@ -18,8 +18,8 @@ class VerifyTurnstileTest extends TestCase
         parent::setUp();
 
         config([
-            'forms-pro.turnstile.site_key' => 'site-key',
-            'forms-pro.turnstile.secret_key' => 'secret-key',
+            'statamic.forms-pro.turnstile.site_key' => 'site-key',
+            'statamic.forms-pro.turnstile.secret_key' => 'secret-key',
         ]);
     }
 
@@ -54,8 +54,8 @@ class VerifyTurnstileTest extends TestCase
         $this->createForm();
 
         config([
-            'forms-pro.turnstile.site_key' => $siteKey,
-            'forms-pro.turnstile.secret_key' => $secretKey,
+            'statamic.forms-pro.turnstile.site_key' => $siteKey,
+            'statamic.forms-pro.turnstile.secret_key' => $secretKey,
         ]);
 
         Http::fake();
