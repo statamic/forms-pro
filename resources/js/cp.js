@@ -2,7 +2,6 @@ import { registerIconSet } from '@statamic/cms/ui';
 import AutomagicForm from './pages/automagic-forms/Index.vue';
 import AutomagicFormSuccess from './pages/automagic-forms/Success.vue';
 import AutomagicFormRestricted from './pages/automagic-forms/Restricted.vue';
-import AddressFieldtype from './components/fieldtypes/AddressFieldtype.vue';
 import AutomagicFormUrlFieldtype from './components/fieldtypes/AutomagicFormUrlFieldtype.vue';
 import AutomagicFormBackgroundFieldtype from './components/fieldtypes/AutomagicFormBackgroundFieldtype.vue';
 import AddressFieldtype from './components/fieldtypes/AddressFieldtype.vue';
