@@ -28,4 +28,30 @@ class MailchimpGroupOptionTest extends TestCase
             ['value' => 'Offers', 'label' => 'Special offers'],
         ]], (new MailchimpGroupOption)->fieldsWithOptions($form));
     }
+
+    #[Test]
+    public function it_lists_the_options_of_image_choice_fields()
+    {
+        $form = tap(Form::make('test')->formFields(['fields' => [
+            ['handle' => 'plan', 'field' => ['type' => 'image_choice', 'options' => [
+                ['key' => 'basic', 'label' => 'Basic'],
+                ['key' => 'pro'],
+            ]]],
+        ]]))->save();
+
+        $this->assertEquals(['plan' => [
+            ['value' => 'basic', 'label' => 'Basic'],
+            ['value' => 'pro', 'label' => 'pro'],
+        ]], (new MailchimpGroupOption)->fieldsWithOptions($form));
+    }
+
+    #[Test]
+    public function it_ignores_taggable_fields_since_their_options_are_only_suggestions()
+    {
+        $form = tap(Form::make('test')->formFields(['fields' => [
+            ['handle' => 'tags', 'field' => ['type' => 'taggable', 'options' => ['News', 'Offers']]],
+        ]]))->save();
+
+        $this->assertEquals([], (new MailchimpGroupOption)->fieldsWithOptions($form));
+    }
 }

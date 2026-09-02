@@ -37,10 +37,13 @@ class MailchimpGroupOption extends Fieldtype
                 }
 
                 return collect(Arr::get($field->fieldtype()->preload(), 'options'))
+                    ->filter(fn ($option): bool => is_array($option))
                     ->map(fn (array $option): array => [
-                        'value' => $option['value'],
-                        'label' => $option['label'] ?? $option['value'],
+                        'value' => $value = $option['value'] ?? $option['key'] ?? null,
+                        'label' => $option['label'] ?? $value,
                     ])
+                    ->reject(fn (array $option): bool => $option['value'] === null)
+                    ->values()
                     ->all();
             })
             ->filter()
