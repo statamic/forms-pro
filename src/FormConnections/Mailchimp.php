@@ -43,6 +43,11 @@ class Mailchimp extends Connection
         return File::get(__DIR__.'/../../resources/svg/mailchimp.svg');
     }
 
+    public function darkIcon(): ?string
+    {
+        return File::get(__DIR__.'/../../resources/svg/mailchimp-dark.svg');
+    }
+
     public function isConfigured(): bool
     {
         return (bool) config('statamic.forms-pro.connections.mailchimp.api_key');
