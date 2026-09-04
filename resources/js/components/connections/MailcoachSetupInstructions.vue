@@ -1,5 +1,5 @@
 <script setup>
-import { Description, Heading } from '@statamic/cms/ui';
+import { Description, Heading, Textarea } from '@statamic/cms/ui';
 
 const stepNumber =
     'mt-px flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300';
@@ -24,9 +24,14 @@ FORMS_PRO_MAILCOACH_TOKEN=mc_yourtoken`;
                 <span :class="stepNumber" aria-hidden="true">2</span>
                 <div class="flex-1 space-y-3">
                     <p v-html="__('forms-pro::messages.mailcoach_setup_env', { file: '<code>.env</code>' })" />
-                    <pre
-                        class="overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs text-gray-800 dark:border-white/10 dark:bg-gray-950/40 dark:text-gray-300"
-                    ><code>{{ envVariables }}</code></pre>
+                    <Textarea
+                        :model-value="envVariables"
+                        read-only
+                        copyable
+                        :rows="2"
+                        resize="none"
+                        class="[&_textarea]:font-mono [&_textarea]:text-xs"
+                    />
                     <Description :text="__('forms-pro::messages.mailcoach_setup_developer')" />
                 </div>
             </li>

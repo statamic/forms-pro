@@ -76,9 +76,7 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
                     <p
                         v-html="__('forms-pro::messages.google_sheets_setup_env_paste', { file: '<code>.env</code>' })"
                     />
-                    <pre
-                        class="overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs text-gray-800 dark:border-white/10 dark:bg-gray-950/40 dark:text-gray-300"
-                    ><code>{{ envVariable }}</code></pre>
+                    <Input :model-value="envVariable" read-only copyable class="font-mono text-xs" />
                     <Description :text="__('forms-pro::messages.google_sheets_setup_developer')" />
                 </div>
             </li>
