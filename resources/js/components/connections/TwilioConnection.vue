@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ConnectionRows, ConnectionRules, conditionsSummary } from '@statamic/cms';
+import { ConnectionRows, ConnectionRules, ConditionsCollapsedSummary } from '@statamic/cms';
 import {
     Alert,
     Badge,
@@ -11,7 +11,6 @@ import {
     PublishContainer,
     PublishFields,
     PublishFieldsProvider,
-    Subheading,
 } from '@statamic/cms/ui';
 import TwilioSetupInstructions from './TwilioSetupInstructions.vue';
 
@@ -64,9 +63,11 @@ const recipientLabel = (notification: { to?: string }): string => {
                     <Icon name="forms-pro::twilio" class="size-3.5 me-1" />
                     {{ recipientLabel(notification) ?? __('New Notification') }}
                 </Badge>
-                <Subheading v-show="collapsed" class="overflow-hidden text-ellipsis whitespace-nowrap gap-1.5!">
-                    <span class="truncate">{{ conditionsSummary(notification.conditions) ?? notification.body }}</span>
-                </Subheading>
+                <ConditionsCollapsedSummary
+                    v-show="collapsed"
+                    :conditions="notification.conditions"
+                    :fallback="notification.body"
+                />
             </template>
 
             <template #default="{ item: notification, errors }">
