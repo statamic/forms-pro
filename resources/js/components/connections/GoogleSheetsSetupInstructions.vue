@@ -68,6 +68,7 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
                     <Input
                         :model-value="encodeCommand"
                         prepend="$"
+                        prepend-variant="inline"
                         read-only
                         copyable
                         class="font-mono text-xs"
