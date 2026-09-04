@@ -1,5 +1,6 @@
 <script setup>
 import { Button, Description, Heading, Input } from '@statamic/cms/ui';
+import ConnectionSetupStep from './ConnectionSetupStep.vue';
 
 const projectUrl = 'https://console.cloud.google.com/projectcreate';
 const apiUrl = 'https://console.cloud.google.com/apis/library/sheets.googleapis.com';
@@ -17,7 +18,7 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
 
         <ol class="mt-6 space-y-6">
             <li class="flex gap-4">
-                <span class="step-number" aria-hidden="true">1</span>
+                <ConnectionSetupStep>1</ConnectionSetupStep>
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.google_sheets_setup_project') }}</p>
                     <Button
@@ -30,7 +31,7 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
                 </div>
             </li>
             <li class="flex gap-4">
-                <span class="step-number" aria-hidden="true">2</span>
+                <ConnectionSetupStep>2</ConnectionSetupStep>
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.google_sheets_setup_api') }}</p>
                     <Button
@@ -43,7 +44,7 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
                 </div>
             </li>
             <li class="flex gap-4">
-                <span class="step-number" aria-hidden="true">3</span>
+                <ConnectionSetupStep>3</ConnectionSetupStep>
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.google_sheets_setup_service_account') }}</p>
                     <Button
@@ -56,13 +57,13 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
                 </div>
             </li>
             <li class="flex gap-4">
-                <span class="step-number" aria-hidden="true">4</span>
+                <ConnectionSetupStep>4</ConnectionSetupStep>
                 <div class="flex-1">
                     <p>{{ __('forms-pro::messages.google_sheets_setup_key') }}</p>
                 </div>
             </li>
             <li class="flex gap-4">
-                <span class="step-number" aria-hidden="true">5</span>
+                <ConnectionSetupStep>5</ConnectionSetupStep>
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.google_sheets_setup_env') }}</p>
                     <Input
@@ -81,7 +82,7 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
                 </div>
             </li>
             <li class="flex gap-4">
-                <span class="step-number" aria-hidden="true">6</span>
+                <ConnectionSetupStep>6</ConnectionSetupStep>
                 <div class="flex-1">
                     <p
                         v-html="
@@ -95,24 +96,3 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
         </ol>
     </div>
 </template>
-
-<style scoped>
-.step-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 0.05rem;
-    width: 1.5rem;
-    height: 1.5rem;
-    border-radius: 100vw;
-    background-color: hsl(from var(--theme-color-ui-accent-bg) h s l / 0.1);
-    color: var(--theme-color-ui-accent-text);
-    font-size: 0.75rem;
-    font-weight: var(--font-weight-semibold);
-
-    .dark & {
-        background-color: hsl(from var(--theme-color-ui-accent-bg) h s l / 0.5);
-        color: hsl(from var(--theme-color-ui-accent-text) h s 90%);
-    }
-}
-</style>

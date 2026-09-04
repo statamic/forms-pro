@@ -1,8 +1,6 @@
 <script setup>
 import { Button, Description, Heading, Textarea } from '@statamic/cms/ui';
-
-const stepNumber =
-    'mt-px flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+import ConnectionSetupStep from './ConnectionSetupStep.vue';
 
 const phoneNumbersUrl = 'https://console.twilio.com/us1/develop/phone-numbers/manage/search';
 const apiKeysUrl = 'https://console.twilio.com/us1/account/keys-credentials/api-keys';
@@ -18,7 +16,7 @@ FORMS_PRO_TWILIO_API_SECRET=your-key-secret`;
 
         <ol class="mt-6 space-y-6">
             <li class="flex gap-4">
-                <span :class="stepNumber" aria-hidden="true">1</span>
+                <ConnectionSetupStep>1</ConnectionSetupStep>
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.twilio_setup_number') }}</p>
                     <Button
@@ -31,7 +29,7 @@ FORMS_PRO_TWILIO_API_SECRET=your-key-secret`;
                 </div>
             </li>
             <li class="flex gap-4">
-                <span :class="stepNumber" aria-hidden="true">2</span>
+                <ConnectionSetupStep>2</ConnectionSetupStep>
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.twilio_setup_key') }}</p>
                     <Button
@@ -44,7 +42,7 @@ FORMS_PRO_TWILIO_API_SECRET=your-key-secret`;
                 </div>
             </li>
             <li class="flex gap-4">
-                <span :class="stepNumber" aria-hidden="true">3</span>
+                <ConnectionSetupStep>3</ConnectionSetupStep>
                 <div class="flex-1 space-y-3">
                     <p v-html="__('forms-pro::messages.twilio_setup_env', { file: '<code>.env</code>' })" />
                     <Textarea

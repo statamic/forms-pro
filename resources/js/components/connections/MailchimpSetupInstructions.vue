@@ -1,8 +1,6 @@
 <script setup>
 import { Description, Heading, Input } from '@statamic/cms/ui';
-
-const stepNumber =
-    'mt-px flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+import ConnectionSetupStep from './ConnectionSetupStep.vue';
 
 const envVariables = `FORMS_PRO_MAILCHIMP_API_KEY=your-key-us14`;
 </script>
@@ -14,13 +12,13 @@ const envVariables = `FORMS_PRO_MAILCHIMP_API_KEY=your-key-us14`;
 
         <ol class="mt-6 space-y-6">
             <li class="flex gap-4">
-                <span :class="stepNumber" aria-hidden="true">1</span>
+                <ConnectionSetupStep>1</ConnectionSetupStep>
                 <div class="flex-1">
                     <p>{{ __('forms-pro::messages.mailchimp_setup_key') }}</p>
                 </div>
             </li>
             <li class="flex gap-4">
-                <span :class="stepNumber" aria-hidden="true">2</span>
+                <ConnectionSetupStep>2</ConnectionSetupStep>
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.mailchimp_setup_env') }}</p>
                     <Input :model-value="envVariables" read-only copyable class="font-mono text-xs" />

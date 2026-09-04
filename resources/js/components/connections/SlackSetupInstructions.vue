@@ -1,9 +1,7 @@
 <script setup>
 import { Button, Description, Heading, Icon, Input } from '@statamic/cms/ui';
 import { usePage } from '@statamic/cms/inertia';
-
-const stepNumber =
-    'mt-px flex size-6 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+import ConnectionSetupStep from './ConnectionSetupStep.vue';
 
 const cmsName = usePage().props._statamic.cmsName;
 const envVariable = 'FORMS_PRO_SLACK_TOKEN=xoxb-your-token';
@@ -36,7 +34,7 @@ const createAppUrl = `https://api.slack.com/apps?new_app=1&manifest_json=${encod
 
         <ol class="mt-6 space-y-6">
             <li class="flex gap-4">
-                <span :class="stepNumber" aria-hidden="true">1</span>
+                <ConnectionSetupStep>1</ConnectionSetupStep>
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.slack_setup_create_app') }}</p>
                     <Button
@@ -69,13 +67,13 @@ const createAppUrl = `https://api.slack.com/apps?new_app=1&manifest_json=${encod
                 </div>
             </li>
             <li class="flex gap-4">
-                <span :class="stepNumber" aria-hidden="true">2</span>
+                <ConnectionSetupStep>2</ConnectionSetupStep>
                 <div class="flex-1">
                     <p>{{ __('forms-pro::messages.slack_setup_install') }}</p>
                 </div>
             </li>
             <li class="flex gap-4">
-                <span :class="stepNumber" aria-hidden="true">3</span>
+                <ConnectionSetupStep>3</ConnectionSetupStep>
                 <div class="flex-1 space-y-3">
                     <p v-html="__('forms-pro::messages.slack_setup_token', { file: '<code>.env</code>' })" />
                     <Input :model-value="envVariable" read-only copyable class="font-mono text-xs" />
