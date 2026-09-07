@@ -45,7 +45,6 @@ const channelName = (notification: { channel?: string }): string => {
             :errors
             :defaults
             :add-label="__('Add Notification')"
-            :empty-heading="__('No notifications yet')"
             :empty-description="__('forms-pro::messages.slack_empty_description')"
             :delete-heading="__('Delete Slack Notification')"
             :delete-description="__('forms-pro::messages.slack_delete_confirmation')"

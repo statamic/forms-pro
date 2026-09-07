@@ -52,7 +52,6 @@ const recipientLabel = (notification: { to?: string }): string => {
             :errors
             :defaults
             :add-label="__('Add Notification')"
-            :empty-heading="__('No notifications yet')"
             :empty-description="__('forms-pro::messages.twilio_empty_description')"
             :delete-heading="__('Delete Twilio Notification')"
             :delete-description="__('forms-pro::messages.twilio_delete_confirmation')"
