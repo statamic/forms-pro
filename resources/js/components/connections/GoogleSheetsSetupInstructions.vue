@@ -66,14 +66,15 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
                 <ConnectionSetupStep step="5" />
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.google_sheets_setup_env') }}</p>
-                    <Input
-                        :model-value="encodeCommand"
-                        prepend="$"
-                        prepend-variant="inline-subtle"
-                        read-only
-                        copyable
-                        class="font-mono text-xs"
-                    />
+                    <Input :model-value="encodeCommand" read-only copyable class="font-mono text-xs">
+                        <template #prepend>
+                            <span
+                                class="font-mono text-sm text-gray-400 select-none dark:text-gray-500"
+                                aria-hidden="true"
+                                >$</span
+                            >
+                        </template>
+                    </Input>
                     <p
                         v-html="__('forms-pro::messages.google_sheets_setup_env_paste', { file: '<code>.env</code>' })"
                     />
