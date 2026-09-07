@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ConnectionRows, ConnectionRules, ConditionsCollapsedSummary } from '@statamic/cms';
+import { ConnectionRows, ConnectionRules, ConnectionRowSummary } from '@statamic/cms';
 import {
     Alert,
     Badge,
@@ -62,7 +62,7 @@ const recipientLabel = (notification: { to?: string }): string => {
                     <Icon name="forms-pro::twilio" class="size-3.5 me-1" />
                     {{ recipientLabel(notification) ?? __('New Notification') }}
                 </Badge>
-                <ConditionsCollapsedSummary
+                <ConnectionRowSummary
                     v-show="collapsed"
                     :conditions="notification.conditions"
                     :fallback="notification.body"

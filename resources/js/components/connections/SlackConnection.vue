@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ConnectionRows, ConnectionRules, ConditionsCollapsedSummary } from '@statamic/cms';
+import { ConnectionRows, ConnectionRules, ConnectionRowSummary } from '@statamic/cms';
 import {
     Alert,
     Badge,
@@ -55,7 +55,7 @@ const channelName = (notification: { channel?: string }): string => {
                     <Icon name="forms-pro::slack" class="size-3.5 me-1" />
                     {{ channelName(notification) ?? __('New Notification') }}
                 </Badge>
-                <ConditionsCollapsedSummary
+                <ConnectionRowSummary
                     v-show="collapsed"
                     :conditions="notification.conditions"
                     :fallback="notification.heading"
