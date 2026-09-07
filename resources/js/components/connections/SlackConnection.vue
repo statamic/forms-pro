@@ -38,14 +38,14 @@ const channelName = (notification: { channel?: string }): string => {
             <Description :text="__(apiError)" class="mt-1" />
         </Alert>
 
-        <Label v-if="modelValue.length" :text="__('Notifications')" class="mb-2" />
+        <Label :text="__('Notifications')" class="mb-2" />
 
         <ConnectionRows
             :model-value="modelValue"
             :errors
             :defaults
             :add-label="__('Add Notification')"
-            :empty-description="__('forms-pro::messages.slack_empty_description')"
+            :description="__('forms-pro::messages.slack_instructions')"
             :delete-heading="__('Delete Slack Notification')"
             :delete-description="__('forms-pro::messages.slack_delete_confirmation')"
             @update:model-value="$emit('update:modelValue', $event)"

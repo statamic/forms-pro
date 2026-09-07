@@ -139,7 +139,7 @@ return [
 
     'slack_channel_instructions' => 'Private channels only appear once the app has been invited to them.',
     'slack_description' => 'Post submissions to a Slack channel.',
-    'slack_empty_description' => 'Post to a channel whenever this form receives a submission.',
+    'slack_instructions' => 'Post to a channel whenever this form receives a submission.',
     'slack_fields_instructions' => 'Leave empty to include every field.',
     'slack_heading' => 'New :form submission',
     'slack_heading_instructions' => 'You can include submitted values using [Antlers](https://statamic.dev/frontend/antlers).',
@@ -160,7 +160,7 @@ return [
     'slack_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once :variable is set, reload this page.',
 
     'twilio_description' => 'Send text messages.',
-    'twilio_empty_description' => 'Text someone whenever this form receives a submission.',
+    'twilio_instructions' => 'Text someone whenever this form receives a submission.',
     'twilio_to_instructions' => 'Type a number in full international format, or pick a form field to text whoever submitted.',
     'twilio_from_instructions' => 'Numbers without SMS capability are hidden. A Messaging Service picks a sender for you if you own several.',
     'twilio_body_instructions' => 'You can include submitted values using [Antlers](https://statamic.dev/frontend/antlers). Long messages are split and billed per 160 characters — fewer if you use emoji or curly quotes.',
