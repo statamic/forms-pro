@@ -34,7 +34,7 @@ const createAppUrl = `https://api.slack.com/apps?new_app=1&manifest_json=${encod
 
         <ol class="mt-6 space-y-6">
             <li class="flex gap-4">
-                <ConnectionSetupStep>1</ConnectionSetupStep>
+                <ConnectionSetupStep step="1" />
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.slack_setup_create_app') }}</p>
                     <Button
@@ -67,13 +67,13 @@ const createAppUrl = `https://api.slack.com/apps?new_app=1&manifest_json=${encod
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>2</ConnectionSetupStep>
+                <ConnectionSetupStep step="2" />
                 <div class="flex-1">
                     <p>{{ __('forms-pro::messages.slack_setup_install') }}</p>
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>3</ConnectionSetupStep>
+                <ConnectionSetupStep step="3" />
                 <div class="flex-1 space-y-3">
                     <p v-html="__('forms-pro::messages.slack_setup_token', { file: '<code>.env</code>' })" />
                     <Input :model-value="envVariable" read-only copyable class="font-mono text-xs" />

@@ -16,7 +16,7 @@ FORMS_PRO_TWILIO_API_SECRET=your-key-secret`;
 
         <ol class="mt-6 space-y-6">
             <li class="flex gap-4">
-                <ConnectionSetupStep>1</ConnectionSetupStep>
+                <ConnectionSetupStep step="1" />
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.twilio_setup_number') }}</p>
                     <Button
@@ -29,7 +29,7 @@ FORMS_PRO_TWILIO_API_SECRET=your-key-secret`;
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>2</ConnectionSetupStep>
+                <ConnectionSetupStep step="2" />
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.twilio_setup_key') }}</p>
                     <Button
@@ -42,7 +42,7 @@ FORMS_PRO_TWILIO_API_SECRET=your-key-secret`;
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>3</ConnectionSetupStep>
+                <ConnectionSetupStep step="3" />
                 <div class="flex-1 space-y-3">
                     <p v-html="__('forms-pro::messages.twilio_setup_env', { file: '<code>.env</code>' })" />
                     <Textarea

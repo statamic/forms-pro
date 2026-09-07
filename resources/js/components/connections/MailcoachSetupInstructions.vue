@@ -13,13 +13,13 @@ FORMS_PRO_MAILCOACH_TOKEN=mc_yourtoken`;
 
         <ol class="mt-6 space-y-6">
             <li class="flex gap-4">
-                <ConnectionSetupStep>1</ConnectionSetupStep>
+                <ConnectionSetupStep step="1" />
                 <div class="flex-1">
                     <p>{{ __('forms-pro::messages.mailcoach_setup_token') }}</p>
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>2</ConnectionSetupStep>
+                <ConnectionSetupStep step="2" />
                 <div class="flex-1 space-y-3">
                     <p v-html="__('forms-pro::messages.mailcoach_setup_env', { file: '<code>.env</code>' })" />
                     <Textarea

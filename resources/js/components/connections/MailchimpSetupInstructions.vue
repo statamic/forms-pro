@@ -12,13 +12,13 @@ const envVariables = `FORMS_PRO_MAILCHIMP_API_KEY=your-key-us14`;
 
         <ol class="mt-6 space-y-6">
             <li class="flex gap-4">
-                <ConnectionSetupStep>1</ConnectionSetupStep>
+                <ConnectionSetupStep step="1" />
                 <div class="flex-1">
                     <p>{{ __('forms-pro::messages.mailchimp_setup_key') }}</p>
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>2</ConnectionSetupStep>
+                <ConnectionSetupStep step="2" />
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.mailchimp_setup_env') }}</p>
                     <Input :model-value="envVariables" read-only copyable class="font-mono text-xs" />

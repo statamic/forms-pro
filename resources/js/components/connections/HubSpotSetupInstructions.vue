@@ -14,7 +14,7 @@ const envVariables = `FORMS_PRO_HUBSPOT_ACCESS_TOKEN=pat-eu1-your-token`;
 
         <ol class="mt-6 space-y-6">
             <li class="flex gap-4">
-                <ConnectionSetupStep>1</ConnectionSetupStep>
+                <ConnectionSetupStep step="1" />
                 <div class="flex-1 space-y-3">
                     <p
                         v-html="
@@ -34,7 +34,7 @@ const envVariables = `FORMS_PRO_HUBSPOT_ACCESS_TOKEN=pat-eu1-your-token`;
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>2</ConnectionSetupStep>
+                <ConnectionSetupStep step="2" />
                 <div class="flex-1 space-y-3">
                     <p v-html="__('forms-pro::messages.hubspot_setup_env', { file: '<code>.env</code>' })" />
                     <Input :model-value="envVariables" read-only copyable class="font-mono text-xs" />
@@ -42,7 +42,7 @@ const envVariables = `FORMS_PRO_HUBSPOT_ACCESS_TOKEN=pat-eu1-your-token`;
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>3</ConnectionSetupStep>
+                <ConnectionSetupStep step="3" />
                 <div class="flex-1 space-y-3">
                     <p
                         class="[&_a]:underline [&_a:hover]:text-gray-700 dark:[&_a:hover]:text-gray-300"

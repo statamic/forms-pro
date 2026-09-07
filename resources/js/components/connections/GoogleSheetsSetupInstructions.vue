@@ -18,7 +18,7 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
 
         <ol class="mt-6 space-y-6">
             <li class="flex gap-4">
-                <ConnectionSetupStep>1</ConnectionSetupStep>
+                <ConnectionSetupStep step="1" />
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.google_sheets_setup_project') }}</p>
                     <Button
@@ -31,7 +31,7 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>2</ConnectionSetupStep>
+                <ConnectionSetupStep step="2" />
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.google_sheets_setup_api') }}</p>
                     <Button
@@ -44,7 +44,7 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>3</ConnectionSetupStep>
+                <ConnectionSetupStep step="3" />
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.google_sheets_setup_service_account') }}</p>
                     <Button
@@ -57,13 +57,13 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>4</ConnectionSetupStep>
+                <ConnectionSetupStep step="4" />
                 <div class="flex-1">
                     <p>{{ __('forms-pro::messages.google_sheets_setup_key') }}</p>
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>5</ConnectionSetupStep>
+                <ConnectionSetupStep step="5" />
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.google_sheets_setup_env') }}</p>
                     <Input
@@ -82,7 +82,7 @@ const envVariable = 'FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS=your-encoded-key';
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>6</ConnectionSetupStep>
+                <ConnectionSetupStep step="6" />
                 <div class="flex-1">
                     <p
                         v-html="

@@ -13,7 +13,7 @@ const envVariables = `FORMS_PRO_KIT_API_KEY=kit_your-key`;
 
         <ol class="mt-6 space-y-6">
             <li class="flex gap-4">
-                <ConnectionSetupStep>1</ConnectionSetupStep>
+                <ConnectionSetupStep step="1" />
                 <div class="flex-1 space-y-3">
                     <p>{{ __('forms-pro::messages.kit_setup_key') }}</p>
                     <Button
@@ -26,7 +26,7 @@ const envVariables = `FORMS_PRO_KIT_API_KEY=kit_your-key`;
                 </div>
             </li>
             <li class="flex gap-4">
-                <ConnectionSetupStep>2</ConnectionSetupStep>
+                <ConnectionSetupStep step="2" />
                 <div class="flex-1 space-y-3">
                     <p v-html="__('forms-pro::messages.kit_setup_env', { file: '<code>.env</code>' })" />
                     <Input :model-value="envVariables" read-only copyable class="font-mono text-xs" />
