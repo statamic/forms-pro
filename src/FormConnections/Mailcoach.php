@@ -35,11 +35,6 @@ class Mailcoach extends Connection
         return File::get(__DIR__.'/../../resources/svg/mailcoach.svg');
     }
 
-    public function darkIcon(): ?string
-    {
-        return File::get(__DIR__.'/../../resources/svg/mailcoach-dark.svg');
-    }
-
     public function isConfigured(): bool
     {
         return config('statamic.forms-pro.connections.mailcoach.api_url')

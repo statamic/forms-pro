@@ -35,11 +35,6 @@ class Kit extends Connection
         return File::get(__DIR__.'/../../resources/svg/kit.svg');
     }
 
-    public function darkIcon(): ?string
-    {
-        return File::get(__DIR__.'/../../resources/svg/kit-dark.svg');
-    }
-
     public function isConfigured(): bool
     {
         return (bool) config('statamic.forms-pro.connections.kit.api_key');
