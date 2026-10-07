@@ -44,24 +44,22 @@ class HubSpot extends Connector
         return (bool) config('statamic.forms-pro.connections.hubspot.access_token');
     }
 
-    public function finalized(Submission $submission): object|array
+    protected function job(Submission $submission, array $connection): ?object
     {
-        $config = $submission->form()->connections()->get('hubspot', []);
-
-        if (! Arr::get($config, 'form') || ! Arr::get($config, 'email_field')) {
-            return [];
+        if (! Arr::get($connection, 'form') || ! Arr::get($connection, 'email_field')) {
+            return null;
         }
 
-        if (! $submission->get($config['email_field']) || ! $this->hasConsent($submission, $config)) {
-            return [];
+        if (! $submission->get($connection['email_field']) || ! $this->hasConsent($submission, $connection)) {
+            return null;
         }
 
-        return [new SubmitToHubSpot($submission, $config, $this->context())];
+        return new SubmitToHubSpot($submission, $connection, $this->context());
     }
 
-    private function hasConsent(Submission $submission, array $config): bool
+    private function hasConsent(Submission $submission, array $connection): bool
     {
-        return blank($handle = Arr::get($config, 'consent_field'))
+        return blank($handle = Arr::get($connection, 'consent_field'))
             || $this->isChecked($submission, $handle);
     }
 
@@ -94,13 +92,19 @@ class HubSpot extends Connector
 
         $blueprint = static::blueprint($form, $account['forms'], $account['subscriptions']);
 
-        $fields = $blueprint->fields()
-            ->addValues($form->connections()->get('hubspot', []))
-            ->preProcess();
+        $fields = $blueprint->fields()->preProcess();
 
         return VueComponent::render('hubspot-connector', [
             'blueprint' => $blueprint->toPublishArray(),
-            'meta' => $fields->meta()->all(),
+            'meta' => collect($form->connections()->get('hubspot'))
+                ->mapWithKeys(fn (array $connection): array => [
+                    $connection['id'] => $fields->addValues($connection)->preProcess()->meta()->all(),
+                ])
+                ->all(),
+            'defaults' => [
+                'values' => $fields->values()->all(),
+                'meta' => $fields->meta()->all(),
+            ],
             'hubspotForms' => $account['forms'],
             'isConfigured' => $isConfigured,
             'apiError' => $apiError ?? null,
@@ -126,7 +130,7 @@ class HubSpot extends Connector
         }
     }
 
-    public function preProcess(array $config, Form $form): array
+    protected function preProcessConnection(array $connection, Form $form): array
     {
         try {
             $account = $this->isConfigured()
@@ -137,13 +141,13 @@ class HubSpot extends Connector
         }
 
         return static::blueprint($form, $account['forms'], $account['subscriptions'])->fields()
-            ->addValues($config)
+            ->addValues($connection)
             ->preProcess()
             ->values()
             ->all();
     }
 
-    public function rules(Form $form): array
+    protected function connectionRules(Form $form): array
     {
         $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
 
@@ -162,15 +166,13 @@ class HubSpot extends Connector
         ];
     }
 
-    public function process(array $data, Form $form): array
+    protected function processConnection(array $connection, Form $form): array
     {
-        $config = static::blueprint($form)->fields()
-            ->addValues($data)
+        return static::blueprint($form)->fields()
+            ->addValues($connection)
             ->process()
             ->values()
             ->all();
-
-        return Arr::removeNullValues($config);
     }
 
     public static function blueprint(Form $form, array $forms = [], array $subscriptions = []): \Statamic\Fields\Blueprint

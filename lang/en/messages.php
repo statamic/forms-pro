@@ -49,6 +49,8 @@ return [
     'google_sheets_setup_developer' => 'These steps need access to the server, so you may need a developer to do them for you. Once the key is set, reload this page.',
 
     'hubspot_description' => 'Send submissions to a HubSpot form.',
+    'hubspot_instructions' => 'Send submissions to a HubSpot form whenever this form receives one.',
+    'hubspot_delete_confirmation' => 'Are you sure you want to stop sending submissions to this HubSpot form?',
     'hubspot_form_instructions' => 'Submissions are recorded against this form, so its workflows, follow-up emails and reporting all run as if someone filled it in on a HubSpot page.',
     'hubspot_email_field_instructions' => 'Submissions without an email address are ignored.',
     'hubspot_properties_instructions' => 'Choose which of the HubSpot form\'s fields to send. Add a field there if the one you want is missing.',

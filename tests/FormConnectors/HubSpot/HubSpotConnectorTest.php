@@ -31,7 +31,7 @@ class HubSpotConnectorTest extends TestCase
     #[Test]
     public function it_returns_a_job_for_the_configured_form()
     {
-        $jobs = (new HubSpot)->finalized($this->submission(['email' => 'jack@example.com']));
+        $jobs = $this->finalized($this->submission(['email' => 'jack@example.com']));
 
         $this->assertCount(1, $jobs);
         $this->assertInstanceOf(SubmitToHubSpot::class, $jobs[0]);
@@ -44,14 +44,14 @@ class HubSpotConnectorTest extends TestCase
             ['handle' => 'email', 'field' => ['type' => 'text']],
         ]]))->save();
 
-        $this->assertEmpty((new HubSpot)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
+        $this->assertEmpty($this->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
     }
 
     #[Test]
     #[DataProvider('incompleteConfigProvider')]
     public function it_returns_no_jobs_when_the_config_is_incomplete(array $config)
     {
-        $this->assertEmpty((new HubSpot)->finalized($this->submission(['email' => 'jack@example.com'], $config)));
+        $this->assertEmpty($this->finalized($this->submission(['email' => 'jack@example.com'], $config)));
     }
 
     public static function incompleteConfigProvider(): array
@@ -65,14 +65,14 @@ class HubSpotConnectorTest extends TestCase
     #[Test]
     public function it_returns_no_jobs_when_the_submission_has_no_email_address()
     {
-        $this->assertEmpty((new HubSpot)->finalized($this->submission(['email' => null])));
+        $this->assertEmpty($this->finalized($this->submission(['email' => null])));
     }
 
     #[Test]
     #[DataProvider('consentProvider')]
     public function it_only_submits_when_consent_has_been_given(mixed $value, bool $expected)
     {
-        $jobs = (new HubSpot)->finalized(
+        $jobs = $this->finalized(
             $this->submission(['email' => 'jack@example.com', 'marketing' => $value], ['consent_field' => 'marketing'])
         );
 
@@ -103,7 +103,7 @@ class HubSpotConnectorTest extends TestCase
             'REMOTE_ADDR' => '1.2.3.4',
         ], cookies: ['hubspotutk' => $hutk]);
 
-        $jobs = (new HubSpot)->finalized($this->submission(['email' => 'jack@example.com']));
+        $jobs = $this->finalized($this->submission(['email' => 'jack@example.com']));
 
         $this->assertEquals([
             'hutk' => $hutk,
@@ -119,7 +119,7 @@ class HubSpotConnectorTest extends TestCase
             'HTTP_REFERER' => 'not a url',
         ], cookies: ['hubspotutk' => 'not-a-tracking-token']);
 
-        $context = (new HubSpot)->finalized($this->submission(['email' => 'jack@example.com']))[0]->context;
+        $context = $this->finalized($this->submission(['email' => 'jack@example.com']))[0]->context;
 
         $this->assertArrayNotHasKey('hutk', $context);
         $this->assertArrayNotHasKey('pageUri', $context);
@@ -133,7 +133,7 @@ class HubSpotConnectorTest extends TestCase
         $component = (new HubSpot)->render($this->form())->toArray();
 
         $this->assertEquals('hubspot-connector', $component['name']);
-        $this->assertEquals(['blueprint', 'meta', 'hubspotForms', 'isConfigured', 'apiError'], array_keys($component['props']));
+        $this->assertEquals(['blueprint', 'meta', 'defaults', 'hubspotForms', 'isConfigured', 'apiError'], array_keys($component['props']));
         $this->assertTrue($component['props']['isConfigured']);
     }
 
@@ -265,8 +265,13 @@ class HubSpotConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        $config = (new HubSpot)->preProcess(['form' => self::FORM, 'email_field' => 'email'], $this->form());
+        $configs = (new HubSpot)->preProcess([['id' => 'abc', 'form' => self::FORM, 'email_field' => 'email']], $this->form());
 
+        $this->assertCount(1, $configs);
+        $config = $configs[0];
+
+        $this->assertEquals('abc', $config['id']);
+        $this->assertTrue($config['enabled']);
         $this->assertEquals(self::FORM, $config['form']);
         $this->assertEquals('email', $config['email_field']);
     }
@@ -276,13 +281,13 @@ class HubSpotConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        $this->assertEquals(self::FORM, (new HubSpot)->preProcess([], $this->form())['form']);
+        $this->assertEquals(self::FORM, (new HubSpot)->preProcess([['id' => 'abc']], $this->form())[0]['form']);
     }
 
     #[Test]
     public function it_validates_the_config()
     {
-        $validator = Validator::make([
+        $validator = Validator::make([[
             'form' => self::FORM,
             'email_field' => 'email',
             'consent_field' => 'marketing',
@@ -290,7 +295,7 @@ class HubSpotConnectorTest extends TestCase
             'legitimate_interest_subscription' => 3314676590,
             'properties' => [['key' => 'firstname', 'value' => 'first_name']],
             'communications' => [['subscription' => 3314676590, 'field' => 'marketing']],
-        ], (new HubSpot)->rules($this->form()));
+        ]], (new HubSpot)->rules($this->form()));
 
         $this->assertTrue($validator->passes());
     }
@@ -299,12 +304,12 @@ class HubSpotConnectorTest extends TestCase
     #[DataProvider('invalidConfigs')]
     public function it_rejects_invalid_configs(array $config, array $errors)
     {
-        $validator = Validator::make($config, (new HubSpot)->rules($this->form()));
+        $validator = Validator::make([$config], (new HubSpot)->rules($this->form()));
 
         $this->assertTrue($validator->fails());
 
         foreach ($errors as $key) {
-            $this->assertTrue($validator->errors()->has($key));
+            $this->assertTrue($validator->errors()->has('0.'.$key));
         }
     }
 
@@ -360,6 +365,7 @@ class HubSpotConnectorTest extends TestCase
     public function it_processes_the_config()
     {
         $config = [
+            'id' => 'abc',
             'form' => self::FORM,
             'email_field' => 'email',
             'consent_field' => 'marketing',
@@ -369,16 +375,18 @@ class HubSpotConnectorTest extends TestCase
             'communications' => [['subscription' => 3314676590, 'field' => 'marketing']],
         ];
 
-        $this->assertEquals($config, (new HubSpot)->process($config, $this->form()));
+        $this->assertEquals([$config], (new HubSpot)->process([$config], $this->form()));
     }
 
     #[Test]
     public function it_doesnt_persist_empty_values()
     {
-        $this->assertEquals([
+        $this->assertEquals([[
+            'id' => 'abc',
             'form' => self::FORM,
             'email_field' => 'email',
-        ], (new HubSpot)->process([
+        ]], (new HubSpot)->process([[
+            'id' => 'abc',
             'form' => self::FORM,
             'email_field' => 'email',
             'consent_field' => null,
@@ -386,7 +394,7 @@ class HubSpotConnectorTest extends TestCase
             'legitimate_interest_subscription' => null,
             'properties' => [],
             'communications' => [],
-        ], $this->form()));
+        ]], $this->form()));
     }
 
     private function definition(): array
@@ -429,10 +437,15 @@ class HubSpotConnectorTest extends TestCase
     private function submission(array $data, array $config = []): SubmissionContract
     {
         $form = $this->form();
-        $config = array_merge(['form' => self::FORM, 'email_field' => 'email'], $config);
+        $config = array_merge(['id' => 'abc', 'form' => self::FORM, 'email_field' => 'email'], $config);
 
-        $form->connections($form->connections()->put('hubspot', $config))->save();
+        $form->connections($form->connections()->put('hubspot', [$config]))->save();
 
         return $form->makeSubmission()->data($data);
+    }
+
+    private function finalized(SubmissionContract $submission): array
+    {
+        return (new HubSpot)->setConfig($submission->form()->connections()->get(HubSpot::handle(), []))->finalized($submission);
     }
 }

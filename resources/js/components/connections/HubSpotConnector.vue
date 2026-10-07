@@ -1,50 +1,73 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Alert, Description, Heading, PublishContainer, PublishFields, PublishFieldsProvider } from '@statamic/cms/ui';
+import { ConnectionList, ConnectionRules, ConnectionSummary } from '@statamic/cms';
+import {
+    Alert,
+    Badge,
+    Description,
+    Heading,
+    Icon,
+    Label,
+    PublishContainer,
+    PublishFields,
+    PublishFieldsProvider,
+} from '@statamic/cms/ui';
 import HubSpotSetupInstructions from './HubSpotSetupInstructions.vue';
+
+type Submission = {
+    id: string;
+    form?: string;
+    consent_to_process_field?: string;
+    communications?: unknown[];
+    legitimate_interest_subscription?: number;
+};
 
 defineEmits(['update:modelValue']);
 
 const props = defineProps({
     form: Object,
-    modelValue: { type: Object, default: () => ({}) },
+    modelValue: { type: Array, default: () => [] },
     errors: { type: Object, default: () => ({}) },
     blueprint: Object,
-    meta: Object,
+    meta: { type: Object, default: () => ({}) },
+    defaults: Object,
     hubspotForms: { type: [Object, Array], default: () => ({}) },
     isConfigured: Boolean,
     apiError: String,
 });
 
-const hubspotForm = computed(() => props.hubspotForms?.[props.modelValue.form]);
+const hubspotForm = (submission: Submission) => props.hubspotForms?.[submission.form];
 
-const extraValues = computed<object>(() => ({
-    consent_type: hubspotForm.value?.consent?.type ?? 'none',
-}));
-
-const missingConsentToProcess = computed<boolean>(
-    () =>
-        hubspotForm.value?.consent?.type === 'explicit_consent_to_process' &&
-        !props.modelValue.consent_to_process_field,
+const extraValues = computed<Record<string, object>>(() =>
+    Object.fromEntries(
+        props.modelValue.map((submission: Submission) => [
+            submission.id,
+            { consent_type: hubspotForm(submission)?.consent?.type ?? 'none' },
+        ]),
+    ),
 );
 
-const missingCommunications = computed<boolean>(() => {
-    const consent = hubspotForm.value?.consent;
+const warnings = (submission: Submission): string[] => {
+    const hubspot = hubspotForm(submission);
+    const consent = hubspot?.consent;
 
-    if (!consent || ['none', 'legitimate_interest'].includes(consent.type)) return false;
-
-    return Boolean(consent.checkboxes?.length) && !(props.modelValue.communications ?? []).length;
-});
-
-const missingSubscription = computed<boolean>(() => {
-    const consent = hubspotForm.value?.consent;
-
-    return (
+    return [
+        consent?.type === 'explicit_consent_to_process' &&
+            !submission.consent_to_process_field &&
+            'forms-pro::messages.hubspot_consent_to_process_warning',
+        consent &&
+            !['none', 'legitimate_interest'].includes(consent.type) &&
+            Boolean(consent.checkboxes?.length) &&
+            !(submission.communications ?? []).length &&
+            'forms-pro::messages.hubspot_communications_warning',
         consent?.type === 'legitimate_interest' &&
-        (consent.subscription_ids ?? []).length > 1 &&
-        !props.modelValue.legitimate_interest_subscription
-    );
-});
+            (consent.subscription_ids ?? []).length > 1 &&
+            !submission.legitimate_interest_subscription &&
+            'forms-pro::messages.hubspot_subscription_warning',
+        hubspot?.captcha && 'forms-pro::messages.hubspot_captcha_warning',
+        hubspot && !hubspot.has_email && 'forms-pro::messages.hubspot_no_email_warning',
+    ].filter(Boolean);
+};
 </script>
 
 <template>
@@ -63,44 +86,64 @@ const missingSubscription = computed<boolean>(() => {
             <Description :text="__('forms-pro::messages.hubspot_no_forms')" />
         </Alert>
 
-        <Alert v-if="missingConsentToProcess" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Description :text="__('forms-pro::messages.hubspot_consent_to_process_warning')" />
-        </Alert>
+        <Label :text="__('Forms')" class="mb-2" />
 
-        <Alert v-if="missingCommunications" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Description :text="__('forms-pro::messages.hubspot_communications_warning')" />
-        </Alert>
-
-        <Alert v-if="missingSubscription" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Description :text="__('forms-pro::messages.hubspot_subscription_warning')" />
-        </Alert>
-
-        <Alert v-if="hubspotForm?.captcha" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
-            <Description :text="__('forms-pro::messages.hubspot_captcha_warning')" />
-        </Alert>
-
-        <Alert
-            v-if="hubspotForm && !hubspotForm.has_email"
-            variant="warning"
-            icon="alert-warning-exclamation-mark"
-            class="mb-6"
-        >
-            <Description :text="__('forms-pro::messages.hubspot_no_email_warning')" />
-        </Alert>
-
-        <PublishContainer
-            :errors
-            :blueprint
+        <ConnectionList
             :model-value="modelValue"
-            :meta
-            :extra-values="extraValues"
-            :track-dirty-state="false"
+            :errors
+            :defaults
+            :add-label="__('Add HubSpot Form')"
+            :description="__('forms-pro::messages.hubspot_instructions')"
+            :delete-heading="__('Delete HubSpot Form')"
+            :delete-description="__('forms-pro::messages.hubspot_delete_confirmation')"
             @update:model-value="$emit('update:modelValue', $event)"
         >
-            <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
-                <PublishFields />
-            </PublishFieldsProvider>
-        </PublishContainer>
+            <template #header="{ item: submission, collapsed }">
+                <Badge size="lg" pill color="white" class="px-3 text-gray-950 gap-1">
+                    <Icon name="forms-pro::hubspot" class="size-3.5 me-1" />
+                    {{ hubspotForm(submission)?.name ?? __('New HubSpot Form') }}
+                </Badge>
+                <ConnectionSummary v-show="collapsed" :conditions="submission.conditions" />
+            </template>
+
+            <template #default="{ item: submission, errors }">
+                <ConnectionRules
+                    v-model:conditions="submission.conditions"
+                    :always-label="__('Always send')"
+                    :if-label="__('Send if...')"
+                >
+                    <template #then>
+                        <Alert
+                            v-for="warning in warnings(submission)"
+                            :key="warning"
+                            variant="warning"
+                            icon="alert-warning-exclamation-mark"
+                            class="mb-4"
+                        >
+                            <Description :text="__(warning)" />
+                        </Alert>
+
+                        <div
+                            class="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
+                        >
+                            <PublishContainer
+                                :errors
+                                :blueprint
+                                :model-value="submission"
+                                :meta="meta[submission.id] ?? defaults.meta"
+                                :extra-values="extraValues[submission.id]"
+                                :name="`hubspot-connection-${submission.id}`"
+                                :track-dirty-state="false"
+                            >
+                                <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
+                                    <PublishFields />
+                                </PublishFieldsProvider>
+                            </PublishContainer>
+                        </div>
+                    </template>
+                </ConnectionRules>
+            </template>
+        </ConnectionList>
     </div>
 
     <HubSpotSetupInstructions v-else />
