@@ -28,6 +28,8 @@ return [
     'automagic_form_progress' => ':progress% complete',
 
     'google_sheets_description' => 'Add submissions as rows in a Google Sheet.',
+    'google_sheets_instructions' => 'Add a row to a spreadsheet whenever this form receives a submission.',
+    'google_sheets_delete_confirmation' => 'Are you sure you want to stop sending submissions to this spreadsheet?',
     'google_sheets_spreadsheet_instructions' => 'Paste the address from your browser\'s address bar.',
     'google_sheets_tab_instructions' => 'Rows are added to the bottom. Existing rows aren\'t changed.',
     'google_sheets_tab_no_spreadsheet' => 'Enter a spreadsheet first',

@@ -8,6 +8,7 @@ use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
+use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\GoogleSheets;
 use Statamic\FormsPro\FormConnectors\GoogleSheets\AppendRowToGoogleSheet;
@@ -19,6 +20,10 @@ class GoogleSheetsConnectorTest extends TestCase
     use FakesGoogleServiceAccount;
     use PreventsSavingStacheItemsToDisk;
 
+    private const string OTHER_SPREADSHEET = '9ZyXwVuTsRqPoNmLkJiHgFeDcBa9876543210zyxwvu';
+
+    private const string OTHER_SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/'.self::OTHER_SPREADSHEET.'/edit';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -29,9 +34,9 @@ class GoogleSheetsConnectorTest extends TestCase
     #[Test]
     public function it_returns_a_job_for_the_configured_spreadsheet()
     {
-        $form = $this->form(['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 184]);
+        $form = $this->form([['id' => 'abc', 'spreadsheet' => self::SPREADSHEET_URL, 'tab' => 184]]);
 
-        $jobs = (new GoogleSheets)->finalized($form->makeSubmission()->data(['name' => 'Jack Black']));
+        $jobs = $this->finalized($form->makeSubmission()->data(['name' => 'Jack Black']));
 
         $this->assertCount(1, $jobs);
         $this->assertContainsOnlyInstancesOf(AppendRowToGoogleSheet::class, $jobs);
@@ -41,31 +46,31 @@ class GoogleSheetsConnectorTest extends TestCase
     #[Test]
     public function it_returns_a_job_for_the_first_tab()
     {
-        $form = $this->form(['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 0]);
+        $form = $this->form([['id' => 'abc', 'spreadsheet' => self::SPREADSHEET_URL, 'tab' => 0]]);
 
-        $this->assertCount(1, (new GoogleSheets)->finalized($form->makeSubmission()->data([])));
+        $this->assertCount(1, $this->finalized($form->makeSubmission()->data([])));
     }
 
     #[Test]
     public function it_returns_no_jobs_when_the_form_isnt_connected()
     {
-        $this->assertEmpty((new GoogleSheets)->finalized($this->form()->makeSubmission()));
+        $this->assertEmpty($this->finalized($this->form()->makeSubmission()));
     }
 
     #[Test]
     public function it_returns_no_jobs_without_a_spreadsheet()
     {
-        $form = $this->form(['tab' => 184]);
+        $form = $this->form([['id' => 'abc', 'tab' => 184]]);
 
-        $this->assertEmpty((new GoogleSheets)->finalized($form->makeSubmission()->data([])));
+        $this->assertEmpty($this->finalized($form->makeSubmission()->data([])));
     }
 
     #[Test]
     public function it_returns_no_jobs_without_a_tab()
     {
-        $form = $this->form(['spreadsheet' => self::SPREADSHEET_URL]);
+        $form = $this->form([['id' => 'abc', 'spreadsheet' => self::SPREADSHEET_URL]]);
 
-        $this->assertEmpty((new GoogleSheets)->finalized($form->makeSubmission()->data([])));
+        $this->assertEmpty($this->finalized($form->makeSubmission()->data([])));
     }
 
     #[Test]
@@ -76,7 +81,7 @@ class GoogleSheetsConnectorTest extends TestCase
         $component = (new GoogleSheets)->render($this->form())->toArray();
 
         $this->assertEquals('google-sheets-connector', $component['name']);
-        $this->assertEquals(['blueprint', 'meta', 'isConfigured', 'serviceAccount', 'apiError'], array_keys($component['props']));
+        $this->assertEquals(['blueprint', 'meta', 'defaults', 'isConfigured', 'serviceAccount', 'apiError'], array_keys($component['props']));
         $this->assertTrue($component['props']['isConfigured']);
         $this->assertEquals(self::SERVICE_ACCOUNT, $component['props']['serviceAccount']);
         $this->assertNull($component['props']['apiError']);
@@ -92,11 +97,28 @@ class GoogleSheetsConnectorTest extends TestCase
             ['properties' => ['sheetId' => 184, 'title' => 'Archive']],
         ]])]);
 
-        $form = $this->form(['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 0]);
+        $form = $this->form([['id' => 'abc', 'spreadsheet' => self::SPREADSHEET_URL, 'tab' => 0]]);
 
-        $fields = (new GoogleSheets)->render($form)->toArray()['props']['blueprint']['tabs'][0]['sections'][0]['fields'];
+        $props = (new GoogleSheets)->render($form)->toArray()['props'];
 
-        $this->assertEquals([0 => 'Leads 2026', 184 => 'Archive'], collect($fields)->firstWhere('handle', 'tab')['options']);
+        $this->assertEquals([0 => 'Leads 2026', 184 => 'Archive'], $props['meta']['abc']['tab']['options']);
+        $this->assertEquals([], $props['defaults']['meta']['tab']['options']);
+    }
+
+    #[Test]
+    public function it_renders_the_tabs_of_each_connections_spreadsheet()
+    {
+        $this->fakeTwoSpreadsheets();
+
+        $form = $this->form([
+            ['id' => 'abc', 'spreadsheet' => self::SPREADSHEET_URL, 'tab' => 0],
+            ['id' => 'def', 'spreadsheet' => self::OTHER_SPREADSHEET_URL, 'tab' => 7],
+        ]);
+
+        $meta = (new GoogleSheets)->render($form)->toArray()['props']['meta'];
+
+        $this->assertEquals([0 => 'Leads 2026', 184 => 'Archive'], $meta['abc']['tab']['options']);
+        $this->assertEquals([7 => 'Signups'], $meta['def']['tab']['options']);
     }
 
     #[Test]
@@ -104,9 +126,10 @@ class GoogleSheetsConnectorTest extends TestCase
     {
         Http::fake();
 
-        $fields = (new GoogleSheets)->render($this->form())->toArray()['props']['blueprint']['tabs'][0]['sections'][0]['fields'];
+        $props = (new GoogleSheets)->render($this->form([['id' => 'abc', 'tab' => 0]]))->toArray()['props'];
 
-        $this->assertEmpty(collect($fields)->firstWhere('handle', 'tab')['options']);
+        $this->assertEquals([], $props['meta']['abc']['tab']['options']);
+        $this->assertEquals([], $props['defaults']['meta']['tab']['options']);
 
         Http::assertNothingSent();
     }
@@ -125,7 +148,7 @@ class GoogleSheetsConnectorTest extends TestCase
             'name' => 'Name',
             'submitted_at' => 'Submitted At',
             'submission_id' => 'Submission ID',
-        ], collect($props['meta']['fields']['options'])->pluck('label', 'value')->all());
+        ], collect($props['defaults']['meta']['fields']['options'])->pluck('label', 'value')->all());
     }
 
     #[Test]
@@ -154,15 +177,18 @@ class GoogleSheetsConnectorTest extends TestCase
     #[Test]
     public function it_pre_processes_the_config()
     {
-        $form = $this->form(['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 184, 'fields' => ['email', 'submitted_at']]);
+        $form = $this->form([['id' => 'abc', 'spreadsheet' => self::SPREADSHEET_URL, 'tab' => 184, 'fields' => ['email', 'submitted_at']]]);
 
-        $config = (new GoogleSheets)->preProcess($form->connections()->get('google_sheets'), $form);
+        $configs = (new GoogleSheets)->preProcess($form->connections()->get('google_sheets'), $form);
 
-        $this->assertEquals([
+        $this->assertEquals([[
             'spreadsheet' => self::SPREADSHEET_URL,
             'tab' => 184,
             'fields' => ['email', 'submitted_at'],
-        ], $config);
+            'id' => 'abc',
+            'enabled' => true,
+            'conditions' => [],
+        ]], $configs);
     }
 
     #[Test]
@@ -170,11 +196,11 @@ class GoogleSheetsConnectorTest extends TestCase
     {
         $this->fake();
 
-        $validator = Validator::make([
+        $validator = Validator::make([[
             'spreadsheet' => self::SPREADSHEET_URL,
             'tab' => 184,
             'fields' => ['email', 'submitted_at'],
-        ], (new GoogleSheets)->rules($this->form()));
+        ]], (new GoogleSheets)->rules($this->form()));
 
         $this->assertTrue($validator->passes());
     }
@@ -185,12 +211,12 @@ class GoogleSheetsConnectorTest extends TestCase
     {
         $this->fake();
 
-        $validator = Validator::make($config, (new GoogleSheets)->rules($this->form()));
+        $validator = Validator::make([$config], (new GoogleSheets)->rules($this->form()));
 
         $this->assertTrue($validator->fails());
 
         foreach ($errors as $key) {
-            $this->assertTrue($validator->errors()->has($key));
+            $this->assertTrue($validator->errors()->has('0.'.$key));
         }
     }
 
@@ -214,6 +240,52 @@ class GoogleSheetsConnectorTest extends TestCase
     }
 
     #[Test]
+    public function it_validates_each_tab_against_its_own_connections_spreadsheet()
+    {
+        $this->fakeTwoSpreadsheets();
+
+        $rules = (new GoogleSheets)->rules($this->form());
+
+        $this->assertTrue(Validator::make([
+            ['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 184],
+            ['spreadsheet' => self::OTHER_SPREADSHEET_URL, 'tab' => 7],
+        ], $rules)->passes());
+
+        $validator = Validator::make([
+            ['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 7],
+            ['spreadsheet' => self::OTHER_SPREADSHEET_URL, 'tab' => 184],
+        ], $rules);
+
+        $this->assertTrue($validator->fails());
+        $this->assertEquals(['0.tab', '1.tab'], $validator->errors()->keys());
+    }
+
+    #[Test]
+    public function it_rejects_a_spreadsheet_it_cant_open_in_another_connection()
+    {
+        Http::fake([
+            ...$this->fakeAccessToken(),
+            'sheets.googleapis.com/v4/spreadsheets/'.self::SPREADSHEET.'*' => Http::response(['sheets' => [
+                ['properties' => ['sheetId' => 0, 'title' => 'Leads 2026']],
+            ]]),
+            'sheets.googleapis.com/v4/spreadsheets/'.self::OTHER_SPREADSHEET.'*' => Http::response([
+                'error' => ['code' => 404, 'status' => 'NOT_FOUND', 'message' => 'Requested entity was not found.'],
+            ], 404),
+        ]);
+
+        try {
+            Validator::make([
+                ['spreadsheet' => self::SPREADSHEET_URL, 'tab' => 0],
+                ['spreadsheet' => self::OTHER_SPREADSHEET_URL, 'tab' => 0],
+            ], (new GoogleSheets)->rules($this->form()))->validate();
+
+            $this->fail('A validation exception was not thrown.');
+        } catch (ValidationException $e) {
+            $this->assertEquals(['1.spreadsheet'], array_keys($e->errors()));
+        }
+    }
+
+    #[Test]
     public function it_rejects_a_spreadsheet_it_cant_open()
     {
         $this->fake(['sheets.googleapis.com/*' => Http::response([
@@ -221,15 +293,15 @@ class GoogleSheetsConnectorTest extends TestCase
         ], 404)]);
 
         try {
-            Validator::make([
+            Validator::make([[
                 'spreadsheet' => self::SPREADSHEET_URL,
                 'tab' => 0,
-            ], (new GoogleSheets)->rules($this->form()))->validate();
+            ]], (new GoogleSheets)->rules($this->form()))->validate();
 
             $this->fail('A validation exception was not thrown.');
         } catch (ValidationException $e) {
             $this->assertEquals(["Couldn't open that spreadsheet. Check the address and make sure it's shared with "
-                .self::SERVICE_ACCOUNT.' as an Editor.'], $e->errors()['spreadsheet']);
+                .self::SERVICE_ACCOUNT.' as an Editor.'], $e->errors()['0.spreadsheet']);
         }
     }
 
@@ -257,15 +329,17 @@ class GoogleSheetsConnectorTest extends TestCase
     #[Test]
     public function it_processes_the_config()
     {
-        $this->assertEquals([
+        $this->assertEquals([[
+            'id' => 'abc',
             'spreadsheet' => self::SPREADSHEET_URL,
             'tab' => 184,
             'fields' => ['email', 'submitted_at'],
-        ], (new GoogleSheets)->process([
+        ]], (new GoogleSheets)->process([[
+            'id' => 'abc',
             'spreadsheet' => self::SPREADSHEET_URL,
             'tab' => '184',
             'fields' => ['email', 'submitted_at'],
-        ], $this->form()));
+        ]], $this->form()));
     }
 
     #[Test]
@@ -273,22 +347,24 @@ class GoogleSheetsConnectorTest extends TestCase
     {
         $pasted = 'https://docs.google.com/spreadsheets/d/'.self::SPREADSHEET.'/edit?gid=184#gid=184';
 
-        $config = (new GoogleSheets)->process(['spreadsheet' => $pasted, 'tab' => 0], $this->form());
+        $configs = (new GoogleSheets)->process([['id' => 'abc', 'spreadsheet' => $pasted, 'tab' => 0]], $this->form());
 
-        $this->assertEquals(['spreadsheet' => $pasted, 'tab' => 0], $config);
+        $this->assertEquals([['id' => 'abc', 'spreadsheet' => $pasted, 'tab' => 0]], $configs);
     }
 
     #[Test]
     public function it_removes_null_values_from_the_config()
     {
-        $this->assertEquals([
+        $this->assertEquals([[
+            'id' => 'abc',
             'spreadsheet' => self::SPREADSHEET_URL,
             'tab' => 184,
-        ], (new GoogleSheets)->process([
+        ]], (new GoogleSheets)->process([[
+            'id' => 'abc',
             'spreadsheet' => self::SPREADSHEET_URL,
             'tab' => 184,
             'fields' => null,
-        ], $this->form()));
+        ]], $this->form()));
     }
 
     private function fake(array $overrides = []): void
@@ -306,7 +382,21 @@ class GoogleSheetsConnectorTest extends TestCase
         ]);
     }
 
-    private function form(?array $config = null, ?array $fields = null): FormContract
+    private function fakeTwoSpreadsheets(): void
+    {
+        Http::fake([
+            ...$this->fakeAccessToken(),
+            'sheets.googleapis.com/v4/spreadsheets/'.self::SPREADSHEET.'*' => Http::response(['sheets' => [
+                ['properties' => ['sheetId' => 0, 'title' => 'Leads 2026']],
+                ['properties' => ['sheetId' => 184, 'title' => 'Archive']],
+            ]]),
+            'sheets.googleapis.com/v4/spreadsheets/'.self::OTHER_SPREADSHEET.'*' => Http::response(['sheets' => [
+                ['properties' => ['sheetId' => 7, 'title' => 'Signups']],
+            ]]),
+        ]);
+    }
+
+    private function form(array $connections = [], ?array $fields = null): FormContract
     {
         $form = Form::make('contact_us')->title('Contact Us')->formFields([
             'fields' => $fields ?? [
@@ -315,10 +405,15 @@ class GoogleSheetsConnectorTest extends TestCase
             ],
         ]);
 
-        if ($config) {
-            $form->connections(['google_sheets' => $config]);
+        if ($connections) {
+            $form->connections(['google_sheets' => $connections]);
         }
 
         return tap($form)->save();
+    }
+
+    private function finalized(Submission $submission): array
+    {
+        return (new GoogleSheets)->setConfig($submission->form()->connections()->get(GoogleSheets::handle(), []))->finalized($submission);
     }
 }

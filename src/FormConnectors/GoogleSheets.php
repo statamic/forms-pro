@@ -42,44 +42,54 @@ class GoogleSheets extends Connector
         return (bool) config('statamic.forms-pro.connections.google_sheets.credentials');
     }
 
-    public function finalized(Submission $submission): object|array
+    protected function job(Submission $submission, array $connection): ?object
     {
-        $config = $submission->form()->connections()->get('google_sheets', []);
-
-        if (blank(Arr::get($config, 'spreadsheet')) || blank(Arr::get($config, 'tab'))) {
-            return [];
+        if (blank(Arr::get($connection, 'spreadsheet')) || blank(Arr::get($connection, 'tab'))) {
+            return null;
         }
 
-        return [new AppendRowToGoogleSheet($submission, $config)];
+        return new AppendRowToGoogleSheet($submission, $connection);
     }
 
     public function render(Form $form): VueComponent
     {
-        $tabs = [];
-        $config = $form->connections()->get('google_sheets', []);
         $isConfigured = $this->isConfigured();
 
         try {
-            if ($isConfigured) {
-                $serviceAccount = app(GoogleSheetsClient::class)->serviceAccountEmail();
-
-                if ($spreadsheet = Arr::get($config, 'spreadsheet')) {
-                    $tabs = static::tabs($spreadsheet);
-                }
-            }
+            $serviceAccount = $isConfigured ? app(GoogleSheetsClient::class)->serviceAccountEmail() : null;
         } catch (ConnectionException|GoogleSheetsException $e) {
             $apiError = $e->getMessage();
         }
 
-        $blueprint = static::blueprint($form, $tabs);
+        $blueprint = static::blueprint($form);
+        $fields = $blueprint->fields()->preProcess();
 
-        $fields = $blueprint->fields()
-            ->addValues($config)
-            ->preProcess();
+        $meta = collect($form->connections()->get('google_sheets'))
+            ->mapWithKeys(function (array $connection) use ($fields, $isConfigured, &$apiError): array {
+                $tabs = [];
+
+                try {
+                    if ($isConfigured && ($spreadsheet = Arr::get($connection, 'spreadsheet'))) {
+                        $tabs = static::tabs($spreadsheet);
+                    }
+                } catch (ConnectionException|GoogleSheetsException $e) {
+                    $apiError = $e->getMessage();
+                }
+
+                return [$connection['id'] => [
+                    ...$fields->addValues($connection)->preProcess()->meta()->all(),
+                    'tab' => ['options' => $tabs],
+                ]];
+            })
+            ->all();
 
         return VueComponent::render('google-sheets-connector', [
             'blueprint' => $blueprint->toPublishArray(),
-            'meta' => $fields->meta()->all(),
+            'meta' => $meta,
+            'defaults' => [
+                'values' => $fields->values()->all(),
+                'meta' => [...$fields->meta()->all(), 'tab' => ['options' => []]],
+            ],
             'isConfigured' => $isConfigured,
             'serviceAccount' => $serviceAccount ?? null,
             'apiError' => $apiError ?? null,
@@ -111,16 +121,16 @@ class GoogleSheets extends Connector
         return "forms-pro.google-sheets.tabs.{$client->fingerprint()}.{$id}";
     }
 
-    public function preProcess(array $config, Form $form): array
+    protected function preProcessConnection(array $connection, Form $form): array
     {
         return static::blueprint($form)->fields()
-            ->addValues($config)
+            ->addValues($connection)
             ->preProcess()
             ->values()
             ->all();
     }
 
-    public function rules(Form $form): array
+    protected function connectionRules(Form $form): array
     {
         $reserved = $form->formFields()->fields()->keys()->intersect(array_keys(static::metaColumns()));
 
@@ -136,21 +146,19 @@ class GoogleSheets extends Connector
         ];
     }
 
-    public function process(array $data, Form $form): array
+    protected function processConnection(array $connection, Form $form): array
     {
-        $config = static::blueprint($form)->fields()
+        return static::blueprint($form)->fields()
             ->addValues([
-                ...Arr::removeNullValues($data),
-                'tab' => (int) Arr::get($data, 'tab'),
+                ...$connection,
+                'tab' => (int) Arr::get($connection, 'tab'),
             ])
             ->process()
             ->values()
             ->all();
-
-        return Arr::removeNullValues($config);
     }
 
-    public static function blueprint(Form $form, array $tabs = []): \Statamic\Fields\Blueprint
+    public static function blueprint(Form $form): \Statamic\Fields\Blueprint
     {
         return Blueprint::make()->setContents([
             'tabs' => [
@@ -175,7 +183,6 @@ class GoogleSheets extends Connector
                                         'display' => __('Tab'),
                                         'instructions' => __('forms-pro::messages.google_sheets_tab_instructions'),
                                         'url' => cp_route('forms.connect.google_sheets.tabs', $form->handle()),
-                                        'options' => $tabs,
                                         'validate' => ['required'],
                                     ],
                                 ],

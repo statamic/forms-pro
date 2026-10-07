@@ -15,7 +15,7 @@ const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/';
 
 const error = ref(null);
 const loading = ref(false);
-const tabs = ref(props.config.options ?? {});
+const tabs = ref(props.meta?.options ?? {});
 
 const spreadsheet = computed(() =>
     values.value?.spreadsheet?.startsWith(spreadsheetUrl) ? values.value.spreadsheet : null,

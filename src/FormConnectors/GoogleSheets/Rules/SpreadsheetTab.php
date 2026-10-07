@@ -9,6 +9,7 @@ use Illuminate\Validation\ValidationException;
 use Statamic\FormsPro\FormConnectors\GoogleSheets;
 use Statamic\FormsPro\FormConnectors\GoogleSheets\GoogleSheetsException;
 use Statamic\Support\Arr;
+use Statamic\Support\Str;
 
 class SpreadsheetTab implements DataAwareRule, ValidationRule
 {
@@ -23,7 +24,9 @@ class SpreadsheetTab implements DataAwareRule, ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $spreadsheet = Arr::get($this->data, 'spreadsheet');
+        $prefix = Str::contains($attribute, '.') ? Str::beforeLast($attribute, '.').'.' : '';
+
+        $spreadsheet = Arr::get($this->data, $prefix.'spreadsheet');
 
         if (! is_string($spreadsheet) || ! GoogleSheets::extractSpreadsheetIdFromUrl($spreadsheet)) {
             return;
@@ -32,7 +35,7 @@ class SpreadsheetTab implements DataAwareRule, ValidationRule
         try {
             $tabs = GoogleSheets::tabs($spreadsheet);
         } catch (GoogleSheetsException $e) {
-            throw ValidationException::withMessages(['spreadsheet' => $e->getMessage()]);
+            throw ValidationException::withMessages([$prefix.'spreadsheet' => $e->getMessage()]);
         }
 
         if (! array_key_exists((int) $value, $tabs)) {
