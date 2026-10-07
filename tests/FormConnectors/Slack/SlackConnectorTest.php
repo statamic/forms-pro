@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Slack;
 use Statamic\FormsPro\FormConnectors\Slack\SendSlackMessage;
@@ -33,7 +34,7 @@ class SlackConnectorTest extends TestCase
             ['id' => 'def', 'channel' => 'C0456DEFGHI'],
         ]]))->save();
 
-        $jobs = (new Slack)->finalized($form->makeSubmission());
+        $jobs = $this->finalized($form->makeSubmission());
 
         $this->assertCount(2, $jobs);
         $this->assertContainsOnlyInstancesOf(SendSlackMessage::class, $jobs);
@@ -46,7 +47,7 @@ class SlackConnectorTest extends TestCase
     {
         $form = tap(Form::make('test'))->save();
 
-        $this->assertEmpty((new Slack)->finalized($form->makeSubmission()));
+        $this->assertEmpty($this->finalized($form->makeSubmission()));
     }
 
     #[Test]
@@ -57,7 +58,7 @@ class SlackConnectorTest extends TestCase
             ['id' => 'def', 'channel' => 'C0456DEFGHI'],
         ]]))->save();
 
-        $jobs = (new Slack)->finalized($form->makeSubmission());
+        $jobs = $this->finalized($form->makeSubmission());
 
         $this->assertCount(1, $jobs);
         $this->assertEquals('C0456DEFGHI', $jobs[0]->config['channel']);
@@ -82,7 +83,7 @@ class SlackConnectorTest extends TestCase
 
         $submission = $form->makeSubmission()->data(['how_did_you_hear' => $value]);
 
-        $this->assertCount($shouldDispatch ? 1 : 0, (new Slack)->finalized($submission));
+        $this->assertCount($shouldDispatch ? 1 : 0, $this->finalized($submission));
     }
 
     public static function conditionsProvider(): array
@@ -344,5 +345,10 @@ class SlackConnectorTest extends TestCase
             'heading' => null,
             'enabled' => null,
         ]], $form));
+    }
+
+    private function finalized(Submission $submission): array
+    {
+        return (new Slack)->setConfig($submission->form()->connections()->get(Slack::handle(), []))->finalized($submission);
     }
 }

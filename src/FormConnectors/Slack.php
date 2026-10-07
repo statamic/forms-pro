@@ -9,13 +9,11 @@ use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connectors\Connector;
-use Statamic\Forms\Connectors\ConnectionLogic;
 use Statamic\FormsPro\FormConnectors\Slack\Rules\SlackChannel;
 use Statamic\FormsPro\FormConnectors\Slack\SendSlackMessage;
 use Statamic\FormsPro\FormConnectors\Slack\SlackClient;
 use Statamic\FormsPro\FormConnectors\Slack\SlackException;
 use Statamic\Support\Arr;
-use Statamic\Support\Str;
 use Statamic\Support\VueComponent;
 
 use function Statamic\trans as __;
@@ -34,23 +32,14 @@ class Slack extends Connector
         return File::get(__DIR__.'/../../resources/svg/slack.svg');
     }
 
-    public function count(Form $form): ?int
-    {
-        return count($form->connections()->get('slack', []));
-    }
-
     public function isConfigured(): bool
     {
         return (bool) config('statamic.forms-pro.connections.slack.token');
     }
 
-    public function finalized(Submission $submission): object|array
+    protected function job(Submission $submission, array $connection): ?object
     {
-        return collect($submission->form()->connections()->get('slack'))
-            ->filter(fn (array $config) => ConnectionLogic::passes($config, $submission))
-            ->map(fn (array $config) => new SendSlackMessage($submission, $submission->site(), $config))
-            ->values()
-            ->all();
+        return new SendSlackMessage($submission, $submission->site(), $connection);
     }
 
     public function render(Form $form): VueComponent
@@ -70,8 +59,8 @@ class Slack extends Connector
         return VueComponent::render('slack-connector', [
             'blueprint' => $blueprint->toPublishArray(),
             'meta' => collect($form->connections()->get('slack'))
-                ->mapWithKeys(fn (array $config): array => [
-                    $config['id'] => $fields->addValues($config)->preProcess()->meta()->all(),
+                ->mapWithKeys(fn (array $connection): array => [
+                    $connection['id'] => $fields->addValues($connection)->preProcess()->meta()->all(),
                 ])
                 ->all(),
             'defaults' => [
@@ -94,58 +83,36 @@ class Slack extends Connector
         );
     }
 
-    public function preProcess(array $config, Form $form): array
+    protected function preProcessConnection(array $connection, Form $form): array
     {
-        $fields = static::blueprint($form)->fields();
-
-        return collect($config)
-            ->map(fn (array $config): array => [
-                'id' => $config['id'],
-                'enabled' => Arr::get($config, 'enabled') !== false,
-                'conditions' => ConnectionLogic::preProcess(Arr::get($config, 'conditions') ?? []),
-                ...$fields->addValues($config)->preProcess()->values()->all(),
-            ])
+        return static::blueprint($form)->fields()
+            ->addValues($connection)
+            ->preProcess()
             ->values()
             ->all();
     }
 
-    public function rules(Form $form): array
+    protected function connectionRules(Form $form): array
     {
         return [
-            '*' => ['array'],
-            '*.channel' => ['required', new SlackChannel],
-            '*.heading' => ['nullable', 'string', 'max:2000'],
-            '*.enabled' => ['nullable', 'boolean'],
-            '*.conditions' => ['nullable', 'array'],
-            '*.conditions.*' => ['array'],
+            'channel' => ['required', new SlackChannel],
+            'heading' => ['nullable', 'string', 'max:2000'],
         ];
     }
 
-    public function process(array $data, Form $form): array
+    protected function processConnection(array $connection, Form $form): array
     {
-        $fields = static::blueprint($form)->fields();
-
-        return collect($data)
-            ->map(function (array $config) use ($fields): array {
-                $config = Arr::removeNullValues($config);
-
-                $values = $fields
-                    ->addValues($config)
-                    ->process()
-                    ->values()
-                    ->all();
-
-                return Arr::removeNullValues([
-                    'id' => Arr::get($config, 'id') ?? Str::random(8),
-                    ...$values,
-                    'enabled' => Arr::get($config, 'enabled') === false ? false : null,
-                    'include_fields' => Arr::get($values, 'include_fields') === false ? false : null,
-                    'link_to_submission' => Arr::get($values, 'link_to_submission') === false ? false : null,
-                    'conditions' => ConnectionLogic::process(Arr::get($config, 'conditions') ?? []),
-                ]);
-            })
+        $values = static::blueprint($form)->fields()
+            ->addValues($connection)
+            ->process()
             ->values()
             ->all();
+
+        return [
+            ...$values,
+            'include_fields' => Arr::get($values, 'include_fields') === false ? false : null,
+            'link_to_submission' => Arr::get($values, 'link_to_submission') === false ? false : null,
+        ];
     }
 
     public static function blueprint(Form $form, array $channels = []): \Statamic\Fields\Blueprint

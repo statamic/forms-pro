@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
+use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Twilio;
 use Statamic\FormsPro\FormConnectors\Twilio\SendTwilioMessage;
@@ -40,7 +41,7 @@ class TwilioConnectorTest extends TestCase
             ['id' => 'def', 'to' => 'field:phone', 'from' => '+14155552671', 'body' => 'Thanks!'],
         ]);
 
-        $jobs = (new Twilio)->finalized($form->makeSubmission()->data(['phone' => '07700 900123']));
+        $jobs = $this->finalized($form->makeSubmission()->data(['phone' => '07700 900123']));
 
         $this->assertCount(2, $jobs);
         $this->assertContainsOnlyInstancesOf(SendTwilioMessage::class, $jobs);
@@ -51,7 +52,7 @@ class TwilioConnectorTest extends TestCase
     #[Test]
     public function it_returns_no_jobs_when_the_form_has_no_twilio_notifications()
     {
-        $this->assertEmpty((new Twilio)->finalized($this->form()->makeSubmission()));
+        $this->assertEmpty($this->finalized($this->form()->makeSubmission()));
     }
 
     #[Test]
@@ -62,7 +63,7 @@ class TwilioConnectorTest extends TestCase
             ['id' => 'def', 'to' => '+447700900124', 'from' => '+14155552671', 'body' => 'Two'],
         ]);
 
-        $jobs = (new Twilio)->finalized($form->makeSubmission()->data([]));
+        $jobs = $this->finalized($form->makeSubmission()->data([]));
 
         $this->assertCount(1, $jobs);
         $this->assertEquals('+447700900124', $jobs[0]->config['to']);
@@ -79,8 +80,8 @@ class TwilioConnectorTest extends TestCase
             'conditions' => [['field' => 'enquiry_type', 'operator' => 'equals', 'value' => 'sales']],
         ]]);
 
-        $this->assertCount(1, (new Twilio)->finalized($form->makeSubmission()->data(['enquiry_type' => 'sales'])));
-        $this->assertCount(0, (new Twilio)->finalized($form->makeSubmission()->data(['enquiry_type' => 'support'])));
+        $this->assertCount(1, $this->finalized($form->makeSubmission()->data(['enquiry_type' => 'sales'])));
+        $this->assertCount(0, $this->finalized($form->makeSubmission()->data(['enquiry_type' => 'support'])));
     }
 
     #[Test]
@@ -327,5 +328,10 @@ class TwilioConnectorTest extends TestCase
         }
 
         return tap($form)->save();
+    }
+
+    private function finalized(Submission $submission): array
+    {
+        return (new Twilio)->setConfig($submission->form()->connections()->get(Twilio::handle(), []))->finalized($submission);
     }
 }
