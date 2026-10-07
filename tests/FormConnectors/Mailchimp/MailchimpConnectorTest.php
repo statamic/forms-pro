@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
+use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Mailchimp;
 use Statamic\FormsPro\FormConnectors\Mailchimp\SubscribeToMailchimp;
@@ -30,9 +31,9 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_returns_a_job_for_the_configured_audience()
     {
-        $form = $this->form(['list' => self::AUDIENCE, 'email_field' => 'email']);
+        $form = $this->form([['id' => 'abc', 'list' => self::AUDIENCE, 'email_field' => 'email']]);
 
-        $jobs = (new Mailchimp)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
+        $jobs = $this->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
 
         $this->assertCount(1, $jobs);
         $this->assertContainsOnlyInstancesOf(SubscribeToMailchimp::class, $jobs);
@@ -40,20 +41,92 @@ class MailchimpConnectorTest extends TestCase
     }
 
     #[Test]
+    public function it_returns_a_job_per_connection()
+    {
+        $form = $this->form([
+            ['id' => 'abc', 'list' => self::AUDIENCE, 'email_field' => 'email'],
+            ['id' => 'def', 'list' => 'f6e5d4c3b2', 'email_field' => 'email'],
+        ]);
+
+        $jobs = $this->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
+
+        $this->assertCount(2, $jobs);
+        $this->assertEquals(self::AUDIENCE, $jobs[0]->config['list']);
+        $this->assertEquals('f6e5d4c3b2', $jobs[1]->config['list']);
+    }
+
+    #[Test]
+    public function it_skips_disabled_connections()
+    {
+        $form = $this->form([
+            ['id' => 'abc', 'list' => self::AUDIENCE, 'email_field' => 'email', 'enabled' => false],
+            ['id' => 'def', 'list' => 'f6e5d4c3b2', 'email_field' => 'email'],
+        ]);
+
+        $jobs = $this->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
+
+        $this->assertCount(1, $jobs);
+        $this->assertEquals('f6e5d4c3b2', $jobs[0]->config['list']);
+    }
+
+    #[Test]
+    public function it_wraps_a_legacy_single_connection_config()
+    {
+        $form = $this->form(['list' => self::AUDIENCE, 'email_field' => 'email']);
+
+        $connections = $form->connections()->get('mailchimp');
+
+        $this->assertCount(1, $connections);
+        $this->assertNotEmpty($connections[0]['id']);
+
+        $jobs = $this->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
+
+        $this->assertCount(1, $jobs);
+        $this->assertEquals(self::AUDIENCE, $jobs[0]->config['list']);
+    }
+
+    #[Test]
+    public function it_wraps_a_legacy_single_connection_config_when_setting_it_directly()
+    {
+        $form = $this->form();
+
+        $jobs = (new Mailchimp)
+            ->setConfig(['list' => self::AUDIENCE, 'email_field' => 'email'])
+            ->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
+
+        $this->assertCount(1, $jobs);
+        $this->assertEquals(self::AUDIENCE, $jobs[0]->config['list']);
+    }
+
+    #[Test]
+    public function it_pre_processes_a_legacy_single_connection_config_into_a_list()
+    {
+        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => []])]);
+
+        $configs = (new Mailchimp)->preProcess(['list' => self::AUDIENCE, 'email_field' => 'email'], $this->form());
+
+        $this->assertCount(1, $configs);
+        $this->assertNotEmpty($configs[0]['id']);
+        $this->assertTrue($configs[0]['enabled']);
+        $this->assertEquals(self::AUDIENCE, $configs[0]['list']);
+        $this->assertEquals('email', $configs[0]['email_field']);
+    }
+
+    #[Test]
     public function it_returns_no_jobs_when_the_form_isnt_connected_to_mailchimp()
     {
         $form = tap(Form::make('test'))->save();
 
-        $this->assertEmpty((new Mailchimp)->finalized($form->makeSubmission()));
+        $this->assertEmpty($this->finalized($form->makeSubmission()));
     }
 
     #[Test]
     #[DataProvider('incompleteConfigProvider')]
     public function it_returns_no_jobs_when_the_config_is_incomplete(array $config)
     {
-        $form = $this->form($config);
+        $form = $this->form([['id' => 'abc', ...$config]]);
 
-        $this->assertEmpty((new Mailchimp)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
+        $this->assertEmpty($this->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
     }
 
     public static function incompleteConfigProvider(): array
@@ -67,22 +140,23 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_returns_no_jobs_when_the_submission_has_no_email_address()
     {
-        $form = $this->form(['list' => self::AUDIENCE, 'email_field' => 'email']);
+        $form = $this->form([['id' => 'abc', 'list' => self::AUDIENCE, 'email_field' => 'email']]);
 
-        $this->assertEmpty((new Mailchimp)->finalized($form->makeSubmission()->data(['email' => ''])));
+        $this->assertEmpty($this->finalized($form->makeSubmission()->data(['email' => ''])));
     }
 
     #[Test]
     #[DataProvider('consentProvider')]
     public function it_only_subscribes_when_consent_has_been_given($value, bool $shouldSubscribe)
     {
-        $form = $this->form([
+        $form = $this->form([[
+            'id' => 'abc',
             'list' => self::AUDIENCE,
             'email_field' => 'email',
             'consent_field' => 'consent',
-        ]);
+        ]]);
 
-        $jobs = (new Mailchimp)->finalized($form->makeSubmission()->data([
+        $jobs = $this->finalized($form->makeSubmission()->data([
             'email' => 'jack@example.com',
             'consent' => $value,
         ]));
@@ -110,14 +184,16 @@ class MailchimpConnectorTest extends TestCase
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
-        $component = (new Mailchimp)->render($this->form(['list' => self::AUDIENCE, 'email_field' => 'email']))->toArray();
+        $component = (new Mailchimp)->render($this->form([['id' => 'abc', 'list' => self::AUDIENCE, 'email_field' => 'email']]))->toArray();
         $props = $component['props'];
 
         $this->assertEquals('mailchimp-connector', $component['name']);
-        $this->assertEquals(['blueprint', 'meta', 'isConfigured', 'apiError'], array_keys($props));
+        $this->assertEquals(['blueprint', 'meta', 'defaults', 'isConfigured', 'apiError'], array_keys($props));
         $this->assertTrue($props['isConfigured']);
         $this->assertNull($props['apiError']);
-        $this->assertEquals([['value' => self::AUDIENCE, 'label' => 'Newsletter']], $props['meta']['list']['options']);
+        $this->assertEquals([['value' => self::AUDIENCE, 'label' => 'Newsletter']], $props['defaults']['meta']['list']['options']);
+        $this->assertEquals(['abc'], array_keys($props['meta']));
+        $this->assertEquals([['value' => self::AUDIENCE, 'label' => 'Newsletter']], $props['meta']['abc']['list']['options']);
     }
 
     #[Test]
@@ -127,7 +203,7 @@ class MailchimpConnectorTest extends TestCase
 
         Http::fake();
 
-        $props = (new Mailchimp)->render($this->form([]))->toArray()['props'];
+        $props = (new Mailchimp)->render($this->form())->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -138,11 +214,11 @@ class MailchimpConnectorTest extends TestCase
     {
         Http::fake(['us14.api.mailchimp.com/*' => Http::response(null, 401)]);
 
-        $props = (new Mailchimp)->render($this->form([]))->toArray()['props'];
+        $props = (new Mailchimp)->render($this->form())->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertStringContainsString('FORMS_PRO_MAILCHIMP_API_KEY', $props['apiError']);
-        $this->assertEquals([], $props['meta']['list']['options']);
+        $this->assertEquals([], $props['defaults']['meta']['list']['options']);
     }
 
     #[Test]
@@ -150,7 +226,7 @@ class MailchimpConnectorTest extends TestCase
     {
         Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
 
-        $props = (new Mailchimp)->render($this->form([]))->toArray()['props'];
+        $props = (new Mailchimp)->render($this->form())->toArray()['props'];
 
         $this->assertStringContainsString('Could not resolve host.', $props['apiError']);
     }
@@ -162,11 +238,11 @@ class MailchimpConnectorTest extends TestCase
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
-        (new Mailchimp)->render($this->form([]));
+        (new Mailchimp)->render($this->form());
 
         config(['statamic.forms-pro.connections.mailchimp.api_key' => 'different-key-us14']);
 
-        (new Mailchimp)->render($this->form([]));
+        (new Mailchimp)->render($this->form());
 
         Http::assertSentCount(2);
     }
@@ -178,19 +254,24 @@ class MailchimpConnectorTest extends TestCase
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
-        $form = $this->form([
+        $form = $this->form([[
+            'id' => 'abc',
             'list' => self::AUDIENCE,
             'email_field' => 'email',
             'tags' => ['newsletter'],
             'skip_confirmation' => true,
-        ]);
+        ]]);
 
-        $config = (new Mailchimp)->preProcess($form->connections()->get('mailchimp'), $form);
+        $configs = (new Mailchimp)->preProcess($form->connections()->get('mailchimp'), $form);
 
-        $this->assertEquals(self::AUDIENCE, $config['list']);
-        $this->assertEquals('email', $config['email_field']);
-        $this->assertEquals(['newsletter'], $config['tags']);
-        $this->assertTrue($config['skip_confirmation']);
+        $this->assertCount(1, $configs);
+        $this->assertEquals('abc', $configs[0]['id']);
+        $this->assertTrue($configs[0]['enabled']);
+        $this->assertEquals([], $configs[0]['conditions']);
+        $this->assertEquals(self::AUDIENCE, $configs[0]['list']);
+        $this->assertEquals('email', $configs[0]['email_field']);
+        $this->assertEquals(['newsletter'], $configs[0]['tags']);
+        $this->assertTrue($configs[0]['skip_confirmation']);
     }
 
     #[Test]
@@ -200,7 +281,7 @@ class MailchimpConnectorTest extends TestCase
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
-        $config = (new Mailchimp)->preProcess([], $this->form([]));
+        $config = (new Mailchimp)->preProcess([['id' => 'abc']], $this->form())[0];
 
         $this->assertEquals(self::AUDIENCE, $config['list']);
     }
@@ -213,7 +294,7 @@ class MailchimpConnectorTest extends TestCase
             ['id' => 'f6e5d4c3b2', 'name' => 'Customers'],
         ]])]);
 
-        $config = (new Mailchimp)->preProcess([], $this->form([]));
+        $config = (new Mailchimp)->preProcess([['id' => 'abc']], $this->form())[0];
 
         $this->assertNull($config['list']);
     }
@@ -221,7 +302,7 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_validates_the_config()
     {
-        $validator = Validator::make([
+        $validator = Validator::make([[
             'list' => self::AUDIENCE,
             'email_field' => 'email',
             'first_name_field' => 'name',
@@ -231,7 +312,7 @@ class MailchimpConnectorTest extends TestCase
             'groups' => [['group' => '4e4b2bc6ae', 'field' => 'consent', 'option' => 'news']],
             'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'consent']],
             'skip_confirmation' => true,
-        ], (new Mailchimp)->rules($this->form([])));
+        ]], (new Mailchimp)->rules($this->form()));
 
         $this->assertTrue($validator->passes());
     }
@@ -240,12 +321,12 @@ class MailchimpConnectorTest extends TestCase
     #[DataProvider('invalidConfigs')]
     public function it_rejects_invalid_configs(array $config, array $errors)
     {
-        $validator = Validator::make($config, (new Mailchimp)->rules($this->form([])));
+        $validator = Validator::make([$config], (new Mailchimp)->rules($this->form()));
 
         $this->assertTrue($validator->fails());
 
         foreach ($errors as $key) {
-            $this->assertTrue($validator->errors()->has($key));
+            $this->assertTrue($validator->errors()->has('0.'.$key));
         }
     }
 
@@ -325,7 +406,8 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_processes_the_config()
     {
-        $this->assertEquals([
+        $this->assertEquals([[
+            'id' => 'abc',
             'list' => self::AUDIENCE,
             'email_field' => 'email',
             'first_name_field' => 'name',
@@ -335,7 +417,8 @@ class MailchimpConnectorTest extends TestCase
             'groups' => [['group' => '4e4b2bc6ae', 'field' => 'consent', 'option' => 'news']],
             'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'consent']],
             'skip_confirmation' => true,
-        ], (new Mailchimp)->process([
+        ]], (new Mailchimp)->process([[
+            'id' => 'abc',
             'list' => self::AUDIENCE,
             'email_field' => 'email',
             'first_name_field' => 'name',
@@ -345,17 +428,19 @@ class MailchimpConnectorTest extends TestCase
             'groups' => [['group' => '4e4b2bc6ae', 'field' => 'consent', 'option' => 'news']],
             'marketing_permissions' => [['permission' => 'd60cef6b1f', 'field' => 'consent']],
             'skip_confirmation' => true,
-        ], $this->form([])));
+        ]], $this->form()));
     }
 
     #[Test]
     public function it_doesnt_persist_empty_values()
     {
-        $this->assertEquals([
+        $this->assertEquals([[
+            'id' => 'abc',
             'list' => self::AUDIENCE,
             'email_field' => 'email',
             'skip_confirmation' => false,
-        ], (new Mailchimp)->process([
+        ]], (new Mailchimp)->process([[
+            'id' => 'abc',
             'list' => self::AUDIENCE,
             'email_field' => 'email',
             'first_name_field' => null,
@@ -365,10 +450,10 @@ class MailchimpConnectorTest extends TestCase
             'merge_fields' => [],
             'marketing_permissions' => [],
             'skip_confirmation' => false,
-        ], $this->form([])));
+        ]], $this->form()));
     }
 
-    private function form(array $config): FormContract
+    private function form(array $connections = []): FormContract
     {
         return tap(Form::make('test')->formFields([
             'fields' => [
@@ -377,6 +462,11 @@ class MailchimpConnectorTest extends TestCase
                 ['handle' => 'consent', 'field' => ['type' => 'toggle']],
                 ['handle' => 'interests', 'field' => ['type' => 'checkboxes', 'options' => ['news' => 'News']]],
             ],
-        ])->connections(['mailchimp' => $config]))->save();
+        ])->connections(['mailchimp' => $connections]))->save();
+    }
+
+    private function finalized(Submission $submission): array
+    {
+        return (new Mailchimp)->setConfig($submission->form()->connections()->get(Mailchimp::handle(), []))->finalized($submission);
     }
 }

@@ -48,24 +48,22 @@ class Mailchimp extends Connector
         return (bool) config('statamic.forms-pro.connections.mailchimp.api_key');
     }
 
-    public function finalized(Submission $submission): object|array
+    protected function job(Submission $submission, array $connection): ?object
     {
-        $config = $submission->form()->connections()->get('mailchimp', []);
-
-        if (! Arr::get($config, 'list') || ! Arr::get($config, 'email_field')) {
-            return [];
+        if (! Arr::get($connection, 'list') || ! Arr::get($connection, 'email_field')) {
+            return null;
         }
 
-        if (! $submission->get($config['email_field']) || ! $this->hasConsent($submission, $config)) {
-            return [];
+        if (! $submission->get($connection['email_field']) || ! $this->hasConsent($submission, $connection)) {
+            return null;
         }
 
-        return [new SubscribeToMailchimp($submission, $config)];
+        return new SubscribeToMailchimp($submission, $connection);
     }
 
-    private function hasConsent(Submission $submission, array $config): bool
+    private function hasConsent(Submission $submission, array $connection): bool
     {
-        return blank($handle = Arr::get($config, 'consent_field'))
+        return blank($handle = Arr::get($connection, 'consent_field'))
             || $this->isChecked($submission, $handle);
     }
 
@@ -83,14 +81,19 @@ class Mailchimp extends Connector
         }
 
         $blueprint = static::blueprint($form, $audiences);
-
-        $fields = $blueprint->fields()
-            ->addValues($form->connections()->get('mailchimp', []))
-            ->preProcess();
+        $fields = $blueprint->fields()->preProcess();
 
         return VueComponent::render('mailchimp-connector', [
             'blueprint' => $blueprint->toPublishArray(),
-            'meta' => $fields->meta()->all(),
+            'meta' => collect($form->connections()->get('mailchimp'))
+                ->mapWithKeys(fn (array $connection): array => [
+                    $connection['id'] => $fields->addValues($connection)->preProcess()->meta()->all(),
+                ])
+                ->all(),
+            'defaults' => [
+                'values' => $fields->values()->all(),
+                'meta' => $fields->meta()->all(),
+            ],
             'isConfigured' => $isConfigured,
             'apiError' => $apiError ?? null,
         ]);
@@ -107,7 +110,7 @@ class Mailchimp extends Connector
         );
     }
 
-    public function preProcess(array $config, Form $form): array
+    protected function preProcessConnection(array $connection, Form $form): array
     {
         $audiences = [];
 
@@ -119,13 +122,13 @@ class Mailchimp extends Connector
         }
 
         return static::blueprint($form, $audiences)->fields()
-            ->addValues($config)
+            ->addValues($connection)
             ->preProcess()
             ->values()
             ->all();
     }
 
-    public function rules(Form $form): array
+    protected function connectionRules(Form $form): array
     {
         $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
 
@@ -164,21 +167,21 @@ class Mailchimp extends Connector
             : ['nullable', 'string']);
     }
 
-    public function process(array $data, Form $form): array
+    protected function processConnection(array $connection, Form $form): array
     {
-        $config = static::blueprint($form)->fields()
-            ->addValues($data)
+        $values = static::blueprint($form)->fields()
+            ->addValues($connection)
             ->process()
             ->values()
             ->all();
 
         foreach (['merge_fields', 'groups'] as $grid) {
-            $config[$grid] = collect(Arr::get($config, $grid))
+            $values[$grid] = collect(Arr::get($values, $grid))
                 ->map(fn (array $row) => Arr::except($row, 'id'))
                 ->all() ?: null;
         }
 
-        return Arr::removeNullValues($config);
+        return $values;
     }
 
     public static function blueprint(Form $form, array $audiences = []): \Statamic\Fields\Blueprint

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form as FormContract;
+use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Kit;
 use Statamic\FormsPro\FormConnectors\Kit\SubscribeToKit;
@@ -29,9 +30,9 @@ class KitConnectorTest extends TestCase
     #[Test]
     public function it_returns_a_job_when_an_email_field_is_configured()
     {
-        $form = $this->form(['email_field' => 'email']);
+        $form = $this->form([['id' => 'abc', 'email_field' => 'email']]);
 
-        $jobs = (new Kit)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
+        $jobs = $this->finalized($form->makeSubmission()->data(['email' => 'jack@example.com']));
 
         $this->assertCount(1, $jobs);
         $this->assertContainsOnlyInstancesOf(SubscribeToKit::class, $jobs);
@@ -41,32 +42,32 @@ class KitConnectorTest extends TestCase
     #[Test]
     public function it_returns_no_jobs_when_the_form_isnt_connected_to_kit()
     {
-        $this->assertEmpty((new Kit)->finalized($this->form()->makeSubmission()));
+        $this->assertEmpty($this->finalized($this->form()->makeSubmission()));
     }
 
     #[Test]
     public function it_returns_no_jobs_when_the_email_field_is_missing()
     {
-        $form = $this->form(['form' => self::FORM]);
+        $form = $this->form([['id' => 'abc', 'form' => self::FORM]]);
 
-        $this->assertEmpty((new Kit)->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
+        $this->assertEmpty($this->finalized($form->makeSubmission()->data(['email' => 'jack@example.com'])));
     }
 
     #[Test]
     public function it_returns_no_jobs_when_the_submission_has_no_email_address()
     {
-        $form = $this->form(['email_field' => 'email']);
+        $form = $this->form([['id' => 'abc', 'email_field' => 'email']]);
 
-        $this->assertEmpty((new Kit)->finalized($form->makeSubmission()->data(['email' => ''])));
+        $this->assertEmpty($this->finalized($form->makeSubmission()->data(['email' => ''])));
     }
 
     #[Test]
     #[DataProvider('consentProvider')]
     public function it_only_subscribes_when_consent_has_been_given($value, bool $shouldSubscribe)
     {
-        $form = $this->form(['email_field' => 'email', 'consent_field' => 'consent']);
+        $form = $this->form([['id' => 'abc', 'email_field' => 'email', 'consent_field' => 'consent']]);
 
-        $jobs = (new Kit)->finalized($form->makeSubmission()->data([
+        $jobs = $this->finalized($form->makeSubmission()->data([
             'email' => 'jack@example.com',
             'consent' => $value,
         ]));
@@ -95,21 +96,22 @@ class KitConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        $props = (new Kit)->render($this->form(['form' => self::FORM, 'email_field' => 'email']))->toArray()['props'];
+        $props = (new Kit)->render($this->form([['id' => 'abc', 'form' => self::FORM, 'email_field' => 'email']]))->toArray()['props'];
 
-        $this->assertEquals(['blueprint', 'meta', 'isConfigured', 'apiError'], array_keys($props));
+        $this->assertEquals(['blueprint', 'meta', 'defaults', 'isConfigured', 'apiError'], array_keys($props));
+        $this->assertEquals(['abc'], array_keys($props['meta']));
         $this->assertTrue($props['isConfigured']);
         $this->assertNull($props['apiError']);
 
         $this->assertEquals([
             ['value' => (string) self::FORM, 'label' => 'Newsletter'],
             ['value' => '9776140', 'label' => 'Newsletter site'],
-        ], $props['meta']['form']['options']);
+        ], $props['defaults']['meta']['form']['options']);
 
         $this->assertEquals([
             ['value' => '22367468', 'label' => 'Customers'],
             ['value' => '22367469', 'label' => 'Subscribers'],
-        ], $props['meta']['tags']['options']);
+        ], $props['defaults']['meta']['tags']['options']);
     }
 
     #[Test]
@@ -132,7 +134,7 @@ class KitConnectorTest extends TestCase
         $this->assertEquals([
             ['value' => '22367468', 'label' => 'Customers'],
             ['value' => '22367469', 'label' => 'Subscribers'],
-        ], $props['meta']['tags']['options']);
+        ], $props['defaults']['meta']['tags']['options']);
     }
 
     #[Test]
@@ -157,8 +159,8 @@ class KitConnectorTest extends TestCase
 
         $this->assertTrue($props['isConfigured']);
         $this->assertStringContainsString('FORMS_PRO_KIT_API_KEY', $props['apiError']);
-        $this->assertEquals([], $props['meta']['form']['options']);
-        $this->assertEquals([], $props['meta']['tags']['options']);
+        $this->assertEquals([], $props['defaults']['meta']['form']['options']);
+        $this->assertEquals([], $props['defaults']['meta']['tags']['options']);
     }
 
     #[Test]
@@ -178,11 +180,18 @@ class KitConnectorTest extends TestCase
     #[Test]
     public function it_pre_processes_the_config()
     {
-        $config = (new Kit)->preProcess([
+        $configs = (new Kit)->preProcess([[
+            'id' => 'abc',
             'form' => self::FORM,
             'email_field' => 'email',
             'custom_fields' => [['key' => 'last_name', 'value' => 'name']],
-        ], $this->form());
+        ]], $this->form());
+
+        $this->assertCount(1, $configs);
+        $config = $configs[0];
+
+        $this->assertEquals('abc', $config['id']);
+        $this->assertTrue($config['enabled']);
 
         $this->assertEquals(self::FORM, $config['form']);
         $this->assertEquals('email', $config['email_field']);
@@ -192,14 +201,14 @@ class KitConnectorTest extends TestCase
     #[Test]
     public function it_validates_the_config()
     {
-        $validator = Validator::make([
+        $validator = Validator::make([[
             'form' => self::FORM,
             'email_field' => 'email',
             'first_name_field' => 'name',
             'consent_field' => 'consent',
             'tags' => [22367468, 22367469],
             'custom_fields' => [['key' => 'last_name', 'value' => 'name']],
-        ], (new Kit)->rules($this->form()));
+        ]], (new Kit)->rules($this->form()));
 
         $this->assertTrue($validator->passes());
     }
@@ -208,12 +217,12 @@ class KitConnectorTest extends TestCase
     #[DataProvider('invalidConfigs')]
     public function it_rejects_invalid_configs(array $config, array $errors)
     {
-        $validator = Validator::make($config, (new Kit)->rules($this->form()));
+        $validator = Validator::make([$config], (new Kit)->rules($this->form()));
 
         $this->assertTrue($validator->fails());
 
         foreach ($errors as $key) {
-            $this->assertTrue($validator->errors()->has($key));
+            $this->assertTrue($validator->errors()->has('0.'.$key));
         }
     }
 
@@ -255,6 +264,7 @@ class KitConnectorTest extends TestCase
     public function it_processes_the_config()
     {
         $config = [
+            'id' => 'abc',
             'form' => self::FORM,
             'email_field' => 'email',
             'first_name_field' => 'name',
@@ -263,20 +273,21 @@ class KitConnectorTest extends TestCase
             'custom_fields' => [['key' => 'last_name', 'value' => 'name']],
         ];
 
-        $this->assertEquals($config, (new Kit)->process($config, $this->form()));
+        $this->assertEquals([$config], (new Kit)->process([$config], $this->form()));
     }
 
     #[Test]
     public function it_doesnt_persist_empty_values()
     {
-        $this->assertEquals(['email_field' => 'email'], (new Kit)->process([
+        $this->assertEquals([['id' => 'abc', 'email_field' => 'email']], (new Kit)->process([[
+            'id' => 'abc',
             'form' => null,
             'email_field' => 'email',
             'first_name_field' => null,
             'consent_field' => null,
             'tags' => [],
             'custom_fields' => [],
-        ], $this->form()));
+        ]], $this->form()));
     }
 
     private function fakeAccount(): void
@@ -296,7 +307,7 @@ class KitConnectorTest extends TestCase
         ]);
     }
 
-    private function form(?array $config = null): FormContract
+    private function form(array $connections = []): FormContract
     {
         $form = Form::make('test')->formFields([
             'fields' => [
@@ -306,10 +317,15 @@ class KitConnectorTest extends TestCase
             ],
         ]);
 
-        if ($config !== null) {
-            $form->connections(['kit' => $config]);
+        if ($connections) {
+            $form->connections(['kit' => $connections]);
         }
 
         return tap($form)->save();
+    }
+
+    private function finalized(Submission $submission): array
+    {
+        return (new Kit)->setConfig($submission->form()->connections()->get(Kit::handle(), []))->finalized($submission);
     }
 }

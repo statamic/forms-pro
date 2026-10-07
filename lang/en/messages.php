@@ -78,6 +78,8 @@ return [
     'hubspot_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once the token is set, reload this page.',
 
     'kit_description' => 'Subscribe people to your Kit account.',
+    'kit_instructions' => 'Subscribe people to Kit whenever this form receives a submission.',
+    'kit_delete_confirmation' => 'Are you sure you want to delete this Kit subscription?',
     'kit_email_field_instructions' => 'Submissions without an email address are ignored.',
     'kit_first_name_field_instructions' => 'Kit only stores a first name. Map last name as a custom field below.',
     'kit_tags_instructions' => 'Applied to every subscriber. Existing tags are kept. Create tags in Kit first.',
@@ -93,6 +95,8 @@ return [
     'kit_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once the key is set, reload this page.',
 
     'mailchimp_description' => 'Subscribe people to a Mailchimp audience.',
+    'mailchimp_instructions' => 'Subscribe people to an audience whenever this form receives a submission.',
+    'mailchimp_delete_confirmation' => 'Are you sure you want to delete this Mailchimp subscription?',
     'mailchimp_list_instructions' => 'Where subscribers are added.',
     'mailchimp_email_field_instructions' => 'Submissions without an email address are ignored.',
     'mailchimp_tags_instructions' => 'Applied to every subscriber. Existing tags are kept.',
@@ -123,6 +127,8 @@ return [
     'mailchimp_setup_developer' => 'This step needs access to the server, so you may need a developer to do it for you. Once the key is set, reload this page.',
 
     'mailcoach_description' => 'Subscribe people to a Mailcoach email list.',
+    'mailcoach_instructions' => 'Subscribe people to a list whenever this form receives a submission.',
+    'mailcoach_delete_confirmation' => 'Are you sure you want to delete this Mailcoach subscription?',
     'mailcoach_list_instructions' => 'Where subscribers are added.',
     'mailcoach_email_field_instructions' => 'Submissions without an email address are ignored.',
     'mailcoach_tags_instructions' => 'Applied to every subscriber. Existing tags are replaced.',

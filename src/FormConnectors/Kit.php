@@ -40,24 +40,22 @@ class Kit extends Connector
         return (bool) config('statamic.forms-pro.connections.kit.api_key');
     }
 
-    public function finalized(Submission $submission): object|array
+    protected function job(Submission $submission, array $connection): ?object
     {
-        $config = $submission->form()->connections()->get('kit', []);
-
-        if (! Arr::get($config, 'email_field')) {
-            return [];
+        if (! Arr::get($connection, 'email_field')) {
+            return null;
         }
 
-        if (! $submission->get($config['email_field']) || ! $this->hasConsent($submission, $config)) {
-            return [];
+        if (! $submission->get($connection['email_field']) || ! $this->hasConsent($submission, $connection)) {
+            return null;
         }
 
-        return [new SubscribeToKit($submission, $config)];
+        return new SubscribeToKit($submission, $connection);
     }
 
-    private function hasConsent(Submission $submission, array $config): bool
+    private function hasConsent(Submission $submission, array $connection): bool
     {
-        return blank($handle = Arr::get($config, 'consent_field'))
+        return blank($handle = Arr::get($connection, 'consent_field'))
             || $this->isChecked($submission, $handle);
     }
 
@@ -82,28 +80,34 @@ class Kit extends Connector
 
         $blueprint = static::blueprint($form, $account['forms'], $account['tags'], $account['custom_fields']);
 
-        $fields = $blueprint->fields()
-            ->addValues($form->connections()->get('kit', []))
-            ->preProcess();
+        $fields = $blueprint->fields()->preProcess();
 
         return VueComponent::render('kit-connector', [
             'blueprint' => $blueprint->toPublishArray(),
-            'meta' => $fields->meta()->all(),
+            'meta' => collect($form->connections()->get('kit'))
+                ->mapWithKeys(fn (array $connection): array => [
+                    $connection['id'] => $fields->addValues($connection)->preProcess()->meta()->all(),
+                ])
+                ->all(),
+            'defaults' => [
+                'values' => $fields->values()->all(),
+                'meta' => $fields->meta()->all(),
+            ],
             'isConfigured' => $isConfigured,
             'apiError' => $apiError ?? null,
         ]);
     }
 
-    public function preProcess(array $config, Form $form): array
+    protected function preProcessConnection(array $connection, Form $form): array
     {
         return static::blueprint($form)->fields()
-            ->addValues($config)
+            ->addValues($connection)
             ->preProcess()
             ->values()
             ->all();
     }
 
-    public function rules(Form $form): array
+    protected function connectionRules(Form $form): array
     {
         $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
 
@@ -120,19 +124,19 @@ class Kit extends Connector
         ];
     }
 
-    public function process(array $data, Form $form): array
+    protected function processConnection(array $connection, Form $form): array
     {
-        $config = static::blueprint($form)->fields()
-            ->addValues($data)
+        $values = static::blueprint($form)->fields()
+            ->addValues($connection)
             ->process()
             ->values()
             ->all();
 
-        $config['custom_fields'] = collect(Arr::get($config, 'custom_fields'))
+        $values['custom_fields'] = collect(Arr::get($values, 'custom_fields'))
             ->map(fn (array $customField) => Arr::except($customField, 'id'))
             ->all() ?: null;
 
-        return Arr::removeNullValues($config);
+        return $values;
     }
 
     public static function blueprint(Form $form, array $forms = [], array $tags = [], array $customFields = []): \Statamic\Fields\Blueprint

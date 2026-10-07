@@ -41,24 +41,22 @@ class Mailcoach extends Connector
             && config('statamic.forms-pro.connections.mailcoach.token');
     }
 
-    public function finalized(Submission $submission): object|array
+    protected function job(Submission $submission, array $connection): ?object
     {
-        $config = $submission->form()->connections()->get('mailcoach', []);
-
-        if (! Arr::get($config, 'list') || ! Arr::get($config, 'email_field')) {
-            return [];
+        if (! Arr::get($connection, 'list') || ! Arr::get($connection, 'email_field')) {
+            return null;
         }
 
-        if (! $submission->get($config['email_field']) || ! $this->hasConsent($submission, $config)) {
-            return [];
+        if (! $submission->get($connection['email_field']) || ! $this->hasConsent($submission, $connection)) {
+            return null;
         }
 
-        return [new SubscribeToMailcoach($submission, $config)];
+        return new SubscribeToMailcoach($submission, $connection);
     }
 
-    private function hasConsent(Submission $submission, array $config): bool
+    private function hasConsent(Submission $submission, array $connection): bool
     {
-        return blank($handle = Arr::get($config, 'consent_field'))
+        return blank($handle = Arr::get($connection, 'consent_field'))
             || $this->isChecked($submission, $handle);
     }
 
@@ -77,13 +75,19 @@ class Mailcoach extends Connector
 
         $blueprint = static::blueprint($form, $lists);
 
-        $fields = $blueprint->fields()
-            ->addValues($form->connections()->get('mailcoach', []))
-            ->preProcess();
+        $fields = $blueprint->fields()->preProcess();
 
         return VueComponent::render('mailcoach-connector', [
             'blueprint' => $blueprint->toPublishArray(),
-            'meta' => $fields->meta()->all(),
+            'meta' => collect($form->connections()->get('mailcoach'))
+                ->mapWithKeys(fn (array $connection): array => [
+                    $connection['id'] => $fields->addValues($connection)->preProcess()->meta()->all(),
+                ])
+                ->all(),
+            'defaults' => [
+                'values' => $fields->values()->all(),
+                'meta' => $fields->meta()->all(),
+            ],
             'isConfigured' => $isConfigured,
             'apiError' => $apiError ?? null,
         ]);
@@ -100,7 +104,7 @@ class Mailcoach extends Connector
         );
     }
 
-    public function preProcess(array $config, Form $form): array
+    protected function preProcessConnection(array $connection, Form $form): array
     {
         try {
             $lists = $this->isConfigured() ? $this->lists() : [];
@@ -109,13 +113,13 @@ class Mailcoach extends Connector
         }
 
         return static::blueprint($form, $lists)->fields()
-            ->addValues($config)
+            ->addValues($connection)
             ->preProcess()
             ->values()
             ->all();
     }
 
-    public function rules(Form $form): array
+    protected function connectionRules(Form $form): array
     {
         $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
 
@@ -134,19 +138,19 @@ class Mailcoach extends Connector
         ];
     }
 
-    public function process(array $data, Form $form): array
+    protected function processConnection(array $connection, Form $form): array
     {
-        $config = static::blueprint($form)->fields()
-            ->addValues($data)
+        $values = static::blueprint($form)->fields()
+            ->addValues($connection)
             ->process()
             ->values()
             ->all();
 
-        $config['attributes'] = collect(Arr::get($config, 'attributes'))
+        $values['attributes'] = collect(Arr::get($values, 'attributes'))
             ->map(fn (array $attribute) => Arr::except($attribute, 'id'))
             ->all() ?: null;
 
-        return Arr::removeNullValues($config);
+        return $values;
     }
 
     public static function blueprint(Form $form, array $lists = []): \Statamic\Fields\Blueprint
