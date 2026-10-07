@@ -7,13 +7,13 @@ use Statamic\Facades\Form;
 use Statamic\Fieldtypes\Link;
 use Statamic\FormsPro\AutomagicForms\AutomagicForms;
 use Statamic\FormsPro\AutomagicForms\FormLinkType;
-use Statamic\FormsPro\FormConnections\GoogleSheets\GoogleSheetsClient;
-use Statamic\FormsPro\FormConnections\HubSpot\HubSpotClient;
-use Statamic\FormsPro\FormConnections\Kit\KitClient;
-use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
-use Statamic\FormsPro\FormConnections\Mailcoach\MailcoachClient;
-use Statamic\FormsPro\FormConnections\Slack\SlackClient;
-use Statamic\FormsPro\FormConnections\Twilio\TwilioClient;
+use Statamic\FormsPro\FormConnectors\GoogleSheets\GoogleSheetsClient;
+use Statamic\FormsPro\FormConnectors\HubSpot\HubSpotClient;
+use Statamic\FormsPro\FormConnectors\Kit\KitClient;
+use Statamic\FormsPro\FormConnectors\Mailchimp\MailchimpClient;
+use Statamic\FormsPro\FormConnectors\Mailcoach\MailcoachClient;
+use Statamic\FormsPro\FormConnectors\Slack\SlackClient;
+use Statamic\FormsPro\FormConnectors\Twilio\TwilioClient;
 use Statamic\Providers\AddonServiceProvider;
 
 class ServiceProvider extends AddonServiceProvider

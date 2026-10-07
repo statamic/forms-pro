@@ -13,13 +13,13 @@ import MailchimpGroupFieldtype from './components/fieldtypes/MailchimpGroupField
 import MailchimpGroupOptionFieldtype from './components/fieldtypes/MailchimpGroupOptionFieldtype.vue';
 import MailchimpMarketingPermissionsFieldtype from './components/fieldtypes/MailchimpMarketingPermissionsFieldtype.vue';
 import MailchimpMergeFieldFieldtype from './components/fieldtypes/MailchimpMergeFieldFieldtype.vue';
-import GoogleSheetsConnection from './components/connections/GoogleSheetsConnection.vue';
-import HubSpotConnection from './components/connections/HubSpotConnection.vue';
-import KitConnection from './components/connections/KitConnection.vue';
-import MailchimpConnection from './components/connections/MailchimpConnection.vue';
-import MailcoachConnection from './components/connections/MailcoachConnection.vue';
-import SlackConnection from './components/connections/SlackConnection.vue';
-import TwilioConnection from './components/connections/TwilioConnection.vue';
+import GoogleSheetsConnector from './components/connections/GoogleSheetsConnector.vue';
+import HubSpotConnector from './components/connections/HubSpotConnector.vue';
+import KitConnector from './components/connections/KitConnector.vue';
+import MailchimpConnector from './components/connections/MailchimpConnector.vue';
+import MailcoachConnector from './components/connections/MailcoachConnector.vue';
+import SlackConnector from './components/connections/SlackConnector.vue';
+import TwilioConnector from './components/connections/TwilioConnector.vue';
 
 registerIconSet('forms-pro', import.meta.glob('../svg/*.svg', { query: '?raw', import: 'default' }));
 
@@ -40,11 +40,11 @@ Statamic.booting(() => {
     Statamic.$components.register('mailchimp_marketing_permissions-fieldtype', MailchimpMarketingPermissionsFieldtype);
     Statamic.$components.register('mailchimp_merge_field-fieldtype', MailchimpMergeFieldFieldtype);
 
-    Statamic.$components.register('google-sheets-connection', GoogleSheetsConnection);
-    Statamic.$components.register('hubspot-connection', HubSpotConnection);
-    Statamic.$components.register('kit-connection', KitConnection);
-    Statamic.$components.register('mailchimp-connection', MailchimpConnection);
-    Statamic.$components.register('mailcoach-connection', MailcoachConnection);
-    Statamic.$components.register('slack-connection', SlackConnection);
-    Statamic.$components.register('twilio-connection', TwilioConnection);
+    Statamic.$components.register('google-sheets-connector', GoogleSheetsConnector);
+    Statamic.$components.register('hubspot-connector', HubSpotConnector);
+    Statamic.$components.register('kit-connector', KitConnector);
+    Statamic.$components.register('mailchimp-connector', MailchimpConnector);
+    Statamic.$components.register('mailcoach-connector', MailcoachConnector);
+    Statamic.$components.register('slack-connector', SlackConnector);
+    Statamic.$components.register('twilio-connector', TwilioConnector);
 });

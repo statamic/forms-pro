@@ -5,9 +5,9 @@ namespace Statamic\FormsPro\Http\Controllers\CP;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Statamic\FormsPro\FormConnections\Mailchimp;
-use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpClient;
-use Statamic\FormsPro\FormConnections\Mailchimp\MailchimpException;
+use Statamic\FormsPro\FormConnectors\Mailchimp;
+use Statamic\FormsPro\FormConnectors\Mailchimp\MailchimpClient;
+use Statamic\FormsPro\FormConnectors\Mailchimp\MailchimpException;
 use Statamic\Http\Controllers\CP\CpController;
 
 class MailchimpMergeFieldsController extends CpController

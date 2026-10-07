@@ -4,9 +4,9 @@ namespace Statamic\FormsPro\Http\Controllers\CP;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
-use Statamic\FormsPro\FormConnections\GoogleSheets;
-use Statamic\FormsPro\FormConnections\GoogleSheets\GoogleSheetsException;
-use Statamic\FormsPro\FormConnections\GoogleSheets\Rules\SpreadsheetUrl;
+use Statamic\FormsPro\FormConnectors\GoogleSheets;
+use Statamic\FormsPro\FormConnectors\GoogleSheets\GoogleSheetsException;
+use Statamic\FormsPro\FormConnectors\GoogleSheets\Rules\SpreadsheetUrl;
 use Statamic\Http\Controllers\CP\CpController;
 
 class GoogleSheetsTabsController extends CpController
