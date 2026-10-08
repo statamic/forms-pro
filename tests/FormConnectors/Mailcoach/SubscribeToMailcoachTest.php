@@ -79,11 +79,29 @@ class SubscribeToMailcoachTest extends TestCase
     }
 
     #[Test]
-    public function it_sends_the_configured_tags()
+    public function it_adds_the_configured_tags_without_replacing_existing_ones()
     {
-        $payload = $this->payload(['email' => 'jack@example.com'], ['tags' => ['newsletter', 'website']]);
+        Http::fake([
+            'acme.mailcoach.app/api/email-lists/*' => Http::response(['data' => ['uuid' => 'subscriber-uuid']]),
+            'acme.mailcoach.app/api/subscribers/*' => Http::response(['data' => []]),
+        ]);
 
-        $this->assertEquals(['newsletter', 'website'], $payload['tags']);
+        $this->subscribe(['email' => 'jack@example.com'], ['tags' => ['newsletter', 'website']]);
+
+        Http::assertSentCount(2);
+        Http::assertSent(fn (Request $request) => str_contains($request->url(), '/email-lists/') && ! isset($request['tags']));
+        Http::assertSent(fn (Request $request) => $request->url() === 'https://acme.mailcoach.app/api/subscribers/subscriber-uuid/tags'
+            && $request['tags'] === ['newsletter', 'website']);
+    }
+
+    #[Test]
+    public function it_doesnt_add_tags_when_none_are_configured()
+    {
+        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => ['uuid' => 'subscriber-uuid']])]);
+
+        $this->subscribe(['email' => 'jack@example.com']);
+
+        Http::assertSentCount(1);
     }
 
     #[Test]

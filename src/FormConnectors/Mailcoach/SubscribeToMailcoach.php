@@ -33,7 +33,11 @@ class SubscribeToMailcoach implements ShouldQueue
         }
 
         try {
-            $mailcoach->subscribe($this->config['list'], $this->subscriber($submission, $email));
+            $subscriber = $mailcoach->subscribe($this->config['list'], $this->subscriber($submission, $email));
+
+            if (($tags = Arr::get($this->config, 'tags')) && $uuid = Arr::get($subscriber, 'uuid')) {
+                $mailcoach->addTags($uuid, $tags);
+            }
         } catch (MailcoachException $e) {
             match (true) {
                 $e->isRetryable() => $this->release($e->retryAfter()),
@@ -48,7 +52,6 @@ class SubscribeToMailcoach implements ShouldQueue
             'email' => $email,
             'first_name' => $this->value($submission, Arr::get($this->config, 'first_name_field')),
             'last_name' => $this->value($submission, Arr::get($this->config, 'last_name_field')),
-            'tags' => Arr::get($this->config, 'tags') ?: null,
             'extra_attributes' => $this->extraAttributes($submission),
             'skip_confirmation' => Arr::get($this->config, 'skip_confirmation') ? true : null,
         ]);

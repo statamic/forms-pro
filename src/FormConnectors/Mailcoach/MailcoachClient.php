@@ -45,6 +45,11 @@ class MailcoachClient
         return $this->handle($this->request()->post("email-lists/{$list}/subscribers", $subscriber))['data'] ?? [];
     }
 
+    public function addTags(string $subscriber, array $tags): void
+    {
+        $this->handle($this->request()->post("subscribers/{$subscriber}/tags", ['tags' => $tags]));
+    }
+
     private function request(): PendingRequest
     {
         throw_unless(
