@@ -33,6 +33,10 @@ class Mailchimp extends Connector
 
     protected $developer = 'Statamic';
 
+    private ?array $audiences = null;
+
+    private ?string $apiError = null;
+
     public function description(): ?string
     {
         return __('forms-pro::messages.mailchimp_description');
@@ -69,63 +73,32 @@ class Mailchimp extends Connector
 
     public function render(Form $form): VueComponent
     {
-        $audiences = [];
-        $isConfigured = $this->isConfigured();
-
-        try {
-            if ($isConfigured) {
-                $audiences = $this->audiences();
-            }
-        } catch (ConnectionException|MailchimpException $e) {
-            $apiError = $e->getMessage();
-        }
-
-        $blueprint = static::blueprint($form, $audiences);
-        $fields = $blueprint->fields()->preProcess();
-
         return VueComponent::render('mailchimp-connector', [
-            'blueprint' => $blueprint->toPublishArray(),
-            'meta' => collect($form->connections()->get('mailchimp'))
-                ->mapWithKeys(fn (array $connection): array => [
-                    $connection['id'] => $fields->addValues($connection)->preProcess()->meta()->all(),
-                ])
-                ->all(),
-            'defaults' => [
-                'values' => $fields->values()->all(),
-                'meta' => $fields->meta()->all(),
-            ],
-            'isConfigured' => $isConfigured,
-            'apiError' => $apiError ?? null,
+            ...$this->blueprintProps($form, $form->connections()->get('mailchimp', [])),
+            'isConfigured' => $this->isConfigured(),
+            'apiError' => $this->apiError,
         ]);
     }
 
     private function audiences(): array
     {
-        $mailchimp = app(MailchimpClient::class);
-
-        return Cache::remember(
-            "forms-pro.mailchimp.audiences.{$mailchimp->fingerprint()}",
-            now()->addMinutes(5),
-            fn () => $mailchimp->audiences()
-        );
-    }
-
-    protected function preProcessConnection(array $connection, Form $form): array
-    {
-        $audiences = [];
-
-        if ($this->isConfigured()) {
-            try {
-                $audiences = $this->audiences();
-            } catch (ConnectionException|MailchimpException) {
-            }
+        if ($this->audiences !== null || ! $this->isConfigured()) {
+            return $this->audiences ?? [];
         }
 
-        return static::blueprint($form, $audiences)->fields()
-            ->addValues($connection)
-            ->preProcess()
-            ->values()
-            ->all();
+        try {
+            $mailchimp = app(MailchimpClient::class);
+
+            return $this->audiences = Cache::remember(
+                "forms-pro.mailchimp.audiences.{$mailchimp->fingerprint()}",
+                now()->addMinutes(5),
+                fn () => $mailchimp->audiences()
+            );
+        } catch (ConnectionException|MailchimpException $e) {
+            $this->apiError = $e->getMessage();
+
+            return $this->audiences = [];
+        }
     }
 
     protected function connectionRules(Form $form): array
@@ -133,21 +106,21 @@ class Mailchimp extends Connector
         $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
 
         return [
-            'list' => ['required', 'alpha_num:ascii'],
-            'email_field' => ['required', $isFormField],
-            'first_name_field' => ['nullable', $isFormField],
-            'last_name_field' => ['nullable', $isFormField],
-            'consent_field' => ['nullable', $isFormField],
-            'tags' => ['nullable', 'array'],
+            'list' => ['alpha_num:ascii'],
+            'email_field' => [$isFormField],
+            'first_name_field' => [$isFormField],
+            'last_name_field' => [$isFormField],
+            'consent_field' => [$isFormField],
+            'tags' => ['array'],
             'tags.*' => ['string'],
-            'merge_fields' => ['nullable', 'array'],
+            'merge_fields' => ['array'],
             'merge_fields.*.key' => ['required', 'string', 'distinct', 'regex:/^[A-Z0-9_]+$/', Rule::notIn(self::DEDICATED_MERGE_TAGS)],
             'merge_fields.*.value' => ['required', $isFormField],
-            'groups' => ['nullable', 'array'],
+            'groups' => ['array'],
             'groups.*.group' => ['required', 'string', 'distinct'],
             'groups.*.field' => ['required', $isFormField],
             'groups.*.option' => $this->groupOptionRules($form),
-            'marketing_permissions' => ['nullable', 'array'],
+            'marketing_permissions' => ['array'],
             'marketing_permissions.*.permission' => ['required', 'string', 'distinct'],
             'marketing_permissions.*.field' => ['required', $isFormField],
             'skip_confirmation' => ['boolean'],
@@ -169,11 +142,7 @@ class Mailchimp extends Connector
 
     protected function processConnection(array $connection, Form $form): array
     {
-        $values = static::blueprint($form)->fields()
-            ->addValues($connection)
-            ->process()
-            ->values()
-            ->all();
+        $values = parent::processConnection($connection, $form);
 
         foreach (['merge_fields', 'groups'] as $grid) {
             $values[$grid] = collect(Arr::get($values, $grid))
@@ -184,8 +153,10 @@ class Mailchimp extends Connector
         return $values;
     }
 
-    public static function blueprint(Form $form, array $audiences = []): \Statamic\Fields\Blueprint
+    public function blueprint(Form $form): \Statamic\Fields\Blueprint
     {
+        $audiences = $this->audiences();
+
         return Blueprint::make()->setContents([
             'tabs' => [
                 'main' => [

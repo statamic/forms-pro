@@ -22,6 +22,10 @@ class Slack extends Connector
 {
     protected $developer = 'Statamic';
 
+    private ?array $channels = null;
+
+    private ?string $apiError = null;
+
     public function description(): ?string
     {
         return __('forms-pro::messages.slack_description');
@@ -44,69 +48,45 @@ class Slack extends Connector
 
     public function render(Form $form): VueComponent
     {
-        $channels = [];
-        $isConfigured = $this->isConfigured();
-
-        try {
-            $channels = $isConfigured ? $this->channels() : [];
-        } catch (ConnectionException|SlackException $e) {
-            $apiError = $e->getMessage();
-        }
-
-        $blueprint = static::blueprint($form, $channels);
-        $fields = $blueprint->fields()->preProcess();
-
         return VueComponent::render('slack-connector', [
-            'blueprint' => $blueprint->toPublishArray(),
-            'meta' => collect($form->connections()->get('slack'))
-                ->mapWithKeys(fn (array $connection): array => [
-                    $connection['id'] => $fields->addValues($connection)->preProcess()->meta()->all(),
-                ])
-                ->all(),
-            'defaults' => [
-                'values' => $fields->values()->all(),
-                'meta' => $fields->meta()->all(),
-            ],
-            'isConfigured' => $isConfigured,
-            'apiError' => $apiError ?? null,
+            ...$this->blueprintProps($form, $form->connections()->get('slack', [])),
+            'isConfigured' => $this->isConfigured(),
+            'apiError' => $this->apiError,
         ]);
     }
 
     private function channels(): array
     {
-        $slack = app(SlackClient::class);
+        if ($this->channels !== null || ! $this->isConfigured()) {
+            return $this->channels ?? [];
+        }
 
-        return Cache::remember(
-            "forms-pro.slack.channels.{$slack->fingerprint()}",
-            now()->addMinutes(5),
-            fn () => $slack->channels()->all()
-        );
-    }
+        try {
+            $slack = app(SlackClient::class);
 
-    protected function preProcessConnection(array $connection, Form $form): array
-    {
-        return static::blueprint($form)->fields()
-            ->addValues($connection)
-            ->preProcess()
-            ->values()
-            ->all();
+            return $this->channels = Cache::remember(
+                "forms-pro.slack.channels.{$slack->fingerprint()}",
+                now()->addMinutes(5),
+                fn () => $slack->channels()->all()
+            );
+        } catch (ConnectionException|SlackException $e) {
+            $this->apiError = $e->getMessage();
+
+            return $this->channels = [];
+        }
     }
 
     protected function connectionRules(Form $form): array
     {
         return [
-            'channel' => ['required', new SlackChannel],
-            'heading' => ['nullable', 'string', 'max:2000'],
+            'channel' => [new SlackChannel],
+            'heading' => ['string'],
         ];
     }
 
     protected function processConnection(array $connection, Form $form): array
     {
-        $values = static::blueprint($form)->fields()
-            ->addValues($connection)
-            ->process()
-            ->values()
-            ->all();
+        $values = parent::processConnection($connection, $form);
 
         return [
             ...$values,
@@ -115,8 +95,10 @@ class Slack extends Connector
         ];
     }
 
-    public static function blueprint(Form $form, array $channels = []): \Statamic\Fields\Blueprint
+    public function blueprint(Form $form): \Statamic\Fields\Blueprint
     {
+        $channels = $this->channels();
+
         return Blueprint::make()->setContents([
             'tabs' => [
                 'main' => [

@@ -129,6 +129,22 @@ class SlackConnectorTest extends TestCase
     }
 
     #[Test]
+    public function it_only_asks_slack_for_channels_once_per_instance_even_when_it_fails()
+    {
+        $this->fakeHttp(['slack.com/*' => Http::response(['ok' => false, 'error' => 'invalid_auth'])]);
+
+        $form = tap(Form::make('test'))->save();
+        $slack = new Slack;
+
+        $slack->rules($form);
+        $slack->process([['channel' => 'C0123ABCDEF']], $form);
+        $props = $slack->render($form)->toArray()['props'];
+
+        Http::assertSentCount(1);
+        $this->assertNotNull($props['apiError']);
+    }
+
+    #[Test]
     public function it_follows_pagination_when_listing_channels()
     {
         $this->fakeHttp(fn (Request $request) => match ($request['cursor']) {

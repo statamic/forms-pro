@@ -29,6 +29,10 @@ class HubSpot extends Connector
 
     protected $developer = 'Statamic';
 
+    private ?array $account = null;
+
+    private ?string $apiError = null;
+
     public function description(): ?string
     {
         return __('forms-pro::messages.hubspot_description');
@@ -79,46 +83,32 @@ class HubSpot extends Connector
 
     public function render(Form $form): VueComponent
     {
-        $account = ['forms' => [], 'subscriptions' => []];
-        $isConfigured = $this->isConfigured();
-
-        try {
-            if ($isConfigured) {
-                $account = $this->account();
-            }
-        } catch (ConnectionException|HubSpotException $e) {
-            $apiError = $e->getMessage();
-        }
-
-        $blueprint = static::blueprint($form, $account['forms'], $account['subscriptions']);
-
-        $fields = $blueprint->fields()->preProcess();
-
         return VueComponent::render('hubspot-connector', [
-            'blueprint' => $blueprint->toPublishArray(),
-            'meta' => collect($form->connections()->get('hubspot'))
-                ->mapWithKeys(fn (array $connection): array => [
-                    $connection['id'] => $fields->addValues($connection)->preProcess()->meta()->all(),
-                ])
-                ->all(),
-            'defaults' => [
-                'values' => $fields->values()->all(),
-                'meta' => $fields->meta()->all(),
-            ],
-            'hubspotForms' => $account['forms'],
-            'isConfigured' => $isConfigured,
-            'apiError' => $apiError ?? null,
+            ...$this->blueprintProps($form, $form->connections()->get('hubspot', [])),
+            'hubspotForms' => $this->account()['forms'],
+            'isConfigured' => $this->isConfigured(),
+            'apiError' => $this->apiError,
         ]);
     }
 
     private function account(): array
     {
-        $hubspot = app(HubSpotClient::class);
+        if ($this->account !== null || ! $this->isConfigured()) {
+            return $this->account ?? ['forms' => [], 'subscriptions' => []];
+        }
 
-        return Cache::remember("forms-pro.hubspot.account.{$hubspot->fingerprint()}", now()->addMinutes(5), fn (): array => [
-            'forms' => $hubspot->forms(),
-            'subscriptions' => $this->subscriptions($hubspot),
-        ]);
+        try {
+            $hubspot = app(HubSpotClient::class);
+
+            return $this->account = Cache::remember("forms-pro.hubspot.account.{$hubspot->fingerprint()}", now()->addMinutes(5), fn (): array => [
+                'forms' => $hubspot->forms(),
+                'subscriptions' => $this->subscriptions($hubspot),
+            ]);
+        } catch (ConnectionException|HubSpotException $e) {
+            $this->apiError = $e->getMessage();
+
+            return $this->account = ['forms' => [], 'subscriptions' => []];
+        }
     }
 
     private function subscriptions(HubSpotClient $hubspot): array
@@ -130,53 +120,29 @@ class HubSpot extends Connector
         }
     }
 
-    protected function preProcessConnection(array $connection, Form $form): array
-    {
-        try {
-            $account = $this->isConfigured()
-                ? $this->account()
-                : ['forms' => [], 'subscriptions' => []];
-        } catch (ConnectionException|HubSpotException) {
-            $account = ['forms' => [], 'subscriptions' => []];
-        }
-
-        return static::blueprint($form, $account['forms'], $account['subscriptions'])->fields()
-            ->addValues($connection)
-            ->preProcess()
-            ->values()
-            ->all();
-    }
-
     protected function connectionRules(Form $form): array
     {
         $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
 
         return [
-            'form' => ['required', 'uuid'],
-            'email_field' => ['required', $isFormField],
-            'consent_field' => ['nullable', $isFormField],
-            'consent_to_process_field' => ['nullable', $isFormField],
-            'legitimate_interest_subscription' => ['nullable', 'integer'],
-            'properties' => ['nullable', 'array'],
+            'form' => ['uuid'],
+            'email_field' => [$isFormField],
+            'consent_field' => [$isFormField],
+            'consent_to_process_field' => [$isFormField],
+            'legitimate_interest_subscription' => ['integer'],
+            'properties' => ['array'],
             'properties.*.key' => ['required', 'string', 'distinct', Rule::notIn(['email'])],
             'properties.*.value' => ['required', $isFormField],
-            'communications' => ['nullable', 'array'],
+            'communications' => ['array'],
             'communications.*.subscription' => ['required', 'integer', 'distinct'],
             'communications.*.field' => ['required', $isFormField],
         ];
     }
 
-    protected function processConnection(array $connection, Form $form): array
+    public function blueprint(Form $form): \Statamic\Fields\Blueprint
     {
-        return static::blueprint($form)->fields()
-            ->addValues($connection)
-            ->process()
-            ->values()
-            ->all();
-    }
+        ['forms' => $forms, 'subscriptions' => $subscriptions] = $this->account();
 
-    public static function blueprint(Form $form, array $forms = [], array $subscriptions = []): \Statamic\Fields\Blueprint
-    {
         return Blueprint::make()->setContents([
             'tabs' => [
                 'main' => [

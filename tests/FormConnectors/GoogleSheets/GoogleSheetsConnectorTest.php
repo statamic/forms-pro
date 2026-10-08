@@ -103,7 +103,7 @@ class GoogleSheetsConnectorTest extends TestCase
         $props = (new GoogleSheets)->render($form)->toArray()['props'];
 
         $this->assertEquals([0 => 'Leads 2026', 184 => 'Archive'], $props['meta']['abc']['tab']['options']);
-        $this->assertEquals([], $props['defaults']['meta']['tab']['options']);
+        $this->assertNull($props['defaults']['meta']['tab']);
     }
 
     #[Test]
@@ -130,7 +130,7 @@ class GoogleSheetsConnectorTest extends TestCase
         $props = (new GoogleSheets)->render($this->form([['id' => 'abc', 'tab' => 0]]))->toArray()['props'];
 
         $this->assertEquals([], $props['meta']['abc']['tab']['options']);
-        $this->assertEquals([], $props['defaults']['meta']['tab']['options']);
+        $this->assertNull($props['defaults']['meta']['tab']);
 
         Http::assertNothingSent();
     }

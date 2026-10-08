@@ -25,6 +25,10 @@ class Mailcoach extends Connector
 
     protected $developer = 'Statamic';
 
+    private ?array $lists = null;
+
+    private ?string $apiError = null;
+
     public function description(): ?string
     {
         return __('forms-pro::messages.mailcoach_description');
@@ -62,61 +66,32 @@ class Mailcoach extends Connector
 
     public function render(Form $form): VueComponent
     {
-        $lists = [];
-        $isConfigured = $this->isConfigured();
-
-        try {
-            if ($isConfigured) {
-                $lists = $this->lists();
-            }
-        } catch (ConnectionException|MailcoachException $e) {
-            $apiError = $e->getMessage();
-        }
-
-        $blueprint = static::blueprint($form, $lists);
-
-        $fields = $blueprint->fields()->preProcess();
-
         return VueComponent::render('mailcoach-connector', [
-            'blueprint' => $blueprint->toPublishArray(),
-            'meta' => collect($form->connections()->get('mailcoach'))
-                ->mapWithKeys(fn (array $connection): array => [
-                    $connection['id'] => $fields->addValues($connection)->preProcess()->meta()->all(),
-                ])
-                ->all(),
-            'defaults' => [
-                'values' => $fields->values()->all(),
-                'meta' => $fields->meta()->all(),
-            ],
-            'isConfigured' => $isConfigured,
-            'apiError' => $apiError ?? null,
+            ...$this->blueprintProps($form, $form->connections()->get('mailcoach', [])),
+            'isConfigured' => $this->isConfigured(),
+            'apiError' => $this->apiError,
         ]);
     }
 
     private function lists(): array
     {
-        $mailcoach = app(MailcoachClient::class);
-
-        return Cache::remember(
-            "forms-pro.mailcoach.email-lists.{$mailcoach->fingerprint()}",
-            now()->addMinutes(5),
-            fn () => $mailcoach->lists()
-        );
-    }
-
-    protected function preProcessConnection(array $connection, Form $form): array
-    {
-        try {
-            $lists = $this->isConfigured() ? $this->lists() : [];
-        } catch (ConnectionException|MailcoachException) {
-            $lists = [];
+        if ($this->lists !== null || ! $this->isConfigured()) {
+            return $this->lists ?? [];
         }
 
-        return static::blueprint($form, $lists)->fields()
-            ->addValues($connection)
-            ->preProcess()
-            ->values()
-            ->all();
+        try {
+            $mailcoach = app(MailcoachClient::class);
+
+            return $this->lists = Cache::remember(
+                "forms-pro.mailcoach.email-lists.{$mailcoach->fingerprint()}",
+                now()->addMinutes(5),
+                fn () => $mailcoach->lists()
+            );
+        } catch (ConnectionException|MailcoachException $e) {
+            $this->apiError = $e->getMessage();
+
+            return $this->lists = [];
+        }
     }
 
     protected function connectionRules(Form $form): array
@@ -124,14 +99,14 @@ class Mailcoach extends Connector
         $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
 
         return [
-            'list' => ['required', 'uuid'],
-            'email_field' => ['required', $isFormField],
-            'first_name_field' => ['nullable', $isFormField],
-            'last_name_field' => ['nullable', $isFormField],
-            'consent_field' => ['nullable', $isFormField],
-            'tags' => ['nullable', 'array'],
+            'list' => ['uuid'],
+            'email_field' => [$isFormField],
+            'first_name_field' => [$isFormField],
+            'last_name_field' => [$isFormField],
+            'consent_field' => [$isFormField],
+            'tags' => ['array'],
             'tags.*' => ['string'],
-            'attributes' => ['nullable', 'array'],
+            'attributes' => ['array'],
             'attributes.*.key' => ['required', 'string', 'distinct'],
             'attributes.*.value' => ['required', $isFormField],
             'skip_confirmation' => ['boolean'],
@@ -140,11 +115,7 @@ class Mailcoach extends Connector
 
     protected function processConnection(array $connection, Form $form): array
     {
-        $values = static::blueprint($form)->fields()
-            ->addValues($connection)
-            ->process()
-            ->values()
-            ->all();
+        $values = parent::processConnection($connection, $form);
 
         $values['attributes'] = collect(Arr::get($values, 'attributes'))
             ->map(fn (array $attribute) => Arr::except($attribute, 'id'))
@@ -153,8 +124,10 @@ class Mailcoach extends Connector
         return $values;
     }
 
-    public static function blueprint(Form $form, array $lists = []): \Statamic\Fields\Blueprint
+    public function blueprint(Form $form): \Statamic\Fields\Blueprint
     {
+        $lists = $this->lists();
+
         return Blueprint::make()->setContents([
             'tabs' => [
                 'main' => [

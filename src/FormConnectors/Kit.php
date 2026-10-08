@@ -25,6 +25,10 @@ class Kit extends Connector
 
     protected $developer = 'Statamic';
 
+    private ?array $account = null;
+
+    private ?string $apiError = null;
+
     public function description(): ?string
     {
         return __('forms-pro::messages.kit_description');
@@ -61,50 +65,32 @@ class Kit extends Connector
 
     public function render(Form $form): VueComponent
     {
-        $account = ['forms' => [], 'tags' => [], 'custom_fields' => []];
-        $isConfigured = $this->isConfigured();
-
-        try {
-            if ($isConfigured) {
-                $kit = app(KitClient::class);
-
-                $account = Cache::remember("forms-pro.kit.account.{$kit->fingerprint()}", now()->addMinutes(5), fn (): array => [
-                    'forms' => $kit->forms(),
-                    'tags' => $kit->tags(),
-                    'custom_fields' => $kit->customFields(),
-                ]);
-            }
-        } catch (ConnectionException|KitException $e) {
-            $apiError = $e->getMessage();
-        }
-
-        $blueprint = static::blueprint($form, $account['forms'], $account['tags'], $account['custom_fields']);
-
-        $fields = $blueprint->fields()->preProcess();
-
         return VueComponent::render('kit-connector', [
-            'blueprint' => $blueprint->toPublishArray(),
-            'meta' => collect($form->connections()->get('kit'))
-                ->mapWithKeys(fn (array $connection): array => [
-                    $connection['id'] => $fields->addValues($connection)->preProcess()->meta()->all(),
-                ])
-                ->all(),
-            'defaults' => [
-                'values' => $fields->values()->all(),
-                'meta' => $fields->meta()->all(),
-            ],
-            'isConfigured' => $isConfigured,
-            'apiError' => $apiError ?? null,
+            ...$this->blueprintProps($form, $form->connections()->get('kit', [])),
+            'isConfigured' => $this->isConfigured(),
+            'apiError' => $this->apiError,
         ]);
     }
 
-    protected function preProcessConnection(array $connection, Form $form): array
+    private function account(): array
     {
-        return static::blueprint($form)->fields()
-            ->addValues($connection)
-            ->preProcess()
-            ->values()
-            ->all();
+        if ($this->account !== null || ! $this->isConfigured()) {
+            return $this->account ?? ['forms' => [], 'tags' => [], 'custom_fields' => []];
+        }
+
+        try {
+            $kit = app(KitClient::class);
+
+            return $this->account = Cache::remember("forms-pro.kit.account.{$kit->fingerprint()}", now()->addMinutes(5), fn (): array => [
+                'forms' => $kit->forms(),
+                'tags' => $kit->tags(),
+                'custom_fields' => $kit->customFields(),
+            ]);
+        } catch (ConnectionException|KitException $e) {
+            $this->apiError = $e->getMessage();
+
+            return $this->account = ['forms' => [], 'tags' => [], 'custom_fields' => []];
+        }
     }
 
     protected function connectionRules(Form $form): array
@@ -112,13 +98,13 @@ class Kit extends Connector
         $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
 
         return [
-            'form' => ['nullable', 'integer'],
-            'email_field' => ['required', $isFormField],
-            'first_name_field' => ['nullable', $isFormField],
-            'consent_field' => ['nullable', $isFormField],
-            'tags' => ['nullable', 'array'],
+            'form' => ['integer'],
+            'email_field' => [$isFormField],
+            'first_name_field' => [$isFormField],
+            'consent_field' => [$isFormField],
+            'tags' => ['array'],
             'tags.*' => ['integer', 'distinct'],
-            'custom_fields' => ['nullable', 'array'],
+            'custom_fields' => ['array'],
             'custom_fields.*.key' => ['required', 'string', 'distinct'],
             'custom_fields.*.value' => ['required', $isFormField],
         ];
@@ -126,11 +112,7 @@ class Kit extends Connector
 
     protected function processConnection(array $connection, Form $form): array
     {
-        $values = static::blueprint($form)->fields()
-            ->addValues($connection)
-            ->process()
-            ->values()
-            ->all();
+        $values = parent::processConnection($connection, $form);
 
         $values['custom_fields'] = collect(Arr::get($values, 'custom_fields'))
             ->map(fn (array $customField) => Arr::except($customField, 'id'))
@@ -139,8 +121,10 @@ class Kit extends Connector
         return $values;
     }
 
-    public static function blueprint(Form $form, array $forms = [], array $tags = [], array $customFields = []): \Statamic\Fields\Blueprint
+    public function blueprint(Form $form): \Statamic\Fields\Blueprint
     {
+        ['forms' => $forms, 'tags' => $tags, 'custom_fields' => $customFields] = $this->account();
+
         return Blueprint::make()->setContents([
             'tabs' => [
                 'main' => [

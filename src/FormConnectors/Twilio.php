@@ -22,6 +22,10 @@ class Twilio extends Connector
 {
     protected $developer = 'Statamic';
 
+    private ?array $senders = null;
+
+    private ?string $apiError = null;
+
     public function description(): ?string
     {
         return __('forms-pro::messages.twilio_description');
@@ -46,70 +50,46 @@ class Twilio extends Connector
 
     public function render(Form $form): VueComponent
     {
-        $senders = [];
-        $isConfigured = $this->isConfigured();
-
-        try {
-            if ($isConfigured) {
-                $twilio = app(TwilioClient::class);
-
-                $senders = Cache::remember("forms-pro.twilio.account.{$twilio->fingerprint()}", now()->addMinutes(5), function () use ($twilio): array {
-                    return [...$twilio->phoneNumbers(), ...$twilio->messagingServices()];
-                });
-            }
-        } catch (ConnectionException|TwilioException $e) {
-            $apiError = $e->getMessage();
-        }
-
-        $blueprint = static::blueprint($form, $senders);
-        $fields = $blueprint->fields()->preProcess();
-
         return VueComponent::render('twilio-connector', [
-            'blueprint' => $blueprint->toPublishArray(),
-            'meta' => collect($form->connections()->get('twilio'))
-                ->mapWithKeys(fn (array $connection): array => [
-                    $connection['id'] => $fields->addValues($connection)->preProcess()->meta()->all(),
-                ])
-                ->all(),
-            'defaults' => [
-                'values' => $fields->values()->all(),
-                'meta' => $fields->meta()->all(),
-            ],
-            'isConfigured' => $isConfigured,
-            'apiError' => $apiError ?? null,
+            ...$this->blueprintProps($form, $form->connections()->get('twilio', [])),
+            'isConfigured' => $this->isConfigured(),
+            'apiError' => $this->apiError,
         ]);
     }
 
-    protected function preProcessConnection(array $connection, Form $form): array
+    private function senders(): array
     {
-        return static::blueprint($form)->fields()
-            ->addValues($connection)
-            ->preProcess()
-            ->values()
-            ->all();
+        if ($this->senders !== null || ! $this->isConfigured()) {
+            return $this->senders ?? [];
+        }
+
+        try {
+            $twilio = app(TwilioClient::class);
+
+            return $this->senders = Cache::remember("forms-pro.twilio.account.{$twilio->fingerprint()}", now()->addMinutes(5), function () use ($twilio): array {
+                return [...$twilio->phoneNumbers(), ...$twilio->messagingServices()];
+            });
+        } catch (ConnectionException|TwilioException $e) {
+            $this->apiError = $e->getMessage();
+
+            return $this->senders = [];
+        }
     }
 
     protected function connectionRules(Form $form): array
     {
         return [
-            'to' => ['required', new TwilioRecipient($form)],
-            'from' => ['required', new TwilioSender],
-            'body' => ['required', 'string', 'max:1600'],
-            'country_code' => ['nullable', 'string', 'regex:/^\+[1-9]\d{0,3}$/'],
+            'to' => [new TwilioRecipient($form)],
+            'from' => [new TwilioSender],
+            'body' => ['string'],
+            'country_code' => ['string', 'regex:/^\+[1-9]\d{0,3}$/'],
         ];
     }
 
-    protected function processConnection(array $connection, Form $form): array
+    public function blueprint(Form $form): \Statamic\Fields\Blueprint
     {
-        return static::blueprint($form)->fields()
-            ->addValues($connection)
-            ->process()
-            ->values()
-            ->all();
-    }
+        $senders = $this->senders();
 
-    public static function blueprint(Form $form, array $senders = []): \Statamic\Fields\Blueprint
-    {
         return Blueprint::make()->setContents([
             'tabs' => [
                 'main' => [
