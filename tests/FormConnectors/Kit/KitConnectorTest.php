@@ -12,11 +12,12 @@ use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Kit;
 use Statamic\FormsPro\FormConnectors\Kit\SubscribeToKit;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\FakesConnectorApis;
 use Tests\TestCase;
 
 class KitConnectorTest extends TestCase
 {
-    use PreventsSavingStacheItemsToDisk;
+    use FakesConnectorApis, PreventsSavingStacheItemsToDisk;
 
     private const int FORM = 9785233;
 
@@ -117,7 +118,7 @@ class KitConnectorTest extends TestCase
     #[Test]
     public function it_follows_pagination_when_listing_tags()
     {
-        Http::fake([
+        $this->fakeHttp([
             'api.kit.com/v4/forms*' => Http::response(['forms' => []]),
             'api.kit.com/v4/custom_fields*' => Http::response(['custom_fields' => []]),
             'api.kit.com/v4/tags*after=page-two*' => Http::response(['tags' => [
@@ -142,7 +143,7 @@ class KitConnectorTest extends TestCase
     {
         config(['statamic.forms-pro.connections.kit.api_key' => null]);
 
-        Http::fake();
+        $this->fakeHttp();
 
         $props = (new Kit)->render($this->form())->toArray()['props'];
 
@@ -153,7 +154,7 @@ class KitConnectorTest extends TestCase
     #[Test]
     public function it_renders_api_errors()
     {
-        Http::fake(['api.kit.com/*' => Http::response(null, 401)]);
+        $this->fakeHttp(['api.kit.com/*' => Http::response(null, 401)]);
 
         $props = (new Kit)->render($this->form())->toArray()['props'];
 
@@ -292,7 +293,7 @@ class KitConnectorTest extends TestCase
 
     private function fakeAccount(): void
     {
-        Http::fake([
+        $this->fakeHttp([
             'api.kit.com/v4/forms*' => Http::response(['forms' => [
                 ['id' => self::FORM, 'name' => 'Newsletter'],
                 ['id' => 9776140, 'name' => 'Newsletter site'],

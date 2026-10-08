@@ -14,11 +14,12 @@ use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Twilio;
 use Statamic\FormsPro\FormConnectors\Twilio\SendTwilioMessage;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\FakesConnectorApis;
 use Tests\TestCase;
 
 class TwilioConnectorTest extends TestCase
 {
-    use PreventsSavingStacheItemsToDisk;
+    use FakesConnectorApis, PreventsSavingStacheItemsToDisk;
 
     private const string ACCOUNT_SID = 'AC00000000000000000000000000000000';
 
@@ -96,7 +97,7 @@ class TwilioConnectorTest extends TestCase
     #[Test]
     public function it_renders_the_vue_component()
     {
-        Http::fake([
+        $this->fakeHttp([
             'api.twilio.com/*/IncomingPhoneNumbers.json*' => Http::response(['incoming_phone_numbers' => [
                 ['phone_number' => '+14155552671', 'friendly_name' => 'Marketing', 'capabilities' => ['sms' => true]],
                 ['phone_number' => '+447458158271', 'friendly_name' => '447458158271', 'capabilities' => ['sms' => true]],
@@ -127,7 +128,7 @@ class TwilioConnectorTest extends TestCase
     {
         config(['statamic.forms-pro.connections.twilio' => null]);
 
-        Http::fake();
+        $this->fakeHttp();
 
         $props = (new Twilio)->render($this->form())->toArray()['props'];
 
@@ -138,7 +139,7 @@ class TwilioConnectorTest extends TestCase
     #[Test]
     public function it_only_asks_twilio_for_resources_a_standard_api_key_can_reach()
     {
-        Http::fake([
+        $this->fakeHttp([
             'api.twilio.com/*/IncomingPhoneNumbers.json*' => Http::response(['incoming_phone_numbers' => []]),
             'messaging.twilio.com/v1/Services*' => Http::response(['services' => []]),
         ]);
@@ -151,7 +152,7 @@ class TwilioConnectorTest extends TestCase
     #[Test]
     public function it_renders_api_errors()
     {
-        Http::fake(['*' => Http::response(['code' => 20003], 401)]);
+        $this->fakeHttp(['*' => Http::response(['code' => 20003], 401)]);
 
         $props = (new Twilio)->render($this->form())->toArray()['props'];
 
@@ -163,7 +164,7 @@ class TwilioConnectorTest extends TestCase
     #[Test]
     public function it_renders_an_api_error_when_twilio_is_unavailable()
     {
-        Http::fake(['*' => Http::response(null, 503)]);
+        $this->fakeHttp(['*' => Http::response(null, 503)]);
 
         $props = (new Twilio)->render($this->form())->toArray()['props'];
 
@@ -173,7 +174,7 @@ class TwilioConnectorTest extends TestCase
     #[Test]
     public function it_renders_an_api_error_when_twilio_cant_be_reached()
     {
-        Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
+        $this->fakeHttp(fn () => throw new ConnectionException('Could not resolve host.'));
 
         $props = (new Twilio)->render($this->form())->toArray()['props'];
 

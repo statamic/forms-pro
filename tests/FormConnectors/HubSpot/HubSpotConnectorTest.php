@@ -13,11 +13,12 @@ use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\HubSpot;
 use Statamic\FormsPro\FormConnectors\HubSpot\SubmitToHubSpot;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\FakesConnectorApis;
 use Tests\TestCase;
 
 class HubSpotConnectorTest extends TestCase
 {
-    use PreventsSavingStacheItemsToDisk;
+    use FakesConnectorApis, PreventsSavingStacheItemsToDisk;
 
     private const string FORM = '2cc5419c-d732-4a4a-a82d-c0bfbcf948a5';
 
@@ -153,7 +154,7 @@ class HubSpotConnectorTest extends TestCase
     #[Test]
     public function it_follows_pagination_when_listing_forms()
     {
-        Http::fake([
+        $this->fakeHttp([
             'api.hubapi.com/marketing/v3/forms*after=page-two*' => Http::response(['results' => [
                 array_merge($this->definition(), ['id' => 'second-form', 'name' => 'Careers']),
             ]]),
@@ -211,7 +212,7 @@ class HubSpotConnectorTest extends TestCase
     #[Test]
     public function it_still_renders_the_forms_when_the_subscription_lookup_fails()
     {
-        Http::fake([
+        $this->fakeHttp([
             'api.hubapi.com/marketing/v3/forms*' => Http::response(['results' => [$this->definition()]]),
             'api.hubapi.com/communication-preferences/*' => Http::response(['category' => 'MISSING_SCOPE'], 403),
         ]);
@@ -227,7 +228,7 @@ class HubSpotConnectorTest extends TestCase
     {
         config(['statamic.forms-pro.connections.hubspot.access_token' => null]);
 
-        Http::fake();
+        $this->fakeHttp();
 
         $props = (new HubSpot)->render($this->form())->toArray()['props'];
 
@@ -238,7 +239,7 @@ class HubSpotConnectorTest extends TestCase
     #[Test]
     public function it_renders_api_errors()
     {
-        Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
+        $this->fakeHttp(fn () => throw new ConnectionException('Could not resolve host.'));
 
         $rendered = (new HubSpot)->render($this->form())->toArray();
 
@@ -415,7 +416,7 @@ class HubSpotConnectorTest extends TestCase
 
     private function fakeAccount(): void
     {
-        Http::fake([
+        $this->fakeHttp([
             'api.hubapi.com/marketing/v3/forms*' => Http::response(['results' => [$this->definition()]]),
             'api.hubapi.com/communication-preferences/*' => Http::response(['subscriptionDefinitions' => [
                 ['id' => '3314676590', 'name' => 'Marketing Information'],

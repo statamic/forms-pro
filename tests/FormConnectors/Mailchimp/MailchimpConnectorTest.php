@@ -13,11 +13,12 @@ use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Mailchimp;
 use Statamic\FormsPro\FormConnectors\Mailchimp\SubscribeToMailchimp;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\FakesConnectorApis;
 use Tests\TestCase;
 
 class MailchimpConnectorTest extends TestCase
 {
-    use PreventsSavingStacheItemsToDisk;
+    use FakesConnectorApis, PreventsSavingStacheItemsToDisk;
 
     private const string AUDIENCE = 'a1b2c3d4e5';
 
@@ -101,7 +102,7 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_pre_processes_a_legacy_single_connection_config_into_a_list()
     {
-        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => []])]);
+        $this->fakeHttp(['us14.api.mailchimp.com/*' => Http::response(['lists' => []])]);
 
         $configs = (new Mailchimp)->preProcess(['list' => self::AUDIENCE, 'email_field' => 'email'], $this->form());
 
@@ -180,7 +181,7 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_renders_the_connection_with_the_available_audiences()
     {
-        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
+        $this->fakeHttp(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
@@ -201,7 +202,7 @@ class MailchimpConnectorTest extends TestCase
     {
         config(['statamic.forms-pro.connections.mailchimp.api_key' => null]);
 
-        Http::fake();
+        $this->fakeHttp();
 
         $props = (new Mailchimp)->render($this->form())->toArray()['props'];
 
@@ -212,7 +213,7 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_renders_api_errors()
     {
-        Http::fake(['us14.api.mailchimp.com/*' => Http::response(null, 401)]);
+        $this->fakeHttp(['us14.api.mailchimp.com/*' => Http::response(null, 401)]);
 
         $props = (new Mailchimp)->render($this->form())->toArray()['props'];
 
@@ -224,7 +225,7 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_renders_an_api_error_when_mailchimp_cant_be_reached()
     {
-        Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
+        $this->fakeHttp(fn () => throw new ConnectionException('Could not resolve host.'));
 
         $props = (new Mailchimp)->render($this->form())->toArray()['props'];
 
@@ -234,7 +235,7 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_scopes_the_cache_key_to_the_api_key()
     {
-        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
+        $this->fakeHttp(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
@@ -250,7 +251,7 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_pre_processes_the_config()
     {
-        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
+        $this->fakeHttp(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
@@ -277,7 +278,7 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_preselects_the_audience_when_theres_only_one()
     {
-        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
+        $this->fakeHttp(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
         ]])]);
 
@@ -289,7 +290,7 @@ class MailchimpConnectorTest extends TestCase
     #[Test]
     public function it_doesnt_preselect_an_audience_when_there_are_several()
     {
-        Http::fake(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
+        $this->fakeHttp(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
             ['id' => self::AUDIENCE, 'name' => 'Newsletter'],
             ['id' => 'f6e5d4c3b2', 'name' => 'Customers'],
         ]])]);

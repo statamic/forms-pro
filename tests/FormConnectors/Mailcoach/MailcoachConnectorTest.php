@@ -12,11 +12,12 @@ use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Mailcoach;
 use Statamic\FormsPro\FormConnectors\Mailcoach\SubscribeToMailcoach;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\FakesConnectorApis;
 use Tests\TestCase;
 
 class MailcoachConnectorTest extends TestCase
 {
-    use PreventsSavingStacheItemsToDisk;
+    use FakesConnectorApis, PreventsSavingStacheItemsToDisk;
 
     private const string LIST = '9dcbb6dc-1b47-4d2e-9d3f-8dbf1a92a5f1';
 
@@ -113,7 +114,7 @@ class MailcoachConnectorTest extends TestCase
     #[Test]
     public function it_renders_the_connection_with_the_available_lists()
     {
-        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
+        $this->fakeHttp(['acme.mailcoach.app/*' => Http::response(['data' => [
             ['uuid' => self::LIST, 'name' => 'Newsletter', 'requires_confirmation' => true],
         ]])]);
 
@@ -129,7 +130,7 @@ class MailcoachConnectorTest extends TestCase
     #[Test]
     public function it_follows_pagination_when_listing_lists()
     {
-        Http::fake([
+        $this->fakeHttp([
             'acme.mailcoach.app/*page=2*' => Http::response(['data' => [
                 ['uuid' => 'list-two', 'name' => 'Product Updates'],
             ]]),
@@ -152,7 +153,7 @@ class MailcoachConnectorTest extends TestCase
     {
         config(['statamic.forms-pro.connections.mailcoach' => null]);
 
-        Http::fake();
+        $this->fakeHttp();
 
         $props = (new Mailcoach)->render($this->form())->toArray()['props'];
 
@@ -163,7 +164,7 @@ class MailcoachConnectorTest extends TestCase
     #[Test]
     public function it_renders_api_errors()
     {
-        Http::fake(['acme.mailcoach.app/*' => Http::response(null, 401)]);
+        $this->fakeHttp(['acme.mailcoach.app/*' => Http::response(null, 401)]);
 
         $props = (new Mailcoach)->render($this->form())->toArray()['props'];
 
@@ -175,7 +176,7 @@ class MailcoachConnectorTest extends TestCase
     #[Test]
     public function it_scopes_the_cache_key_to_the_credentials()
     {
-        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
+        $this->fakeHttp(['acme.mailcoach.app/*' => Http::response(['data' => [
             ['uuid' => self::LIST, 'name' => 'Newsletter'],
         ]])]);
 
@@ -191,7 +192,7 @@ class MailcoachConnectorTest extends TestCase
     #[Test]
     public function it_pre_processes_the_config()
     {
-        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
+        $this->fakeHttp(['acme.mailcoach.app/*' => Http::response(['data' => [
             ['uuid' => self::LIST, 'name' => 'Newsletter'],
         ]])]);
 
@@ -217,7 +218,7 @@ class MailcoachConnectorTest extends TestCase
     #[Test]
     public function it_preselects_the_list_when_theres_only_one()
     {
-        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
+        $this->fakeHttp(['acme.mailcoach.app/*' => Http::response(['data' => [
             ['uuid' => self::LIST, 'name' => 'Newsletter'],
         ]])]);
 
@@ -227,7 +228,7 @@ class MailcoachConnectorTest extends TestCase
     #[Test]
     public function it_doesnt_preselect_a_list_when_there_are_several()
     {
-        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => [
+        $this->fakeHttp(['acme.mailcoach.app/*' => Http::response(['data' => [
             ['uuid' => self::LIST, 'name' => 'Newsletter'],
             ['uuid' => '2f0b3a1c-9d4e-4a6b-8c1d-5e7f9a0b2c3d', 'name' => 'Customers'],
         ]])]);

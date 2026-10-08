@@ -13,11 +13,12 @@ use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Slack;
 use Statamic\FormsPro\FormConnectors\Slack\SendSlackMessage;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\FakesConnectorApis;
 use Tests\TestCase;
 
 class SlackConnectorTest extends TestCase
 {
-    use PreventsSavingStacheItemsToDisk;
+    use FakesConnectorApis, PreventsSavingStacheItemsToDisk;
 
     protected function setUp(): void
     {
@@ -111,7 +112,7 @@ class SlackConnectorTest extends TestCase
     #[Test]
     public function it_renders_the_vue_component()
     {
-        Http::fake(['slack.com/*' => Http::response(['ok' => true, 'channels' => []])]);
+        $this->fakeHttp(['slack.com/*' => Http::response(['ok' => true, 'channels' => []])]);
 
         $form = tap(Form::make('test')->formFields([
             'fields' => [
@@ -130,7 +131,7 @@ class SlackConnectorTest extends TestCase
     #[Test]
     public function it_follows_pagination_when_listing_channels()
     {
-        Http::fake(fn (Request $request) => match ($request['cursor']) {
+        $this->fakeHttp(fn (Request $request) => match ($request['cursor']) {
             '' => Http::response([
                 'ok' => true,
                 'channels' => [['id' => 'C1', 'name' => 'general']],
@@ -157,7 +158,7 @@ class SlackConnectorTest extends TestCase
     {
         config(['statamic.forms-pro.connections.slack.token' => null]);
 
-        Http::fake();
+        $this->fakeHttp();
 
         $form = tap(Form::make('test'))->save();
 
@@ -170,7 +171,7 @@ class SlackConnectorTest extends TestCase
     #[Test]
     public function it_renders_api_errors()
     {
-        Http::fake(['slack.com/*' => Http::response(['ok' => false, 'error' => 'invalid_auth'])]);
+        $this->fakeHttp(['slack.com/*' => Http::response(['ok' => false, 'error' => 'invalid_auth'])]);
 
         $form = tap(Form::make('test'))->save();
 
@@ -184,7 +185,7 @@ class SlackConnectorTest extends TestCase
     #[Test]
     public function it_renders_an_api_error_when_slack_is_unavailable()
     {
-        Http::fake(['slack.com/*' => Http::response(null, 503)]);
+        $this->fakeHttp(['slack.com/*' => Http::response(null, 503)]);
 
         $form = tap(Form::make('test'))->save();
 
@@ -196,7 +197,7 @@ class SlackConnectorTest extends TestCase
     #[Test]
     public function it_renders_an_api_error_when_slack_cant_be_reached()
     {
-        Http::fake(fn () => throw new ConnectionException('Could not resolve host.'));
+        $this->fakeHttp(fn () => throw new ConnectionException('Could not resolve host.'));
 
         $form = tap(Form::make('test'))->save();
 
@@ -208,7 +209,7 @@ class SlackConnectorTest extends TestCase
     #[Test]
     public function it_scopes_the_cache_key_to_the_token()
     {
-        Http::fake(['slack.com/*' => Http::response(['ok' => true, 'channels' => []])]);
+        $this->fakeHttp(['slack.com/*' => Http::response(['ok' => true, 'channels' => []])]);
 
         $form = tap(Form::make('test'))->save();
 

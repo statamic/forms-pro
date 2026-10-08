@@ -13,12 +13,13 @@ use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\GoogleSheets;
 use Statamic\FormsPro\FormConnectors\GoogleSheets\AppendRowToGoogleSheet;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\FakesConnectorApis;
 use Tests\TestCase;
 
 class GoogleSheetsConnectorTest extends TestCase
 {
+    use FakesConnectorApis, PreventsSavingStacheItemsToDisk;
     use FakesGoogleServiceAccount;
-    use PreventsSavingStacheItemsToDisk;
 
     private const string OTHER_SPREADSHEET = '9ZyXwVuTsRqPoNmLkJiHgFeDcBa9876543210zyxwvu';
 
@@ -76,7 +77,7 @@ class GoogleSheetsConnectorTest extends TestCase
     #[Test]
     public function it_renders_the_vue_component()
     {
-        Http::fake();
+        $this->fakeHttp();
 
         $component = (new GoogleSheets)->render($this->form())->toArray();
 
@@ -92,7 +93,7 @@ class GoogleSheetsConnectorTest extends TestCase
     #[Test]
     public function it_renders_the_saved_spreadsheets_tabs_so_none_are_fetched_on_load()
     {
-        Http::fake([...$this->fakeAccessToken(), 'sheets.googleapis.com/*' => Http::response(['sheets' => [
+        $this->fakeHttp([...$this->fakeAccessToken(), 'sheets.googleapis.com/*' => Http::response(['sheets' => [
             ['properties' => ['sheetId' => 0, 'title' => 'Leads 2026']],
             ['properties' => ['sheetId' => 184, 'title' => 'Archive']],
         ]])]);
@@ -124,7 +125,7 @@ class GoogleSheetsConnectorTest extends TestCase
     #[Test]
     public function it_renders_no_tabs_when_no_spreadsheet_is_saved()
     {
-        Http::fake();
+        $this->fakeHttp();
 
         $props = (new GoogleSheets)->render($this->form([['id' => 'abc', 'tab' => 0]]))->toArray()['props'];
 
@@ -263,7 +264,7 @@ class GoogleSheetsConnectorTest extends TestCase
     #[Test]
     public function it_rejects_a_spreadsheet_it_cant_open_in_another_connection()
     {
-        Http::fake([
+        $this->fakeHttp([
             ...$this->fakeAccessToken(),
             'sheets.googleapis.com/v4/spreadsheets/'.self::SPREADSHEET.'*' => Http::response(['sheets' => [
                 ['properties' => ['sheetId' => 0, 'title' => 'Leads 2026']],
@@ -308,7 +309,7 @@ class GoogleSheetsConnectorTest extends TestCase
     #[Test]
     public function it_rejects_a_form_with_a_field_named_after_a_column_it_adds()
     {
-        Http::fake();
+        $this->fakeHttp();
 
         $form = $this->form(fields: [
             ['handle' => 'email', 'field' => ['type' => 'text']],
@@ -369,7 +370,7 @@ class GoogleSheetsConnectorTest extends TestCase
 
     private function fake(array $overrides = []): void
     {
-        Http::fake([
+        $this->fakeHttp([
             ...$this->fakeAccessToken(),
             'sheets.googleapis.com/*' => Http::response([
                 'properties' => ['title' => 'Q3 Leads'],
@@ -384,7 +385,7 @@ class GoogleSheetsConnectorTest extends TestCase
 
     private function fakeTwoSpreadsheets(): void
     {
-        Http::fake([
+        $this->fakeHttp([
             ...$this->fakeAccessToken(),
             'sheets.googleapis.com/v4/spreadsheets/'.self::SPREADSHEET.'*' => Http::response(['sheets' => [
                 ['properties' => ['sheetId' => 0, 'title' => 'Leads 2026']],
