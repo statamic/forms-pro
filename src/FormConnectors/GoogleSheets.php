@@ -53,10 +53,10 @@ class GoogleSheets extends Connector
         return new AppendRowToGoogleSheet($submission, $connection);
     }
 
-    public function render(Form $form): VueComponent
+    public function render(): VueComponent
     {
         return VueComponent::render('google-sheets-connector', [
-            ...$this->blueprintProps($form, $form->connections()->get('google_sheets', [])),
+            ...$this->blueprintProps(),
             'isConfigured' => $this->isConfigured(),
             'serviceAccount' => $this->serviceAccount(),
             'apiError' => $this->apiError,
@@ -74,10 +74,10 @@ class GoogleSheets extends Connector
         }
     }
 
-    protected function connectionMeta(array $connection, Form $form): array
+    protected function connectionMeta(array $connection): array
     {
         return [
-            ...parent::connectionMeta($connection, $form),
+            ...parent::connectionMeta($connection),
             'tab' => ['options' => $this->tabsFor(Arr::get($connection, 'spreadsheet'))],
         ];
     }
@@ -122,9 +122,9 @@ class GoogleSheets extends Connector
         return "forms-pro.google-sheets.tabs.{$client->fingerprint()}.{$id}";
     }
 
-    protected function connectionRules(Form $form): array
+    protected function connectionRules(): array
     {
-        $reserved = $form->formFields()->fields()->keys()->intersect(array_keys(static::metaColumns()));
+        $reserved = $this->form()->formFields()->fields()->keys()->intersect(array_keys(static::metaColumns()));
 
         throw_if($reserved->isNotEmpty(), ValidationException::withMessages([
             'fields' => __('forms-pro::validation.google_sheets_reserved_column', ['field' => $reserved->first()]),
@@ -134,19 +134,19 @@ class GoogleSheets extends Connector
             'spreadsheet' => [new SpreadsheetUrl],
             'tab' => ['integer', new SpreadsheetTab],
             'fields' => ['array'],
-            'fields.*' => ['string', 'distinct', Rule::in(array_keys(static::columns($form)))],
+            'fields.*' => ['string', 'distinct', Rule::in(array_keys(static::columns($this->form())))],
         ];
     }
 
-    protected function processConnection(array $connection, Form $form): array
+    protected function processConnection(array $connection): array
     {
         return parent::processConnection([
             ...$connection,
             'tab' => (int) Arr::get($connection, 'tab'),
-        ], $form);
+        ]);
     }
 
-    public function blueprint(Form $form): \Statamic\Fields\Blueprint
+    public function blueprint(): \Statamic\Fields\Blueprint
     {
         return Blueprint::make()->setContents([
             'tabs' => [
@@ -170,7 +170,7 @@ class GoogleSheets extends Connector
                                         'type' => 'google_sheets_tabs',
                                         'display' => __('Tab'),
                                         'instructions' => __('forms-pro::messages.google_sheets_tab_instructions'),
-                                        'url' => cp_route('forms.connect.google_sheets.tabs', $form->handle()),
+                                        'url' => cp_route('forms.connect.google_sheets.tabs', $this->form()->handle()),
                                         'validate' => ['required'],
                                     ],
                                 ],
@@ -180,7 +180,7 @@ class GoogleSheets extends Connector
                                         'type' => 'checkboxes',
                                         'display' => __('Columns'),
                                         'instructions' => __('forms-pro::messages.google_sheets_fields_instructions'),
-                                        'options' => static::columns($form),
+                                        'options' => static::columns($this->form()),
                                     ],
                                 ],
                             ],

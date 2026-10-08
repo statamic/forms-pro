@@ -6,7 +6,6 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
-use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connectors\Connector;
@@ -81,10 +80,10 @@ class HubSpot extends Connector
         ]);
     }
 
-    public function render(Form $form): VueComponent
+    public function render(): VueComponent
     {
         return VueComponent::render('hubspot-connector', [
-            ...$this->blueprintProps($form, $form->connections()->get('hubspot', [])),
+            ...$this->blueprintProps(),
             'hubspotForms' => $this->account()['forms'],
             'isConfigured' => $this->isConfigured(),
             'apiError' => $this->apiError,
@@ -120,9 +119,9 @@ class HubSpot extends Connector
         }
     }
 
-    protected function connectionRules(Form $form): array
+    protected function connectionRules(): array
     {
-        $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
+        $isFormField = Rule::in($this->form()->formFields()->fields()->keys()->all());
 
         return [
             'form' => ['uuid'],
@@ -139,7 +138,7 @@ class HubSpot extends Connector
         ];
     }
 
-    public function blueprint(Form $form): \Statamic\Fields\Blueprint
+    public function blueprint(): \Statamic\Fields\Blueprint
     {
         ['forms' => $forms, 'subscriptions' => $subscriptions] = $this->account();
 
@@ -167,7 +166,7 @@ class HubSpot extends Connector
                                         'type' => 'form_fields',
                                         'display' => __('Email Address'),
                                         'instructions' => __('forms-pro::messages.hubspot_email_field_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'validate' => ['required'],
                                     ],
@@ -178,7 +177,7 @@ class HubSpot extends Connector
                                         'type' => 'hubspot_properties',
                                         'display' => __('Fields'),
                                         'instructions' => __('forms-pro::messages.hubspot_properties_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'forms' => $forms,
                                     ],
                                 ],
@@ -188,7 +187,7 @@ class HubSpot extends Connector
                                         'type' => 'form_fields',
                                         'display' => __('Consent to Process Data'),
                                         'instructions' => __('forms-pro::messages.hubspot_consent_to_process_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['choice', 'other'],
                                         'clearable' => true,
                                         'if' => ['consent_type' => 'explicit_consent_to_process'],
@@ -211,7 +210,7 @@ class HubSpot extends Connector
                                         'type' => 'hubspot_communications',
                                         'display' => __('Marketing Consent'),
                                         'instructions' => __('forms-pro::messages.hubspot_communications_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'forms' => $forms,
                                         'subscriptions' => $subscriptions,
                                         'if' => ['consent_type' => 'contains consent_to_process'],
@@ -223,7 +222,7 @@ class HubSpot extends Connector
                                         'type' => 'form_fields',
                                         'display' => __('Only Submit When'),
                                         'instructions' => __('forms-pro::messages.hubspot_consent_field_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['choice', 'other'],
                                         'clearable' => true,
                                     ],

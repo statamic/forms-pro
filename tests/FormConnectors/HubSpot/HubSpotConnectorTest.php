@@ -131,7 +131,7 @@ class HubSpotConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        $component = (new HubSpot)->render($this->form())->toArray();
+        $component = (new HubSpot)->forForm($this->form())->render()->toArray();
 
         $this->assertEquals('hubspot-connector', $component['name']);
         $this->assertEquals(['blueprint', 'meta', 'defaults', 'hubspotForms', 'isConfigured', 'apiError'], array_keys($component['props']));
@@ -143,7 +143,7 @@ class HubSpotConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        $rendered = (new HubSpot)->render($this->form())->toArray();
+        $rendered = (new HubSpot)->forForm($this->form())->render()->toArray();
 
         $this->assertEquals(
             [self::FORM => 'Contact Us'],
@@ -165,7 +165,7 @@ class HubSpotConnectorTest extends TestCase
             'api.hubapi.com/communication-preferences/*' => Http::response(['subscriptionDefinitions' => []]),
         ]);
 
-        $rendered = (new HubSpot)->render($this->form())->toArray();
+        $rendered = (new HubSpot)->forForm($this->form())->render()->toArray();
 
         $this->assertEquals(
             ['second-form' => 'Careers', self::FORM => 'Contact Us'],
@@ -178,7 +178,7 @@ class HubSpotConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        $rendered = (new HubSpot)->render($this->form())->toArray();
+        $rendered = (new HubSpot)->forForm($this->form())->render()->toArray();
 
         $this->assertEquals(self::FORM, $rendered['props']['blueprint']['tabs'][0]['sections'][0]['fields'][0]['default']);
     }
@@ -188,7 +188,7 @@ class HubSpotConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        $forms = (new HubSpot)->render($this->form())->toArray()['props']['hubspotForms'];
+        $forms = (new HubSpot)->forForm($this->form())->render()->toArray()['props']['hubspotForms'];
 
         $this->assertEquals('Contact Us', $forms[self::FORM]['name']);
         $this->assertFalse($forms[self::FORM]['captcha']);
@@ -204,7 +204,7 @@ class HubSpotConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        $properties = (new HubSpot)->render($this->form())->toArray()['props']['hubspotForms'][self::FORM]['properties'];
+        $properties = (new HubSpot)->forForm($this->form())->render()->toArray()['props']['hubspotForms'][self::FORM]['properties'];
 
         $this->assertNotContains('email', array_column($properties, 'name'));
     }
@@ -217,7 +217,7 @@ class HubSpotConnectorTest extends TestCase
             'api.hubapi.com/communication-preferences/*' => Http::response(['category' => 'MISSING_SCOPE'], 403),
         ]);
 
-        $rendered = (new HubSpot)->render($this->form())->toArray();
+        $rendered = (new HubSpot)->forForm($this->form())->render()->toArray();
 
         $this->assertNull($rendered['props']['apiError']);
         $this->assertCount(1, $rendered['props']['hubspotForms']);
@@ -230,7 +230,7 @@ class HubSpotConnectorTest extends TestCase
 
         $this->fakeHttp();
 
-        $props = (new HubSpot)->render($this->form())->toArray()['props'];
+        $props = (new HubSpot)->forForm($this->form())->render()->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -241,7 +241,7 @@ class HubSpotConnectorTest extends TestCase
     {
         $this->fakeHttp(fn () => throw new ConnectionException('Could not resolve host.'));
 
-        $rendered = (new HubSpot)->render($this->form())->toArray();
+        $rendered = (new HubSpot)->forForm($this->form())->render()->toArray();
 
         $this->assertEquals('Could not resolve host.', $rendered['props']['apiError']);
         $this->assertEmpty($rendered['props']['hubspotForms']);
@@ -252,11 +252,11 @@ class HubSpotConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        (new HubSpot)->render($this->form());
+        (new HubSpot)->forForm($this->form())->render();
 
         config(['statamic.forms-pro.connections.hubspot.access_token' => 'pat-eu1-different']);
 
-        (new HubSpot)->render($this->form());
+        (new HubSpot)->forForm($this->form())->render();
 
         Http::assertSentCount(4);
     }
@@ -266,7 +266,7 @@ class HubSpotConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        $configs = (new HubSpot)->preProcess([['id' => 'abc', 'form' => self::FORM, 'email_field' => 'email']], $this->form());
+        $configs = (new HubSpot)->setForm($this->form())->preProcess([['id' => 'abc', 'form' => self::FORM, 'email_field' => 'email']]);
 
         $this->assertCount(1, $configs);
         $config = $configs[0];
@@ -282,7 +282,7 @@ class HubSpotConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        $this->assertEquals(self::FORM, (new HubSpot)->preProcess([['id' => 'abc']], $this->form())[0]['form']);
+        $this->assertEquals(self::FORM, (new HubSpot)->setForm($this->form())->preProcess([['id' => 'abc']])[0]['form']);
     }
 
     #[Test]
@@ -296,7 +296,7 @@ class HubSpotConnectorTest extends TestCase
             'legitimate_interest_subscription' => 3314676590,
             'properties' => [['key' => 'firstname', 'value' => 'first_name']],
             'communications' => [['subscription' => 3314676590, 'field' => 'marketing']],
-        ]], (new HubSpot)->rules($this->form()));
+        ]], (new HubSpot)->setForm($this->form())->rules());
 
         $this->assertTrue($validator->passes());
     }
@@ -305,7 +305,7 @@ class HubSpotConnectorTest extends TestCase
     #[DataProvider('invalidConfigs')]
     public function it_rejects_invalid_configs(array $config, array $errors)
     {
-        $validator = Validator::make([$config], (new HubSpot)->rules($this->form()));
+        $validator = Validator::make([$config], (new HubSpot)->setForm($this->form())->rules());
 
         $this->assertTrue($validator->fails());
 
@@ -376,7 +376,7 @@ class HubSpotConnectorTest extends TestCase
             'communications' => [['subscription' => 3314676590, 'field' => 'marketing']],
         ];
 
-        $this->assertEquals([$config], (new HubSpot)->process([$config], $this->form()));
+        $this->assertEquals([$config], (new HubSpot)->setForm($this->form())->process([$config]));
     }
 
     #[Test]
@@ -386,7 +386,7 @@ class HubSpotConnectorTest extends TestCase
             'id' => 'abc',
             'form' => self::FORM,
             'email_field' => 'email',
-        ]], (new HubSpot)->process([[
+        ]], (new HubSpot)->setForm($this->form())->process([[
             'id' => 'abc',
             'form' => self::FORM,
             'email_field' => 'email',
@@ -395,7 +395,7 @@ class HubSpotConnectorTest extends TestCase
             'legitimate_interest_subscription' => null,
             'properties' => [],
             'communications' => [],
-        ]], $this->form()));
+        ]]));
     }
 
     private function definition(): array
@@ -447,6 +447,6 @@ class HubSpotConnectorTest extends TestCase
 
     private function finalized(SubmissionContract $submission): array
     {
-        return (new HubSpot)->setConfig($submission->form()->connections()->get(HubSpot::handle(), []))->finalized($submission);
+        return (new HubSpot)->forForm($submission->form())->finalized($submission);
     }
 }

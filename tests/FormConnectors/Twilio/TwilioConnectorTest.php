@@ -88,10 +88,10 @@ class TwilioConnectorTest extends TestCase
     #[Test]
     public function it_counts_notifications()
     {
-        $this->assertEquals(0, (new Twilio)->count(tap(Form::make('test'))->save()));
-        $this->assertEquals(1, (new Twilio)->count($this->form([
+        $this->assertEquals(0, (new Twilio)->forForm(tap(Form::make('test'))->save())->count());
+        $this->assertEquals(1, (new Twilio)->forForm($this->form([
             ['id' => 'abc', 'to' => '+447700900123', 'from' => '+14155552671', 'body' => 'New enquiry'],
-        ])));
+        ]))->count());
     }
 
     #[Test]
@@ -109,7 +109,7 @@ class TwilioConnectorTest extends TestCase
             ]]),
         ]);
 
-        $component = (new Twilio)->render($this->form())->toArray();
+        $component = (new Twilio)->forForm($this->form())->render()->toArray();
 
         $this->assertEquals('twilio-connector', $component['name']);
         $this->assertEquals(['blueprint', 'meta', 'defaults', 'isConfigured', 'apiError'], array_keys($component['props']));
@@ -130,7 +130,7 @@ class TwilioConnectorTest extends TestCase
 
         $this->fakeHttp();
 
-        $props = (new Twilio)->render($this->form())->toArray()['props'];
+        $props = (new Twilio)->forForm($this->form())->render()->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -144,7 +144,7 @@ class TwilioConnectorTest extends TestCase
             'messaging.twilio.com/v1/Services*' => Http::response(['services' => []]),
         ]);
 
-        (new Twilio)->render($this->form());
+        (new Twilio)->forForm($this->form())->render();
 
         Http::assertNotSent(fn (Request $request) => str_contains($request->url(), self::ACCOUNT_SID.'.json'));
     }
@@ -154,7 +154,7 @@ class TwilioConnectorTest extends TestCase
     {
         $this->fakeHttp(['*' => Http::response(['code' => 20003], 401)]);
 
-        $props = (new Twilio)->render($this->form())->toArray()['props'];
+        $props = (new Twilio)->forForm($this->form())->render()->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertEquals('The [FORMS_PRO_TWILIO_API_KEY] and [FORMS_PRO_TWILIO_API_SECRET] environment variables are invalid.', $props['apiError']);
@@ -166,7 +166,7 @@ class TwilioConnectorTest extends TestCase
     {
         $this->fakeHttp(['*' => Http::response(null, 503)]);
 
-        $props = (new Twilio)->render($this->form())->toArray()['props'];
+        $props = (new Twilio)->forForm($this->form())->render()->toArray()['props'];
 
         $this->assertEquals('Twilio responded with a [503] status code.', $props['apiError']);
     }
@@ -176,7 +176,7 @@ class TwilioConnectorTest extends TestCase
     {
         $this->fakeHttp(fn () => throw new ConnectionException('Could not resolve host.'));
 
-        $props = (new Twilio)->render($this->form())->toArray()['props'];
+        $props = (new Twilio)->forForm($this->form())->render()->toArray()['props'];
 
         $this->assertStringContainsString('Could not resolve host.', $props['apiError']);
     }
@@ -195,7 +195,7 @@ class TwilioConnectorTest extends TestCase
             ['id' => 'two', 'to' => 'field:phone', 'from' => '+14155552671', 'body' => 'Second', 'enabled' => false],
         ]);
 
-        $configs = (new Twilio)->preProcess($form->connections()->get('twilio'), $form);
+        $configs = (new Twilio)->setForm($form)->preProcess($form->connections()->get('twilio'));
 
         $this->assertEquals('one', $configs[0]['id']);
         $this->assertTrue($configs[0]['enabled']);
@@ -220,7 +220,7 @@ class TwilioConnectorTest extends TestCase
                 'enabled' => true,
                 'conditions' => [['field' => 'enquiry_type', 'operator' => 'equals', 'value' => 'sales', 'join' => 'and']],
             ],
-        ], (new Twilio)->rules($this->form()));
+        ], (new Twilio)->setForm($this->form())->rules());
 
         $this->assertTrue($validator->passes());
     }
@@ -229,7 +229,7 @@ class TwilioConnectorTest extends TestCase
     #[DataProvider('invalidConfigs')]
     public function it_rejects_invalid_configs($configs, $errors)
     {
-        $validator = Validator::make($configs, (new Twilio)->rules($this->form()));
+        $validator = Validator::make($configs, (new Twilio)->setForm($this->form())->rules());
 
         $this->assertTrue($validator->fails());
 
@@ -265,13 +265,13 @@ class TwilioConnectorTest extends TestCase
                 ['field' => 'enquiry_type', 'operator' => 'equals', 'value' => 'sales', 'join' => 'and'],
             ]],
             ['id' => 'ghi', 'to' => 'field:phone', 'from' => 'MG0123456789abcdef0123456789abcdef', 'body' => 'Thanks!', 'country_code' => '+44'],
-        ], (new Twilio)->process([
+        ], (new Twilio)->setForm($form)->process([
             ['id' => 'def', 'to' => '+447700900124', 'from' => '+14155552671', 'body' => 'New', 'enabled' => false, 'conditions' => [
                 ['_id' => 'vue-row', 'field' => 'enquiry_type', 'operator' => 'equals', 'value' => 'sales', 'join' => 'and'],
                 ['field' => null, 'operator' => 'equals', 'value' => 'incomplete', 'join' => 'and'],
             ]],
             ['id' => 'ghi', 'to' => 'field:phone', 'from' => 'MG0123456789abcdef0123456789abcdef', 'body' => 'Thanks!', 'country_code' => '+44', 'enabled' => true],
-        ], $form));
+        ]));
     }
 
     #[Test]
@@ -281,17 +281,17 @@ class TwilioConnectorTest extends TestCase
 
         $this->assertEquals([
             ['id' => 'abc', 'to' => '+447700900123', 'from' => '+14155552671', 'body' => 'New enquiry'],
-        ], (new Twilio)->process([
+        ], (new Twilio)->setForm($form)->process([
             ['_id' => 'vue-row', 'id' => 'abc', 'to' => '+447700900123', 'from' => '+14155552671', 'body' => 'New enquiry'],
-        ], $form));
+        ]));
     }
 
     #[Test]
     public function it_generates_an_id_for_configs_that_dont_have_one()
     {
-        $config = (new Twilio)->process([
+        $config = (new Twilio)->setForm($this->form())->process([
             ['to' => '+447700900123', 'from' => '+14155552671', 'body' => 'New enquiry'],
-        ], $this->form())[0];
+        ])[0];
 
         $this->assertNotEmpty($config['id']);
         $this->assertEquals('+447700900123', $config['to']);
@@ -305,14 +305,14 @@ class TwilioConnectorTest extends TestCase
             'to' => '+447700900123',
             'from' => '+14155552671',
             'body' => 'New enquiry',
-        ]], (new Twilio)->process([[
+        ]], (new Twilio)->setForm($this->form())->process([[
             'id' => 'abc',
             'to' => '+447700900123',
             'from' => '+14155552671',
             'body' => 'New enquiry',
             'country_code' => null,
             'enabled' => null,
-        ]], $this->form()));
+        ]]));
     }
 
     private function form(?array $configs = null): FormContract
@@ -333,6 +333,6 @@ class TwilioConnectorTest extends TestCase
 
     private function finalized(Submission $submission): array
     {
-        return (new Twilio)->setConfig($submission->form()->connections()->get(Twilio::handle(), []))->finalized($submission);
+        return (new Twilio)->forForm($submission->form())->finalized($submission);
     }
 }

@@ -5,7 +5,6 @@ namespace Statamic\FormsPro\FormConnectors;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
-use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connectors\Connector;
@@ -48,10 +47,10 @@ class Twilio extends Connector
         return new SendTwilioMessage($submission, $connection);
     }
 
-    public function render(Form $form): VueComponent
+    public function render(): VueComponent
     {
         return VueComponent::render('twilio-connector', [
-            ...$this->blueprintProps($form, $form->connections()->get('twilio', [])),
+            ...$this->blueprintProps(),
             'isConfigured' => $this->isConfigured(),
             'apiError' => $this->apiError,
         ]);
@@ -76,17 +75,17 @@ class Twilio extends Connector
         }
     }
 
-    protected function connectionRules(Form $form): array
+    protected function connectionRules(): array
     {
         return [
-            'to' => [new TwilioRecipient($form)],
+            'to' => [new TwilioRecipient($this->form())],
             'from' => [new TwilioSender],
             'body' => ['string'],
             'country_code' => ['string', 'regex:/^\+[1-9]\d{0,3}$/'],
         ];
     }
 
-    public function blueprint(Form $form): \Statamic\Fields\Blueprint
+    public function blueprint(): \Statamic\Fields\Blueprint
     {
         $senders = $this->senders();
 
@@ -102,7 +101,7 @@ class Twilio extends Connector
                                         'type' => 'form_fields',
                                         'display' => __('Recipient'),
                                         'instructions' => __('forms-pro::messages.twilio_to_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['contact', 'text', 'other'],
                                         'prefix' => 'field:',
                                         'taggable' => true,

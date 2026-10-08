@@ -6,7 +6,6 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
-use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connectors\Connector;
@@ -63,10 +62,10 @@ class Kit extends Connector
             || $this->isChecked($submission, $handle);
     }
 
-    public function render(Form $form): VueComponent
+    public function render(): VueComponent
     {
         return VueComponent::render('kit-connector', [
-            ...$this->blueprintProps($form, $form->connections()->get('kit', [])),
+            ...$this->blueprintProps(),
             'isConfigured' => $this->isConfigured(),
             'apiError' => $this->apiError,
         ]);
@@ -93,9 +92,9 @@ class Kit extends Connector
         }
     }
 
-    protected function connectionRules(Form $form): array
+    protected function connectionRules(): array
     {
-        $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
+        $isFormField = Rule::in($this->form()->formFields()->fields()->keys()->all());
 
         return [
             'form' => ['integer'],
@@ -110,9 +109,9 @@ class Kit extends Connector
         ];
     }
 
-    protected function processConnection(array $connection, Form $form): array
+    protected function processConnection(array $connection): array
     {
-        $values = parent::processConnection($connection, $form);
+        $values = parent::processConnection($connection);
 
         $values['custom_fields'] = collect(Arr::get($values, 'custom_fields'))
             ->map(fn (array $customField) => Arr::except($customField, 'id'))
@@ -121,7 +120,7 @@ class Kit extends Connector
         return $values;
     }
 
-    public function blueprint(Form $form): \Statamic\Fields\Blueprint
+    public function blueprint(): \Statamic\Fields\Blueprint
     {
         ['forms' => $forms, 'tags' => $tags, 'custom_fields' => $customFields] = $this->account();
 
@@ -137,7 +136,7 @@ class Kit extends Connector
                                         'type' => 'form_fields',
                                         'display' => __('Email Address'),
                                         'instructions' => __('forms-pro::messages.kit_email_field_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'validate' => ['required'],
                                     ],
@@ -148,7 +147,7 @@ class Kit extends Connector
                                         'type' => 'form_fields',
                                         'display' => __('First Name'),
                                         'instructions' => __('forms-pro::messages.kit_first_name_field_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'clearable' => true,
                                     ],
@@ -192,7 +191,7 @@ class Kit extends Connector
                                                 'field' => [
                                                     'type' => 'form_fields',
                                                     'display' => __('Form Field'),
-                                                    'form' => $form->handle(),
+                                                    'form' => $this->form()->handle(),
                                                     'validate' => ['required'],
                                                     'width' => 50,
                                                 ],
@@ -206,7 +205,7 @@ class Kit extends Connector
                                         'type' => 'form_fields',
                                         'display' => __('Only Subscribe When'),
                                         'instructions' => __('forms-pro::messages.kit_consent_field_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['choice', 'other'],
                                         'clearable' => true,
                                         'width' => 50,

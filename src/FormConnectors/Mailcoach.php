@@ -6,7 +6,6 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
-use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connectors\Connector;
@@ -64,10 +63,10 @@ class Mailcoach extends Connector
             || $this->isChecked($submission, $handle);
     }
 
-    public function render(Form $form): VueComponent
+    public function render(): VueComponent
     {
         return VueComponent::render('mailcoach-connector', [
-            ...$this->blueprintProps($form, $form->connections()->get('mailcoach', [])),
+            ...$this->blueprintProps(),
             'isConfigured' => $this->isConfigured(),
             'apiError' => $this->apiError,
         ]);
@@ -94,9 +93,9 @@ class Mailcoach extends Connector
         }
     }
 
-    protected function connectionRules(Form $form): array
+    protected function connectionRules(): array
     {
-        $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
+        $isFormField = Rule::in($this->form()->formFields()->fields()->keys()->all());
 
         return [
             'list' => ['uuid'],
@@ -113,9 +112,9 @@ class Mailcoach extends Connector
         ];
     }
 
-    protected function processConnection(array $connection, Form $form): array
+    protected function processConnection(array $connection): array
     {
-        $values = parent::processConnection($connection, $form);
+        $values = parent::processConnection($connection);
 
         $values['attributes'] = collect(Arr::get($values, 'attributes'))
             ->map(fn (array $attribute) => Arr::except($attribute, 'id'))
@@ -124,7 +123,7 @@ class Mailcoach extends Connector
         return $values;
     }
 
-    public function blueprint(Form $form): \Statamic\Fields\Blueprint
+    public function blueprint(): \Statamic\Fields\Blueprint
     {
         $lists = $this->lists();
 
@@ -152,7 +151,7 @@ class Mailcoach extends Connector
                                         'type' => 'form_fields',
                                         'display' => __('Email Address'),
                                         'instructions' => __('forms-pro::messages.mailcoach_email_field_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'validate' => ['required'],
                                     ],
@@ -162,7 +161,7 @@ class Mailcoach extends Connector
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('First Name'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'clearable' => true,
                                         'width' => 50,
@@ -173,7 +172,7 @@ class Mailcoach extends Connector
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Last Name'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'clearable' => true,
                                         'width' => 50,
@@ -212,7 +211,7 @@ class Mailcoach extends Connector
                                                 'field' => [
                                                     'type' => 'form_fields',
                                                     'display' => __('Form Field'),
-                                                    'form' => $form->handle(),
+                                                    'form' => $this->form()->handle(),
                                                     'validate' => ['required'],
                                                     'width' => 50,
                                                 ],
@@ -226,7 +225,7 @@ class Mailcoach extends Connector
                                         'type' => 'form_fields',
                                         'display' => __('Only Subscribe When'),
                                         'instructions' => __('forms-pro::messages.mailcoach_consent_field_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['choice', 'other'],
                                         'clearable' => true,
                                         'width' => 50,

@@ -97,7 +97,7 @@ class KitConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        $props = (new Kit)->render($this->form([['id' => 'abc', 'form' => self::FORM, 'email_field' => 'email']]))->toArray()['props'];
+        $props = (new Kit)->forForm($this->form([['id' => 'abc', 'form' => self::FORM, 'email_field' => 'email']]))->render()->toArray()['props'];
 
         $this->assertEquals(['blueprint', 'meta', 'defaults', 'isConfigured', 'apiError'], array_keys($props));
         $this->assertEquals(['abc'], array_keys($props['meta']));
@@ -130,7 +130,7 @@ class KitConnectorTest extends TestCase
             ]),
         ]);
 
-        $props = (new Kit)->render($this->form())->toArray()['props'];
+        $props = (new Kit)->forForm($this->form())->render()->toArray()['props'];
 
         $this->assertEquals([
             ['value' => '22367468', 'label' => 'Customers'],
@@ -145,7 +145,7 @@ class KitConnectorTest extends TestCase
 
         $this->fakeHttp();
 
-        $props = (new Kit)->render($this->form())->toArray()['props'];
+        $props = (new Kit)->forForm($this->form())->render()->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -156,7 +156,7 @@ class KitConnectorTest extends TestCase
     {
         $this->fakeHttp(['api.kit.com/*' => Http::response(null, 401)]);
 
-        $props = (new Kit)->render($this->form())->toArray()['props'];
+        $props = (new Kit)->forForm($this->form())->render()->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertStringContainsString('FORMS_PRO_KIT_API_KEY', $props['apiError']);
@@ -169,11 +169,11 @@ class KitConnectorTest extends TestCase
     {
         $this->fakeAccount();
 
-        (new Kit)->render($this->form());
+        (new Kit)->forForm($this->form())->render();
 
         config(['statamic.forms-pro.connections.kit.api_key' => 'kit_different']);
 
-        (new Kit)->render($this->form());
+        (new Kit)->forForm($this->form())->render();
 
         Http::assertSentCount(6);
     }
@@ -181,12 +181,12 @@ class KitConnectorTest extends TestCase
     #[Test]
     public function it_pre_processes_the_config()
     {
-        $configs = (new Kit)->preProcess([[
+        $configs = (new Kit)->setForm($this->form())->preProcess([[
             'id' => 'abc',
             'form' => self::FORM,
             'email_field' => 'email',
             'custom_fields' => [['key' => 'last_name', 'value' => 'name']],
-        ]], $this->form());
+        ]]);
 
         $this->assertCount(1, $configs);
         $config = $configs[0];
@@ -209,7 +209,7 @@ class KitConnectorTest extends TestCase
             'consent_field' => 'consent',
             'tags' => [22367468, 22367469],
             'custom_fields' => [['key' => 'last_name', 'value' => 'name']],
-        ]], (new Kit)->rules($this->form()));
+        ]], (new Kit)->setForm($this->form())->rules());
 
         $this->assertTrue($validator->passes());
     }
@@ -218,7 +218,7 @@ class KitConnectorTest extends TestCase
     #[DataProvider('invalidConfigs')]
     public function it_rejects_invalid_configs(array $config, array $errors)
     {
-        $validator = Validator::make([$config], (new Kit)->rules($this->form()));
+        $validator = Validator::make([$config], (new Kit)->setForm($this->form())->rules());
 
         $this->assertTrue($validator->fails());
 
@@ -274,13 +274,13 @@ class KitConnectorTest extends TestCase
             'custom_fields' => [['key' => 'last_name', 'value' => 'name']],
         ];
 
-        $this->assertEquals([$config], (new Kit)->process([$config], $this->form()));
+        $this->assertEquals([$config], (new Kit)->setForm($this->form())->process([$config]));
     }
 
     #[Test]
     public function it_doesnt_persist_empty_values()
     {
-        $this->assertEquals([['id' => 'abc', 'email_field' => 'email']], (new Kit)->process([[
+        $this->assertEquals([['id' => 'abc', 'email_field' => 'email']], (new Kit)->setForm($this->form())->process([[
             'id' => 'abc',
             'form' => null,
             'email_field' => 'email',
@@ -288,7 +288,7 @@ class KitConnectorTest extends TestCase
             'consent_field' => null,
             'tags' => [],
             'custom_fields' => [],
-        ]], $this->form()));
+        ]]));
     }
 
     private function fakeAccount(): void
@@ -327,6 +327,6 @@ class KitConnectorTest extends TestCase
 
     private function finalized(Submission $submission): array
     {
-        return (new Kit)->setConfig($submission->form()->connections()->get(Kit::handle(), []))->finalized($submission);
+        return (new Kit)->forForm($submission->form())->finalized($submission);
     }
 }

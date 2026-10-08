@@ -118,7 +118,7 @@ class MailcoachConnectorTest extends TestCase
             ['uuid' => self::LIST, 'name' => 'Newsletter', 'requires_confirmation' => true],
         ]])]);
 
-        $props = (new Mailcoach)->render($this->form([['id' => 'abc', 'list' => self::LIST, 'email_field' => 'email']]))->toArray()['props'];
+        $props = (new Mailcoach)->forForm($this->form([['id' => 'abc', 'list' => self::LIST, 'email_field' => 'email']]))->render()->toArray()['props'];
 
         $this->assertEquals(['blueprint', 'meta', 'defaults', 'isConfigured', 'apiError'], array_keys($props));
         $this->assertTrue($props['isConfigured']);
@@ -140,7 +140,7 @@ class MailcoachConnectorTest extends TestCase
             ]),
         ]);
 
-        $props = (new Mailcoach)->render($this->form())->toArray()['props'];
+        $props = (new Mailcoach)->forForm($this->form())->render()->toArray()['props'];
 
         $this->assertEquals([
             ['value' => 'list-one', 'label' => 'Newsletter'],
@@ -155,7 +155,7 @@ class MailcoachConnectorTest extends TestCase
 
         $this->fakeHttp();
 
-        $props = (new Mailcoach)->render($this->form())->toArray()['props'];
+        $props = (new Mailcoach)->forForm($this->form())->render()->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -166,7 +166,7 @@ class MailcoachConnectorTest extends TestCase
     {
         $this->fakeHttp(['acme.mailcoach.app/*' => Http::response(null, 401)]);
 
-        $props = (new Mailcoach)->render($this->form())->toArray()['props'];
+        $props = (new Mailcoach)->forForm($this->form())->render()->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertStringContainsString('FORMS_PRO_MAILCOACH_TOKEN', $props['apiError']);
@@ -180,11 +180,11 @@ class MailcoachConnectorTest extends TestCase
             ['uuid' => self::LIST, 'name' => 'Newsletter'],
         ]])]);
 
-        (new Mailcoach)->render($this->form());
+        (new Mailcoach)->forForm($this->form())->render();
 
         config(['statamic.forms-pro.connections.mailcoach.token' => 'different-token']);
 
-        (new Mailcoach)->render($this->form());
+        (new Mailcoach)->forForm($this->form())->render();
 
         Http::assertSentCount(2);
     }
@@ -196,12 +196,12 @@ class MailcoachConnectorTest extends TestCase
             ['uuid' => self::LIST, 'name' => 'Newsletter'],
         ]])]);
 
-        $configs = (new Mailcoach)->preProcess([[
+        $configs = (new Mailcoach)->setForm($this->form())->preProcess([[
             'id' => 'abc',
             'list' => self::LIST,
             'email_field' => 'email',
             'attributes' => [['key' => 'full_name', 'value' => 'name']],
-        ]], $this->form());
+        ]]);
 
         $this->assertCount(1, $configs);
         $config = $configs[0];
@@ -222,7 +222,7 @@ class MailcoachConnectorTest extends TestCase
             ['uuid' => self::LIST, 'name' => 'Newsletter'],
         ]])]);
 
-        $this->assertEquals(self::LIST, (new Mailcoach)->preProcess([['id' => 'abc']], $this->form())[0]['list']);
+        $this->assertEquals(self::LIST, (new Mailcoach)->setForm($this->form())->preProcess([['id' => 'abc']])[0]['list']);
     }
 
     #[Test]
@@ -233,7 +233,7 @@ class MailcoachConnectorTest extends TestCase
             ['uuid' => '2f0b3a1c-9d4e-4a6b-8c1d-5e7f9a0b2c3d', 'name' => 'Customers'],
         ]])]);
 
-        $this->assertNull((new Mailcoach)->preProcess([['id' => 'abc']], $this->form())[0]['list']);
+        $this->assertNull((new Mailcoach)->setForm($this->form())->preProcess([['id' => 'abc']])[0]['list']);
     }
 
     #[Test]
@@ -247,7 +247,7 @@ class MailcoachConnectorTest extends TestCase
             'tags' => ['newsletter'],
             'attributes' => [['key' => 'full_name', 'value' => 'name']],
             'skip_confirmation' => true,
-        ]], (new Mailcoach)->rules($this->form()));
+        ]], (new Mailcoach)->setForm($this->form())->rules());
 
         $this->assertTrue($validator->passes());
     }
@@ -256,7 +256,7 @@ class MailcoachConnectorTest extends TestCase
     #[DataProvider('invalidConfigs')]
     public function it_rejects_invalid_configs(array $config, array $errors)
     {
-        $validator = Validator::make([$config], (new Mailcoach)->rules($this->form()));
+        $validator = Validator::make([$config], (new Mailcoach)->setForm($this->form())->rules());
 
         $this->assertTrue($validator->fails());
 
@@ -309,7 +309,7 @@ class MailcoachConnectorTest extends TestCase
             'skip_confirmation' => true,
         ];
 
-        $this->assertEquals([$config], (new Mailcoach)->process([$config], $this->form()));
+        $this->assertEquals([$config], (new Mailcoach)->setForm($this->form())->process([$config]));
     }
 
     #[Test]
@@ -320,7 +320,7 @@ class MailcoachConnectorTest extends TestCase
             'list' => self::LIST,
             'email_field' => 'email',
             'skip_confirmation' => false,
-        ]], (new Mailcoach)->process([[
+        ]], (new Mailcoach)->setForm($this->form())->process([[
             'id' => 'abc',
             'list' => self::LIST,
             'email_field' => 'email',
@@ -330,7 +330,7 @@ class MailcoachConnectorTest extends TestCase
             'tags' => [],
             'attributes' => [],
             'skip_confirmation' => false,
-        ]], $this->form()));
+        ]]));
     }
 
     private function form(array $connections = []): FormContract
@@ -346,6 +346,6 @@ class MailcoachConnectorTest extends TestCase
 
     private function finalized(Submission $submission): array
     {
-        return (new Mailcoach)->setConfig($submission->form()->connections()->get(Mailcoach::handle(), []))->finalized($submission);
+        return (new Mailcoach)->forForm($submission->form())->finalized($submission);
     }
 }

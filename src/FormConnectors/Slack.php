@@ -5,7 +5,6 @@ namespace Statamic\FormsPro\FormConnectors;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
-use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connectors\Connector;
@@ -46,10 +45,10 @@ class Slack extends Connector
         return new SendSlackMessage($submission, $submission->site(), $connection);
     }
 
-    public function render(Form $form): VueComponent
+    public function render(): VueComponent
     {
         return VueComponent::render('slack-connector', [
-            ...$this->blueprintProps($form, $form->connections()->get('slack', [])),
+            ...$this->blueprintProps(),
             'isConfigured' => $this->isConfigured(),
             'apiError' => $this->apiError,
         ]);
@@ -76,7 +75,7 @@ class Slack extends Connector
         }
     }
 
-    protected function connectionRules(Form $form): array
+    protected function connectionRules(): array
     {
         return [
             'channel' => [new SlackChannel],
@@ -84,9 +83,9 @@ class Slack extends Connector
         ];
     }
 
-    protected function processConnection(array $connection, Form $form): array
+    protected function processConnection(array $connection): array
     {
-        $values = parent::processConnection($connection, $form);
+        $values = parent::processConnection($connection);
 
         return [
             ...$values,
@@ -95,7 +94,7 @@ class Slack extends Connector
         ];
     }
 
-    public function blueprint(Form $form): \Statamic\Fields\Blueprint
+    public function blueprint(): \Statamic\Fields\Blueprint
     {
         $channels = $this->channels();
 
@@ -152,7 +151,7 @@ class Slack extends Connector
                                         'type' => 'checkboxes',
                                         'display' => __('Fields to Include'),
                                         'instructions' => __('forms-pro::messages.slack_fields_instructions'),
-                                        'options' => $form->formFields()->fields()
+                                        'options' => $this->form()->formFields()->fields()
                                             ->reject(fn ($field) => array_intersect($field->fieldtype()->categories(), ['information', 'structure']))
                                             ->mapWithKeys(fn ($field) => [$field->handle() => __($field->display())])
                                             ->all(),

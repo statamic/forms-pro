@@ -106,7 +106,7 @@ class SlackConnectorTest extends TestCase
             ['id' => 'def', 'channel' => 'C0456DEFGHI'],
         ]]))->save();
 
-        $this->assertEquals(2, (new Slack)->count($form));
+        $this->assertEquals(2, (new Slack)->forForm($form)->count());
     }
 
     #[Test]
@@ -121,7 +121,7 @@ class SlackConnectorTest extends TestCase
             ],
         ]))->save();
 
-        $component = (new Slack)->render($form)->toArray();
+        $component = (new Slack)->forForm($form)->render()->toArray();
 
         $this->assertEquals('slack-connector', $component['name']);
         $this->assertEquals(['blueprint', 'meta', 'defaults', 'isConfigured', 'apiError'], array_keys($component['props']));
@@ -136,9 +136,9 @@ class SlackConnectorTest extends TestCase
         $form = tap(Form::make('test'))->save();
         $slack = new Slack;
 
-        $slack->rules($form);
-        $slack->process([['channel' => 'C0123ABCDEF']], $form);
-        $props = $slack->render($form)->toArray()['props'];
+        $slack->setForm($form)->rules();
+        $slack->setForm($form)->process([['channel' => 'C0123ABCDEF']]);
+        $props = $slack->forForm($form)->render()->toArray()['props'];
 
         Http::assertSentCount(1);
         $this->assertNotNull($props['apiError']);
@@ -161,7 +161,7 @@ class SlackConnectorTest extends TestCase
 
         $form = tap(Form::make('test'))->save();
 
-        $options = (new Slack)->render($form)->toArray()['props']['defaults']['meta']['channel']['options'];
+        $options = (new Slack)->forForm($form)->render()->toArray()['props']['defaults']['meta']['channel']['options'];
 
         $this->assertEquals([
             ['value' => 'C1', 'label' => '#general'],
@@ -178,7 +178,7 @@ class SlackConnectorTest extends TestCase
 
         $form = tap(Form::make('test'))->save();
 
-        $props = (new Slack)->render($form)->toArray()['props'];
+        $props = (new Slack)->forForm($form)->render()->toArray()['props'];
 
         $this->assertFalse($props['isConfigured']);
         Http::assertNothingSent();
@@ -191,7 +191,7 @@ class SlackConnectorTest extends TestCase
 
         $form = tap(Form::make('test'))->save();
 
-        $props = (new Slack)->render($form)->toArray()['props'];
+        $props = (new Slack)->forForm($form)->render()->toArray()['props'];
 
         $this->assertTrue($props['isConfigured']);
         $this->assertEquals('Error from Slack: [invalid_auth].', $props['apiError']);
@@ -205,7 +205,7 @@ class SlackConnectorTest extends TestCase
 
         $form = tap(Form::make('test'))->save();
 
-        $props = (new Slack)->render($form)->toArray()['props'];
+        $props = (new Slack)->forForm($form)->render()->toArray()['props'];
 
         $this->assertEquals('Slack responded with a [503] status code.', $props['apiError']);
     }
@@ -217,7 +217,7 @@ class SlackConnectorTest extends TestCase
 
         $form = tap(Form::make('test'))->save();
 
-        $props = (new Slack)->render($form)->toArray()['props'];
+        $props = (new Slack)->forForm($form)->render()->toArray()['props'];
 
         $this->assertStringContainsString('Could not resolve host.', $props['apiError']);
     }
@@ -229,11 +229,11 @@ class SlackConnectorTest extends TestCase
 
         $form = tap(Form::make('test'))->save();
 
-        (new Slack)->render($form);
+        (new Slack)->forForm($form)->render();
 
         config(['statamic.forms-pro.connections.slack.token' => 'xoxb-different']);
 
-        (new Slack)->render($form);
+        (new Slack)->forForm($form)->render();
 
         Http::assertSentCount(2);
     }
@@ -251,7 +251,7 @@ class SlackConnectorTest extends TestCase
             ['id' => 'two', 'channel' => 'C0456DEFGHI', 'enabled' => false],
         ]]))->save();
 
-        $configs = (new Slack)->preProcess($form->connections()->get('slack'), $form);
+        $configs = (new Slack)->setForm($form)->preProcess($form->connections()->get('slack'));
 
         $this->assertEquals('one', $configs[0]['id']);
         $this->assertTrue($configs[0]['enabled']);
@@ -276,7 +276,7 @@ class SlackConnectorTest extends TestCase
                 'enabled' => true,
                 'conditions' => [['field' => 'name', 'operator' => 'equals', 'value' => 'Bob', 'join' => 'and']],
             ],
-        ], (new Slack)->rules($form));
+        ], (new Slack)->setForm($form)->rules());
 
         $this->assertTrue($validator->passes());
     }
@@ -287,7 +287,7 @@ class SlackConnectorTest extends TestCase
     {
         $form = tap(Form::make('test'))->save();
 
-        $validator = Validator::make($configs, (new Slack)->rules($form));
+        $validator = Validator::make($configs, (new Slack)->setForm($form)->rules());
 
         $this->assertTrue($validator->fails());
 
@@ -316,13 +316,13 @@ class SlackConnectorTest extends TestCase
             ]],
             ['id' => 'ghi', 'channel' => 'C0789JKLMNO', 'include_fields' => false, 'link_to_submission' => false],
             ['id' => 'jkl', 'channel' => 'C0123ABCDEF'],
-        ], (new Slack)->process([
+        ], (new Slack)->setForm($form)->process([
             ['id' => 'def', 'channel' => 'C0456DEFGHI', 'enabled' => false, 'conditions' => [
                 ['_id' => 'vue-row', 'field' => 'name', 'operator' => 'equals', 'value' => 'Bob', 'join' => 'and'],
             ]],
             ['id' => 'ghi', 'channel' => 'C0789JKLMNO', 'include_fields' => false, 'link_to_submission' => false],
             ['id' => 'jkl', 'channel' => 'C0123ABCDEF', 'enabled' => true, 'include_fields' => true, 'link_to_submission' => true],
-        ], $form));
+        ]));
     }
 
     #[Test]
@@ -332,9 +332,9 @@ class SlackConnectorTest extends TestCase
 
         $this->assertEquals([
             ['id' => 'abc', 'channel' => 'C0123ABCDEF'],
-        ], (new Slack)->process([
+        ], (new Slack)->setForm($form)->process([
             ['_id' => 'vue-row', 'id' => 'abc', 'channel' => 'C0123ABCDEF'],
-        ], $form));
+        ]));
     }
 
     #[Test]
@@ -342,7 +342,7 @@ class SlackConnectorTest extends TestCase
     {
         $form = tap(Form::make('test'))->save();
 
-        $config = (new Slack)->process([['channel' => 'C0123ABCDEF']], $form)[0];
+        $config = (new Slack)->setForm($form)->process([['channel' => 'C0123ABCDEF']])[0];
 
         $this->assertNotEmpty($config['id']);
         $this->assertEquals('C0123ABCDEF', $config['channel']);
@@ -356,16 +356,16 @@ class SlackConnectorTest extends TestCase
         $this->assertEquals([[
             'id' => 'abc',
             'channel' => 'C0123ABCDEF',
-        ]], (new Slack)->process([[
+        ]], (new Slack)->setForm($form)->process([[
             'id' => 'abc',
             'channel' => 'C0123ABCDEF',
             'heading' => null,
             'enabled' => null,
-        ]], $form));
+        ]]));
     }
 
     private function finalized(Submission $submission): array
     {
-        return (new Slack)->setConfig($submission->form()->connections()->get(Slack::handle(), []))->finalized($submission);
+        return (new Slack)->forForm($submission->form())->finalized($submission);
     }
 }

@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\NestedRules;
 use Illuminate\Validation\Rule;
-use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connectors\Connector;
@@ -71,10 +70,10 @@ class Mailchimp extends Connector
             || $this->isChecked($submission, $handle);
     }
 
-    public function render(Form $form): VueComponent
+    public function render(): VueComponent
     {
         return VueComponent::render('mailchimp-connector', [
-            ...$this->blueprintProps($form, $form->connections()->get('mailchimp', [])),
+            ...$this->blueprintProps(),
             'isConfigured' => $this->isConfigured(),
             'apiError' => $this->apiError,
         ]);
@@ -101,9 +100,9 @@ class Mailchimp extends Connector
         }
     }
 
-    protected function connectionRules(Form $form): array
+    protected function connectionRules(): array
     {
-        $isFormField = Rule::in($form->formFields()->fields()->keys()->all());
+        $isFormField = Rule::in($this->form()->formFields()->fields()->keys()->all());
 
         return [
             'list' => ['alpha_num:ascii'],
@@ -119,7 +118,7 @@ class Mailchimp extends Connector
             'groups' => ['array'],
             'groups.*.group' => ['required', 'string', 'distinct'],
             'groups.*.field' => ['required', $isFormField],
-            'groups.*.option' => $this->groupOptionRules($form),
+            'groups.*.option' => $this->groupOptionRules(),
             'marketing_permissions' => ['array'],
             'marketing_permissions.*.permission' => ['required', 'string', 'distinct'],
             'marketing_permissions.*.field' => ['required', $isFormField],
@@ -131,18 +130,18 @@ class Mailchimp extends Connector
      * A group mapped to a field with options needs to say which one, otherwise it would
      * be applied whenever any option is chosen. Fields without options don't.
      */
-    private function groupOptionRules(Form $form): NestedRules
+    private function groupOptionRules(): NestedRules
     {
-        $fieldsWithOptions = array_keys((new MailchimpGroupOption)->fieldsWithOptions($form));
+        $fieldsWithOptions = array_keys((new MailchimpGroupOption)->fieldsWithOptions($this->form()));
 
         return Rule::forEach(fn ($value, $attribute, $data, $group): array => in_array(Arr::get($group, 'field'), $fieldsWithOptions)
             ? ['required', 'string']
             : ['nullable', 'string']);
     }
 
-    protected function processConnection(array $connection, Form $form): array
+    protected function processConnection(array $connection): array
     {
-        $values = parent::processConnection($connection, $form);
+        $values = parent::processConnection($connection);
 
         foreach (['merge_fields', 'groups'] as $grid) {
             $values[$grid] = collect(Arr::get($values, $grid))
@@ -153,7 +152,7 @@ class Mailchimp extends Connector
         return $values;
     }
 
-    public function blueprint(Form $form): \Statamic\Fields\Blueprint
+    public function blueprint(): \Statamic\Fields\Blueprint
     {
         $audiences = $this->audiences();
 
@@ -181,7 +180,7 @@ class Mailchimp extends Connector
                                         'type' => 'form_fields',
                                         'display' => __('Email Address'),
                                         'instructions' => __('forms-pro::messages.mailchimp_email_field_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'validate' => ['required'],
                                     ],
@@ -191,7 +190,7 @@ class Mailchimp extends Connector
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('First Name'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'clearable' => true,
                                         'width' => 50,
@@ -202,7 +201,7 @@ class Mailchimp extends Connector
                                     'field' => [
                                         'type' => 'form_fields',
                                         'display' => __('Last Name'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['text', 'contact', 'other'],
                                         'clearable' => true,
                                         'width' => 50,
@@ -232,7 +231,7 @@ class Mailchimp extends Connector
                                                 'field' => [
                                                     'type' => 'mailchimp_merge_field',
                                                     'display' => __('Merge Field'),
-                                                    'url' => cp_route('forms.connect.mailchimp.merge-fields', $form->handle()),
+                                                    'url' => cp_route('forms.connect.mailchimp.merge-fields', $this->form()->handle()),
                                                     'validate' => ['required'],
                                                     'width' => 50,
                                                 ],
@@ -242,7 +241,7 @@ class Mailchimp extends Connector
                                                 'field' => [
                                                     'type' => 'form_fields',
                                                     'display' => __('Form Field'),
-                                                    'form' => $form->handle(),
+                                                    'form' => $this->form()->handle(),
                                                     'validate' => ['required'],
                                                     'width' => 50,
                                                 ],
@@ -266,7 +265,7 @@ class Mailchimp extends Connector
                                                 'field' => [
                                                     'type' => 'mailchimp_group',
                                                     'display' => __('Group'),
-                                                    'url' => cp_route('forms.connect.mailchimp.groups', $form->handle()),
+                                                    'url' => cp_route('forms.connect.mailchimp.groups', $this->form()->handle()),
                                                     'validate' => ['required'],
                                                     'width' => 33,
                                                 ],
@@ -276,7 +275,7 @@ class Mailchimp extends Connector
                                                 'field' => [
                                                     'type' => 'form_fields',
                                                     'display' => __('Form Field'),
-                                                    'form' => $form->handle(),
+                                                    'form' => $this->form()->handle(),
                                                     'categories' => ['choice', 'other'],
                                                     'validate' => ['required'],
                                                     'width' => 33,
@@ -287,7 +286,7 @@ class Mailchimp extends Connector
                                                 'field' => [
                                                     'type' => 'mailchimp_group_option',
                                                     'display' => __('When'),
-                                                    'form' => $form->handle(),
+                                                    'form' => $this->form()->handle(),
                                                     'width' => 33,
                                                 ],
                                             ],
@@ -300,8 +299,8 @@ class Mailchimp extends Connector
                                         'type' => 'mailchimp_marketing_permissions',
                                         'display' => __('Marketing Permissions'),
                                         'instructions' => __('forms-pro::messages.mailchimp_marketing_permissions_instructions'),
-                                        'form' => $form->handle(),
-                                        'url' => cp_route('forms.connect.mailchimp.marketing-permissions', $form->handle()),
+                                        'form' => $this->form()->handle(),
+                                        'url' => cp_route('forms.connect.mailchimp.marketing-permissions', $this->form()->handle()),
                                     ],
                                 ],
                                 [
@@ -310,7 +309,7 @@ class Mailchimp extends Connector
                                         'type' => 'form_fields',
                                         'display' => __('Only Subscribe When'),
                                         'instructions' => __('forms-pro::messages.mailchimp_consent_field_instructions'),
-                                        'form' => $form->handle(),
+                                        'form' => $this->form()->handle(),
                                         'categories' => ['choice', 'other'],
                                         'clearable' => true,
                                         'width' => 50,
