@@ -37,8 +37,11 @@ class AppendRowToGoogleSheet implements ShouldQueue
         }
 
         $handles = array_keys($values);
+        $key = null;
+        $cached = false;
 
         try {
+            $cached = Cache::has($key = $this->cacheKey($sheets));
             $title = $this->sheet($sheets)['title'];
             $headers = $sheets->headerRow($this->spreadsheet(), $title);
             $columns = $this->columns($headers, $handles);
@@ -49,13 +52,14 @@ class AppendRowToGoogleSheet implements ShouldQueue
 
             $sheets->append($this->spreadsheet(), $title, $this->row($values, $columns, $this->anchor($headers)));
         } catch (GoogleSheetsException $e) {
-            if (! $e->isRetryable()) {
-                Cache::forget($this->cacheKey($sheets));
+            if (! $e->isRetryable() && $key) {
+                Cache::forget($key);
             }
 
             match (true) {
                 $e->isRetryable() => $this->release($e->retryAfter()),
-                default => throw $e,
+                $cached => $this->release(),
+                default => $this->fail($e),
             };
         }
     }
@@ -63,7 +67,7 @@ class AppendRowToGoogleSheet implements ShouldQueue
     /**
      * Titles get renamed, so they're resolved from the immutable sheet ID on
      * every append. Cached, because that's rare enough that a stale title is
-     * worth one clean failure.
+     * worth one retry.
      */
     private function sheet(GoogleSheetsClient $sheets): array
     {

@@ -15,10 +15,12 @@ use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Kit\KitClient;
 use Statamic\FormsPro\FormConnectors\Kit\SubscribeToKit;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\AssertsFailedJobs;
 use Tests\TestCase;
 
 class SubscribeToKitTest extends TestCase
 {
+    use AssertsFailedJobs;
     use PreventsSavingStacheItemsToDisk;
 
     private const int FORM = 9785233;
@@ -218,17 +220,13 @@ class SubscribeToKitTest extends TestCase
 
     #[Test]
     #[DataProvider('fatalResponseProvider')]
-    public function it_throws_on_fatal_errors(int $status, ?array $body, string $message)
+    public function it_fails_the_job_on_fatal_errors(int $status, ?array $body, string $message)
     {
         Http::fake(['api.kit.com/*' => Http::response($body, $status)]);
 
-        $this->expectExceptionMessage($message);
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), $message);
 
-        try {
-            $this->subscribe(['email' => 'jack@example.com']);
-        } finally {
-            Http::assertSentCount(1);
-        }
+        Http::assertSentCount(1);
     }
 
     public static function fatalResponseProvider(): array
@@ -248,13 +246,9 @@ class SubscribeToKitTest extends TestCase
 
         Http::fake();
 
-        $this->expectExceptionMessage('FORMS_PRO_KIT_API_KEY');
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), 'FORMS_PRO_KIT_API_KEY');
 
-        try {
-            $this->subscribe(['email' => 'jack@example.com']);
-        } finally {
-            Http::assertNothingSent();
-        }
+        Http::assertNothingSent();
     }
 
     private function form(): FormContract

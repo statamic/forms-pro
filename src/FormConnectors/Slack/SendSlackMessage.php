@@ -34,7 +34,7 @@ class SendSlackMessage implements ShouldQueue
         } catch (SlackException $e) {
             match (true) {
                 $e->isRetryable() => $this->release($e->retryAfter()),
-                default => throw $e,
+                default => $this->fail($e),
             };
         }
     }

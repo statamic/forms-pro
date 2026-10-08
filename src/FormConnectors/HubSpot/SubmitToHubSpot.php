@@ -42,7 +42,7 @@ class SubmitToHubSpot implements ShouldQueue
             match (true) {
                 $e->isRetryable() => $this->release($e->retryAfter()),
                 $e->isSkippable() => Log::info("Skipped submitting [{$email}] to HubSpot: {$e->getMessage()}"),
-                default => throw $e,
+                default => $this->fail($e),
             };
         }
     }

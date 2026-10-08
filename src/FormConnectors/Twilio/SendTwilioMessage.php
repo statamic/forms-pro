@@ -44,7 +44,7 @@ class SendTwilioMessage implements ShouldQueue
             match (true) {
                 $e->isRetryable() => $this->release($e->retryAfter()),
                 $e->isSkippable() => Log::info("Skipped texting [{$to}]: {$e->getMessage()}"),
-                default => throw $e,
+                default => $this->fail($e),
             };
         }
     }

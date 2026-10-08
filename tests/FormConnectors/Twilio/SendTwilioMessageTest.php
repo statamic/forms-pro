@@ -13,12 +13,13 @@ use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Twilio\SendTwilioMessage;
 use Statamic\FormsPro\FormConnectors\Twilio\TwilioClient;
-use Statamic\FormsPro\FormConnectors\Twilio\TwilioException;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\AssertsFailedJobs;
 use Tests\TestCase;
 
 class SendTwilioMessageTest extends TestCase
 {
+    use AssertsFailedJobs;
     use PreventsSavingStacheItemsToDisk;
 
     private const string ACCOUNT_SID = 'AC00000000000000000000000000000000';
@@ -181,26 +182,22 @@ class SendTwilioMessageTest extends TestCase
     }
 
     #[Test]
-    public function it_throws_when_the_credentials_are_invalid()
+    public function it_fails_the_job_when_the_credentials_are_invalid()
     {
         Http::fake(['api.twilio.com/*' => Http::response(['code' => 20003], 401)]);
 
-        $this->expectExceptionMessage('FORMS_PRO_TWILIO_API_KEY');
-
-        $this->send($this->form(), ['name' => 'Jack Black']);
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black']), 'FORMS_PRO_TWILIO_API_KEY');
     }
 
     #[Test]
-    public function it_throws_when_the_sender_is_misconfigured()
+    public function it_fails_the_job_when_the_sender_is_misconfigured()
     {
         Http::fake(['api.twilio.com/*' => Http::response([
             'code' => 21606,
             'message' => "The 'From' number is not a valid message-capable Twilio number.",
         ], 400)]);
 
-        $this->expectException(TwilioException::class);
-
-        $this->send($this->form(), ['name' => 'Jack Black']);
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black']), "Error from Twilio: The 'From' number is not a valid message-capable Twilio number.");
     }
 
     #[Test]
@@ -210,13 +207,9 @@ class SendTwilioMessageTest extends TestCase
 
         Http::fake();
 
-        $this->expectExceptionMessage('FORMS_PRO_TWILIO_ACCOUNT_SID');
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black']), 'FORMS_PRO_TWILIO_ACCOUNT_SID');
 
-        try {
-            $this->send($this->form(), ['name' => 'Jack Black']);
-        } finally {
-            Http::assertNothingSent();
-        }
+        Http::assertNothingSent();
     }
 
     private function form(): FormContract

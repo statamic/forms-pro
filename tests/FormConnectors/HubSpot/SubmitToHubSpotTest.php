@@ -16,10 +16,12 @@ use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\HubSpot\HubSpotClient;
 use Statamic\FormsPro\FormConnectors\HubSpot\SubmitToHubSpot;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\AssertsFailedJobs;
 use Tests\TestCase;
 
 class SubmitToHubSpotTest extends TestCase
 {
+    use AssertsFailedJobs;
     use PreventsSavingStacheItemsToDisk;
 
     private const string FORM = '2cc5419c-d732-4a4a-a82d-c0bfbcf948a5';
@@ -245,13 +247,9 @@ class SubmitToHubSpotTest extends TestCase
     {
         $this->fake(definition: $this->definition(['legalConsentOptions' => $this->explicitConsent()]));
 
-        $this->expectExceptionMessage('no field is mapped to it');
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), 'no field is mapped to it');
 
-        try {
-            $this->submit(['email' => 'jack@example.com']);
-        } finally {
-            Http::assertNotSent(fn (Request $request) => str_contains($request->url(), 'hsforms'));
-        }
+        Http::assertNotSent(fn (Request $request) => str_contains($request->url(), 'hsforms'));
     }
 
     #[Test]
@@ -429,20 +427,16 @@ class SubmitToHubSpotTest extends TestCase
             'errors' => [['context' => ['requiredGranularScopes' => ['forms']]]],
         ], 403));
 
-        $this->expectExceptionMessage('It needs one of: forms.');
-
-        $this->submit(['email' => 'jack@example.com']);
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), 'It needs one of: forms.');
     }
 
     #[Test]
     #[DataProvider('fatalResponseProvider')]
-    public function it_throws_on_fatal_errors(int $status, ?array $body, string $message)
+    public function it_fails_the_job_on_fatal_errors(int $status, ?array $body, string $message)
     {
         $this->fake(submit: Http::response($body, $status));
 
-        $this->expectExceptionMessage($message);
-
-        $this->submit(['email' => 'jack@example.com']);
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), $message);
     }
 
     public static function fatalResponseProvider(): array
@@ -497,13 +491,9 @@ class SubmitToHubSpotTest extends TestCase
 
         Http::fake();
 
-        $this->expectExceptionMessage('FORMS_PRO_HUBSPOT_ACCESS_TOKEN');
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), 'FORMS_PRO_HUBSPOT_ACCESS_TOKEN');
 
-        try {
-            $this->submit(['email' => 'jack@example.com']);
-        } finally {
-            Http::assertNothingSent();
-        }
+        Http::assertNothingSent();
     }
 
     private function explicitConsent(): array

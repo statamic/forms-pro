@@ -16,12 +16,13 @@ use Statamic\Facades\Form;
 use Statamic\Facades\Site;
 use Statamic\FormsPro\FormConnectors\Slack\SendSlackMessage;
 use Statamic\FormsPro\FormConnectors\Slack\SlackClient;
-use Statamic\FormsPro\FormConnectors\Slack\SlackException;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\AssertsFailedJobs;
 use Tests\TestCase;
 
 class SendSlackMessageTest extends TestCase
 {
+    use AssertsFailedJobs;
     use PreventsSavingStacheItemsToDisk;
 
     protected function setUp(): void
@@ -330,17 +331,13 @@ class SendSlackMessageTest extends TestCase
 
     #[Test]
     #[DataProvider('fatalErrorProvider')]
-    public function it_throws_on_fatal_errors($error)
+    public function it_fails_the_job_on_fatal_errors($error)
     {
         Http::fake(['slack.com/*' => Http::response(['ok' => false, 'error' => $error])]);
 
-        $this->expectException(SlackException::class);
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black']), "Error from Slack: [{$error}].");
 
-        try {
-            $this->job($this->form(), ['name' => 'Jack Black'])->handle(app(SlackClient::class));
-        } finally {
-            Http::assertSentCount(1);
-        }
+        Http::assertSentCount(1);
     }
 
     public static function fatalErrorProvider()
@@ -360,13 +357,9 @@ class SendSlackMessageTest extends TestCase
 
         Http::fake();
 
-        $this->expectExceptionMessage('FORMS_PRO_SLACK_TOKEN');
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black']), 'FORMS_PRO_SLACK_TOKEN');
 
-        try {
-            $this->job($this->form(), ['name' => 'Jack Black'])->handle(app(SlackClient::class));
-        } finally {
-            Http::assertNothingSent();
-        }
+        Http::assertNothingSent();
     }
 
     private function form(?array $fields = null): FormContract

@@ -15,10 +15,12 @@ use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Mailchimp\MailchimpClient;
 use Statamic\FormsPro\FormConnectors\Mailchimp\SubscribeToMailchimp;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\AssertsFailedJobs;
 use Tests\TestCase;
 
 class SubscribeToMailchimpTest extends TestCase
 {
+    use AssertsFailedJobs;
     use PreventsSavingStacheItemsToDisk;
 
     private const string AUDIENCE = 'a1b2c3d4e5';
@@ -340,7 +342,7 @@ class SubscribeToMailchimpTest extends TestCase
     }
 
     #[Test]
-    public function it_throws_on_an_invalid_merge_field()
+    public function it_fails_the_job_on_an_invalid_merge_field()
     {
         Http::fake(['us14.api.mailchimp.com/*' => Http::response([
             'title' => 'Invalid Resource',
@@ -348,23 +350,17 @@ class SubscribeToMailchimpTest extends TestCase
             'errors' => [['field' => 'COMPANY', 'message' => 'Please enter a value']],
         ], 400)]);
 
-        $this->expectExceptionMessage('Your merge fields were invalid. Please enter a value');
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), 'Your merge fields were invalid. Please enter a value');
 
-        try {
-            $this->subscribe(['email' => 'jack@example.com']);
-        } finally {
-            Http::assertSentCount(1);
-        }
+        Http::assertSentCount(1);
     }
 
     #[Test]
-    public function it_throws_when_the_key_is_invalid()
+    public function it_fails_the_job_when_the_key_is_invalid()
     {
         Http::fake(['us14.api.mailchimp.com/*' => Http::response(null, 401)]);
 
-        $this->expectExceptionMessage('FORMS_PRO_MAILCHIMP_API_KEY');
-
-        $this->subscribe(['email' => 'jack@example.com']);
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), 'FORMS_PRO_MAILCHIMP_API_KEY');
     }
 
     #[Test]
@@ -374,13 +370,9 @@ class SubscribeToMailchimpTest extends TestCase
 
         Http::fake();
 
-        $this->expectExceptionMessage('FORMS_PRO_MAILCHIMP_API_KEY');
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), 'FORMS_PRO_MAILCHIMP_API_KEY');
 
-        try {
-            $this->subscribe(['email' => 'jack@example.com']);
-        } finally {
-            Http::assertNothingSent();
-        }
+        Http::assertNothingSent();
     }
 
     #[Test]
@@ -390,13 +382,9 @@ class SubscribeToMailchimpTest extends TestCase
 
         Http::fake();
 
-        $this->expectExceptionMessage('is invalid');
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), 'is invalid');
 
-        try {
-            $this->subscribe(['email' => 'jack@example.com']);
-        } finally {
-            Http::assertNothingSent();
-        }
+        Http::assertNothingSent();
     }
 
     private function form(): FormContract

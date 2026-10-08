@@ -14,10 +14,12 @@ use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\Mailcoach\MailcoachClient;
 use Statamic\FormsPro\FormConnectors\Mailcoach\SubscribeToMailcoach;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\AssertsFailedJobs;
 use Tests\TestCase;
 
 class SubscribeToMailcoachTest extends TestCase
 {
+    use AssertsFailedJobs;
     use PreventsSavingStacheItemsToDisk;
 
     private const string LIST = '9dcbb6dc-1b47-4d2e-9d3f-8dbf1a92a5f1';
@@ -179,17 +181,13 @@ class SubscribeToMailcoachTest extends TestCase
 
     #[Test]
     #[DataProvider('fatalResponseProvider')]
-    public function it_throws_on_fatal_errors(int $status, ?array $body, string $message)
+    public function it_fails_the_job_on_fatal_errors(int $status, ?array $body, string $message)
     {
         Http::fake(['acme.mailcoach.app/*' => Http::response($body, $status)]);
 
-        $this->expectExceptionMessage($message);
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), $message);
 
-        try {
-            $this->subscribe(['email' => 'jack@example.com']);
-        } finally {
-            Http::assertSentCount(1);
-        }
+        Http::assertSentCount(1);
     }
 
     public static function fatalResponseProvider(): array
@@ -209,13 +207,9 @@ class SubscribeToMailcoachTest extends TestCase
 
         Http::fake();
 
-        $this->expectExceptionMessage('FORMS_PRO_MAILCOACH_TOKEN');
+        $this->assertJobFails($this->job(['email' => 'jack@example.com']), 'FORMS_PRO_MAILCOACH_TOKEN');
 
-        try {
-            $this->subscribe(['email' => 'jack@example.com']);
-        } finally {
-            Http::assertNothingSent();
-        }
+        Http::assertNothingSent();
     }
 
     private function form(): FormContract

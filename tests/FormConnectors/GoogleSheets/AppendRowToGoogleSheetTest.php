@@ -16,12 +16,13 @@ use Statamic\Facades\AssetContainer;
 use Statamic\Facades\Form;
 use Statamic\FormsPro\FormConnectors\GoogleSheets\AppendRowToGoogleSheet;
 use Statamic\FormsPro\FormConnectors\GoogleSheets\GoogleSheetsClient;
-use Statamic\FormsPro\FormConnectors\GoogleSheets\GoogleSheetsException;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
+use Tests\FormConnectors\AssertsFailedJobs;
 use Tests\TestCase;
 
 class AppendRowToGoogleSheetTest extends TestCase
 {
+    use AssertsFailedJobs;
     use FakesGoogleServiceAccount;
     use PreventsSavingStacheItemsToDisk;
 
@@ -186,13 +187,9 @@ class AppendRowToGoogleSheetTest extends TestCase
     {
         $this->fake(['name', '', 'notes', 'email']);
 
-        $this->expectException(GoogleSheetsException::class);
-        $this->expectExceptionMessage('Row 1 has an empty cell before [name]');
-
-        $this->handle(
-            $this->form(),
-            ['name' => 'Jack Black', 'email' => 'jack@example.com'],
-            ['fields' => ['name', 'email']],
+        $this->assertJobFails(
+            $this->job($this->form(), ['name' => 'Jack Black', 'email' => 'jack@example.com'], ['fields' => ['name', 'email']]),
+            'Row 1 has an empty cell before [name]',
         );
     }
 
@@ -235,13 +232,9 @@ class AppendRowToGoogleSheetTest extends TestCase
     {
         $this->fake(headers: ['name', 'notes', 'name']);
 
-        $this->expectExceptionMessage('The sheet has more than one [name] column');
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black'], ['fields' => ['name']]), 'The sheet has more than one [name] column');
 
-        try {
-            $this->handle($this->form(), ['name' => 'Jack Black'], ['fields' => ['name']]);
-        } finally {
-            $this->assertEmpty($this->requestsTo(':append'));
-        }
+        $this->assertEmpty($this->requestsTo(':append'));
     }
 
     #[Test]
@@ -288,9 +281,7 @@ class AppendRowToGoogleSheetTest extends TestCase
             'error' => ['code' => 404, 'status' => 'NOT_FOUND', 'message' => 'Requested entity was not found.'],
         ], 404)]);
 
-        $this->expectExceptionMessage("make sure it's shared with ".self::SERVICE_ACCOUNT.' as an Editor');
-
-        $this->handle($this->form(), ['name' => 'Jack Black']);
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black']), "make sure it's shared with ".self::SERVICE_ACCOUNT.' as an Editor');
     }
 
     #[Test]
@@ -300,13 +291,26 @@ class AppendRowToGoogleSheetTest extends TestCase
             'error' => ['code' => 400, 'status' => 'INVALID_ARGUMENT', 'message' => "Unable to parse range: 'Leads 2026'!1:1"],
         ], 400)]);
 
-        $this->expectExceptionMessage("Error from Google Sheets: Unable to parse range: 'Leads 2026'!1:1");
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black']), "Error from Google Sheets: Unable to parse range: 'Leads 2026'!1:1");
 
-        try {
-            $this->handle($this->form(), ['name' => 'Jack Black']);
-        } finally {
-            $this->assertNull(Cache::get('forms-pro.google-sheets.sheet.'.app(GoogleSheetsClient::class)->fingerprint().'.'.self::SPREADSHEET.'.0'));
-        }
+        $this->assertNull(Cache::get($this->sheetCacheKey()));
+    }
+
+    #[Test]
+    public function it_retries_with_a_fresh_title_when_the_cached_one_is_rejected()
+    {
+        Cache::put($this->sheetCacheKey(), ['sheetId' => 0, 'title' => 'Leads 2025']);
+
+        $this->fake(overrides: ['sheets.googleapis.com/*/values/*1' => Http::response([
+            'error' => ['code' => 400, 'status' => 'INVALID_ARGUMENT', 'message' => "Unable to parse range: 'Leads 2025'!1:1"],
+        ], 400)]);
+
+        $job = $this->job($this->form(), ['name' => 'Jack Black'])->withFakeQueueInteractions();
+        $job->handle(app(GoogleSheetsClient::class));
+
+        $job->assertReleased(0);
+        $job->assertNotFailed();
+        $this->assertNull(Cache::get($this->sheetCacheKey()));
     }
 
     #[Test]
@@ -314,9 +318,7 @@ class AppendRowToGoogleSheetTest extends TestCase
     {
         $this->fake();
 
-        $this->expectExceptionMessage('The tab this form writes to no longer exists');
-
-        $this->handle($this->form(), ['name' => 'Jack Black'], ['tab' => 999]);
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black'], ['tab' => 999]), 'The tab this form writes to no longer exists');
     }
 
     #[Test]
@@ -344,15 +346,13 @@ class AppendRowToGoogleSheetTest extends TestCase
     }
 
     #[Test]
-    public function it_throws_when_the_service_account_cant_write_to_the_spreadsheet()
+    public function it_fails_the_job_when_the_service_account_cant_write_to_the_spreadsheet()
     {
         $this->fake(overrides: ['sheets.googleapis.com/*' => Http::response([
             'error' => ['code' => 403, 'errors' => [['reason' => 'forbidden']], 'message' => 'The caller does not have permission.'],
         ], 403)]);
 
-        $this->expectExceptionMessage('Error from Google Sheets: The caller does not have permission.');
-
-        $this->handle($this->form(), ['name' => 'Jack Black']);
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black']), 'Error from Google Sheets: The caller does not have permission.');
     }
 
     #[Test]
@@ -370,48 +370,38 @@ class AppendRowToGoogleSheetTest extends TestCase
     }
 
     #[Test]
-    public function it_throws_when_the_access_token_is_still_rejected()
+    public function it_fails_the_job_when_the_access_token_is_still_rejected()
     {
         $this->fake(overrides: ['sheets.googleapis.com/*' => Http::response([
             'error' => ['code' => 401, 'message' => 'Invalid Credentials'],
         ], 401)]);
 
-        $this->expectExceptionMessage('The [FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS] environment variable is invalid.');
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black']), 'The [FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS] environment variable is invalid.');
 
-        try {
-            $this->handle($this->form(), ['name' => 'Jack Black']);
-        } finally {
-            $this->assertCount(2, $this->requestsTo('https://oauth2.googleapis.com/token'));
-        }
+        $this->assertCount(2, $this->requestsTo('https://oauth2.googleapis.com/token'));
     }
 
     #[Test]
-    public function it_throws_when_google_rejects_the_service_account_key()
+    public function it_fails_the_job_when_google_rejects_the_service_account_key()
     {
         $this->fake(overrides: ['oauth2.googleapis.com/token' => Http::response([
             'error' => 'invalid_grant',
             'error_description' => 'Invalid JWT Signature.',
         ], 400)]);
 
-        $this->expectExceptionMessage('Google rejected the service account key: Invalid JWT Signature.');
-
-        $this->handle($this->form(), ['name' => 'Jack Black']);
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black']), 'Google rejected the service account key: Invalid JWT Signature.');
     }
 
     #[Test]
-    public function it_throws_when_the_credentials_arent_a_service_account_key()
+    public function it_fails_the_job_when_the_credentials_arent_a_service_account_key()
     {
         config(['statamic.forms-pro.connections.google_sheets.credentials' => base64_encode(json_encode(['type' => 'authorized_user']))]);
 
         Http::fake();
 
-        $this->expectExceptionMessage('The [FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS] environment variable is not a valid service account key.');
+        $this->assertJobFails($this->job($this->form(), ['name' => 'Jack Black']), 'The [FORMS_PRO_GOOGLE_SHEETS_CREDENTIALS] environment variable is not a valid service account key.');
 
-        try {
-            $this->handle($this->form(), ['name' => 'Jack Black']);
-        } finally {
-            Http::assertNothingSent();
-        }
+        Http::assertNothingSent();
     }
 
     #[Test]
@@ -504,6 +494,11 @@ class AppendRowToGoogleSheetTest extends TestCase
     private function indexOf(Request $request): int
     {
         return Http::recorded()->search(fn (array $pair) => $pair[0] === $request);
+    }
+
+    private function sheetCacheKey(): string
+    {
+        return 'forms-pro.google-sheets.sheet.'.app(GoogleSheetsClient::class)->fingerprint().'.'.self::SPREADSHEET.'.0';
     }
 
     private function lockKey(): string
