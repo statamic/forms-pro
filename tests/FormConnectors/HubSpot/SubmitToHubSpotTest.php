@@ -250,6 +250,30 @@ class SubmitToHubSpotTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('consentTextFallbackProvider')]
+    public function it_falls_back_to_other_legal_text_when_consent_to_process_text_is_missing(array $text, string $expected)
+    {
+        $consent = array_diff_key($this->explicitConsent(), ['consentToProcessText' => true]) + $text;
+        $this->fake(definition: $this->definition(['legalConsentOptions' => $consent]));
+
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'marketing' => true],
+            ['consent_to_process_field' => 'marketing'],
+            fake: false,
+        );
+
+        $this->assertEquals($expected, $payload['legalConsentOptions']['consent']['text']);
+    }
+
+    public static function consentTextFallbackProvider(): array
+    {
+        return [
+            'checkbox label' => [['consentToProcessCheckboxLabel' => 'I agree to processing.'], 'I agree to processing.'],
+            'privacy text' => [[], 'We care about your privacy.'],
+        ];
+    }
+
+    #[Test]
     #[DataProvider('declinedConsentProvider')]
     public function it_doesnt_submit_when_the_submitter_declined_consent_to_process(array $data)
     {

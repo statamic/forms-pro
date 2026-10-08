@@ -119,7 +119,7 @@ class SubmitToHubSpot implements ShouldQueue
 
         return ['consent' => Arr::removeNullValues([
             'consentToProcess' => $this->consentToProcess($submission, $type),
-            'text' => $consent['consentToProcessText'] ?? null,
+            'text' => $consent['consentToProcessText'] ?? $consent['consentToProcessCheckboxLabel'] ?? $consent['privacyText'] ?? null,
             'communications' => $this->communications($submission, $consent) ?: null,
         ])];
     }
