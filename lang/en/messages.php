@@ -38,6 +38,7 @@ return [
     'google_sheets_service_account' => 'Statamic can only open spreadsheets that are shared with this address. It needs Editor access to add rows.',
     'google_sheets_not_found' => 'Couldn\'t open that spreadsheet. Check the address and make sure it\'s shared with :email as an Editor.',
     'google_sheets_api_error' => 'Couldn\'t connect to Google Sheets.',
+    'google_sheets_reserved_column' => 'This form has a field called :field, which clashes with a column this connection adds, so its value won\'t reach your spreadsheets. Rename the field in the form\'s fields to fix this.',
 
     'google_sheets_setup_heading' => 'Connect your Google account',
     'google_sheets_setup_intro' => 'Your site needs a service account before it can write to Google Sheets. You only need to do this once.',

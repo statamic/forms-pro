@@ -82,7 +82,7 @@ class GoogleSheetsConnectorTest extends TestCase
         $component = (new GoogleSheets)->forForm($this->form())->render()->toArray();
 
         $this->assertEquals('google-sheets-connector', $component['name']);
-        $this->assertEquals(['blueprint', 'meta', 'defaults', 'isConfigured', 'serviceAccount', 'apiError'], array_keys($component['props']));
+        $this->assertEquals(['blueprint', 'meta', 'defaults', 'isConfigured', 'serviceAccount', 'apiError', 'reservedFields'], array_keys($component['props']));
         $this->assertTrue($component['props']['isConfigured']);
         $this->assertEquals(self::SERVICE_ACCOUNT, $component['props']['serviceAccount']);
         $this->assertNull($component['props']['apiError']);
@@ -307,24 +307,40 @@ class GoogleSheetsConnectorTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_a_form_with_a_field_named_after_a_column_it_adds()
+    public function it_renders_the_fields_named_after_a_column_it_adds()
     {
         $this->fakeHttp();
 
         $form = $this->form(fields: [
             ['handle' => 'email', 'field' => ['type' => 'text']],
             ['handle' => 'submitted_at', 'field' => ['type' => 'date']],
+            ['handle' => 'submission_id', 'field' => ['type' => 'text']],
         ]);
 
-        try {
-            (new GoogleSheets)->setForm($form)->rules();
+        $props = (new GoogleSheets)->forForm($form)->render()->toArray()['props'];
 
-            $this->fail('A validation exception was not thrown.');
-        } catch (ValidationException $e) {
-            $this->assertEquals(['This form has a field called submitted_at, which clashes with a column this connection adds. Rename the field to use this connection.'], $e->errors()['fields']);
-        }
+        $this->assertEquals(['submitted_at', 'submission_id'], $props['reservedFields']);
+        $this->assertEquals([], (new GoogleSheets)->forForm($this->form())->render()->toArray()['props']['reservedFields']);
+    }
 
-        Http::assertNothingSent();
+    #[Test]
+    public function it_validates_a_form_with_a_field_named_after_a_column_it_adds()
+    {
+        $this->fake();
+
+        $form = $this->form(fields: [
+            ['handle' => 'email', 'field' => ['type' => 'text']],
+            ['handle' => 'submitted_at', 'field' => ['type' => 'date']],
+        ]);
+
+        $rules = (new GoogleSheets)->setForm($form)->rules();
+
+        $this->assertTrue(Validator::make([], $rules)->passes());
+        $this->assertTrue(Validator::make([[
+            'spreadsheet' => self::SPREADSHEET_URL,
+            'tab' => 184,
+            'fields' => ['email', 'submitted_at'],
+        ]], $rules)->passes());
     }
 
     #[Test]

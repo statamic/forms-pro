@@ -15,6 +15,7 @@ const props = defineProps({
     isConfigured: Boolean,
     serviceAccount: String,
     apiError: String,
+    reservedFields: { type: Array, default: () => [] },
 });
 
 const tabName = (sheet: { id: string; tab?: number }): string => props.meta[sheet.id]?.tab?.options?.[sheet.tab];
@@ -25,6 +26,14 @@ const tabName = (sheet: { id: string; tab?: number }): string => props.meta[shee
         <Alert v-if="apiError" variant="error" icon="alert-warning-exclamation-mark" class="mb-6">
             <Heading :text="__('forms-pro::messages.google_sheets_api_error')" />
             <Description :text="__(apiError)" class="mt-1" />
+        </Alert>
+
+        <Alert v-if="reservedFields.length" variant="warning" icon="alert-warning-exclamation-mark" class="mb-6">
+            <Description
+                v-for="field in reservedFields"
+                :key="field"
+                :text="__('forms-pro::messages.google_sheets_reserved_column', { field })"
+            />
         </Alert>
 
         <div v-if="serviceAccount" class="mb-6">

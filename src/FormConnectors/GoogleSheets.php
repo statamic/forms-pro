@@ -7,7 +7,6 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
@@ -60,7 +59,16 @@ class GoogleSheets extends Connector
             'isConfigured' => $this->isConfigured(),
             'serviceAccount' => $this->serviceAccount(),
             'apiError' => $this->apiError,
+            'reservedFields' => $this->reservedFields(),
         ]);
+    }
+
+    private function reservedFields(): array
+    {
+        return $this->form()->formFields()->fields()->keys()
+            ->intersect(array_keys(static::metaColumns()))
+            ->values()
+            ->all();
     }
 
     private function serviceAccount(): ?string
@@ -124,12 +132,6 @@ class GoogleSheets extends Connector
 
     protected function connectionRules(): array
     {
-        $reserved = $this->form()->formFields()->fields()->keys()->intersect(array_keys(static::metaColumns()));
-
-        throw_if($reserved->isNotEmpty(), ValidationException::withMessages([
-            'fields' => __('forms-pro::validation.google_sheets_reserved_column', ['field' => $reserved->first()]),
-        ]));
-
         return [
             'spreadsheet' => [new SpreadsheetUrl],
             'tab' => ['integer', new SpreadsheetTab],

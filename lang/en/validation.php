@@ -1,7 +1,6 @@
 <?php
 
 return [
-    'google_sheets_reserved_column' => 'This form has a field called :field, which clashes with a column this connection adds. Rename the field to use this connection.',
     'google_sheets_spreadsheet_url' => 'Paste the address of a Google Sheet.',
     'slack_channel' => 'Choose a Slack channel.',
     'twilio_recipient' => 'Choose a form field, or type a number in full international format.',
