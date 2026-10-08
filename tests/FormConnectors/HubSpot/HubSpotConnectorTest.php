@@ -73,6 +73,7 @@ class HubSpotConnectorTest extends TestCase
     public function it_captures_the_tracking_context_from_the_request()
     {
         $hutk = str_repeat('a', 32);
+        $this->runInConsole(false);
 
         $this->call('POST', '/!/forms/contact_us', server: [
             'HTTP_REFERER' => 'https://example.com/contact',
@@ -89,8 +90,34 @@ class HubSpotConnectorTest extends TestCase
     }
 
     #[Test]
+    public function it_doesnt_capture_the_tracking_context_in_the_control_panel()
+    {
+        $this->runInConsole(false);
+
+        $this->call('POST', '/cp/forms/contact_us/submissions/fake', server: [
+            'HTTP_REFERER' => 'https://example.com/cp/forms/contact_us',
+            'REMOTE_ADDR' => '1.2.3.4',
+        ], cookies: ['hubspotutk' => str_repeat('a', 32)]);
+
+        $this->assertSame([], $this->finalized($this->submission(['email' => 'jack@example.com']))[0]->context);
+    }
+
+    #[Test]
+    public function it_doesnt_capture_the_tracking_context_in_the_console()
+    {
+        $this->call('POST', '/!/forms/contact_us', server: [
+            'HTTP_REFERER' => 'https://example.com/contact',
+            'REMOTE_ADDR' => '1.2.3.4',
+        ], cookies: ['hubspotutk' => str_repeat('a', 32)]);
+
+        $this->assertSame([], $this->finalized($this->submission(['email' => 'jack@example.com']))[0]->context);
+    }
+
+    #[Test]
     public function it_ignores_tracking_values_hubspot_would_reject()
     {
+        $this->runInConsole(false);
+
         $this->call('POST', '/!/forms/contact_us', server: [
             'HTTP_REFERER' => 'not a url',
         ], cookies: ['hubspotutk' => 'not-a-tracking-token']);
@@ -416,5 +443,11 @@ class HubSpotConnectorTest extends TestCase
     private function finalized(SubmissionContract $submission): array
     {
         return (new HubSpot)->forForm($submission->form())->finalized($submission);
+    }
+
+    private function runInConsole(bool $value): void
+    {
+        $property = new \ReflectionProperty($this->app, 'isRunningInConsole');
+        $property->setValue($this->app, $value);
     }
 }

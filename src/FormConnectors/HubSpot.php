@@ -12,6 +12,7 @@ use Statamic\Forms\Connectors\Connector;
 use Statamic\FormsPro\FormConnectors\HubSpot\HubSpotClient;
 use Statamic\FormsPro\FormConnectors\HubSpot\HubSpotException;
 use Statamic\FormsPro\FormConnectors\HubSpot\SubmitToHubSpot;
+use Statamic\Statamic;
 use Statamic\Support\Arr;
 use Statamic\Support\VueComponent;
 
@@ -59,6 +60,10 @@ class HubSpot extends Connector
 
     private function context(): array
     {
+        if (app()->runningInConsole() || Statamic::isCpRoute()) {
+            return [];
+        }
+
         $request = request();
 
         $hutk = $request->cookie('hubspotutk');
