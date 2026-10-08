@@ -1,16 +1,6 @@
 <script setup lang="ts">
-import { ConnectionList, ConnectionRules, ConnectionSummary } from '@statamic/cms';
-import {
-    Alert,
-    Badge,
-    Description,
-    Heading,
-    Icon,
-    Label,
-    PublishContainer,
-    PublishFields,
-    PublishFieldsProvider,
-} from '@statamic/cms/ui';
+import { ConnectionList, ConnectionSummary } from '@statamic/cms';
+import { Alert, Badge, Description, Heading, Icon, Label } from '@statamic/cms/ui';
 import SlackSetupInstructions from './SlackSetupInstructions.vue';
 
 defineEmits(['update:modelValue']);
@@ -44,10 +34,15 @@ const channelName = (notification: { channel?: string }): string => {
             :model-value="modelValue"
             :errors
             :defaults
+            :blueprint
+            :meta
+            name="slack-connection"
             :add-label="__('Add Notification')"
             :description="__('forms-pro::messages.slack_instructions')"
             :delete-heading="__('Delete Slack Notification')"
             :delete-description="__('forms-pro::messages.slack_delete_confirmation')"
+            :always-label="__('Always send')"
+            :if-label="__('Send if...')"
             @update:model-value="$emit('update:modelValue', $event)"
         >
             <template #header="{ item: notification, collapsed }">
@@ -60,33 +55,6 @@ const channelName = (notification: { channel?: string }): string => {
                     :conditions="notification.conditions"
                     :fallback="notification.heading"
                 />
-            </template>
-
-            <template #default="{ item: notification, errors }">
-                <ConnectionRules
-                    v-model:conditions="notification.conditions"
-                    :always-label="__('Always send')"
-                    :if-label="__('Send if...')"
-                >
-                    <template #then>
-                        <div
-                            class="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
-                        >
-                            <PublishContainer
-                                :errors
-                                :blueprint
-                                :model-value="notification"
-                                :meta="meta[notification.id] ?? defaults.meta"
-                                :name="`slack-connection-${notification.id}`"
-                                :track-dirty-state="false"
-                            >
-                                <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
-                                    <PublishFields />
-                                </PublishFieldsProvider>
-                            </PublishContainer>
-                        </div>
-                    </template>
-                </ConnectionRules>
             </template>
         </ConnectionList>
     </div>

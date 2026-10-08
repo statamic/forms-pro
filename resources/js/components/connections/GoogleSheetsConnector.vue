@@ -1,17 +1,6 @@
 <script setup lang="ts">
-import { ConnectionList, ConnectionRules, ConnectionSummary } from '@statamic/cms';
-import {
-    Alert,
-    Badge,
-    Description,
-    Heading,
-    Icon,
-    Input,
-    Label,
-    PublishContainer,
-    PublishFields,
-    PublishFieldsProvider,
-} from '@statamic/cms/ui';
+import { ConnectionList, ConnectionSummary } from '@statamic/cms';
+import { Alert, Badge, Description, Heading, Icon, Input, Label } from '@statamic/cms/ui';
 import GoogleSheetsSetupInstructions from './GoogleSheetsSetupInstructions.vue';
 
 defineEmits(['update:modelValue']);
@@ -50,10 +39,15 @@ const tabName = (sheet: { id: string; tab?: number }): string => props.meta[shee
             :model-value="modelValue"
             :errors
             :defaults
+            :blueprint
+            :meta
+            name="google-sheets-connection"
             :add-label="__('Add Spreadsheet')"
             :description="__('forms-pro::messages.google_sheets_instructions')"
             :delete-heading="__('Delete Spreadsheet')"
             :delete-description="__('forms-pro::messages.google_sheets_delete_confirmation')"
+            :always-label="__('Always add a row')"
+            :if-label="__('Add a row if...')"
             @update:model-value="$emit('update:modelValue', $event)"
         >
             <template #header="{ item: sheet, collapsed }">
@@ -62,33 +56,6 @@ const tabName = (sheet: { id: string; tab?: number }): string => props.meta[shee
                     {{ tabName(sheet) ?? __('New Spreadsheet') }}
                 </Badge>
                 <ConnectionSummary v-show="collapsed" :conditions="sheet.conditions" />
-            </template>
-
-            <template #default="{ item: sheet, errors }">
-                <ConnectionRules
-                    v-model:conditions="sheet.conditions"
-                    :always-label="__('Always add a row')"
-                    :if-label="__('Add a row if...')"
-                >
-                    <template #then>
-                        <div
-                            class="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
-                        >
-                            <PublishContainer
-                                :errors
-                                :blueprint
-                                :model-value="sheet"
-                                :meta="meta[sheet.id] ?? defaults.meta"
-                                :name="`google-sheets-connection-${sheet.id}`"
-                                :track-dirty-state="false"
-                            >
-                                <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
-                                    <PublishFields />
-                                </PublishFieldsProvider>
-                            </PublishContainer>
-                        </div>
-                    </template>
-                </ConnectionRules>
             </template>
         </ConnectionList>
     </div>

@@ -1,16 +1,6 @@
 <script setup lang="ts">
-import { ConnectionList, ConnectionRules, ConnectionSummary } from '@statamic/cms';
-import {
-    Alert,
-    Badge,
-    Description,
-    Heading,
-    Icon,
-    Label,
-    PublishContainer,
-    PublishFields,
-    PublishFieldsProvider,
-} from '@statamic/cms/ui';
+import { ConnectionList, ConnectionSummary } from '@statamic/cms';
+import { Alert, Badge, Description, Heading, Icon, Label } from '@statamic/cms/ui';
 import KitSetupInstructions from './KitSetupInstructions.vue';
 
 defineEmits(['update:modelValue']);
@@ -44,10 +34,15 @@ const kitFormName = (subscription: { form?: number }): string => {
             :model-value="modelValue"
             :errors
             :defaults
+            :blueprint
+            :meta
+            name="kit-connection"
             :add-label="__('Add Subscription')"
             :description="__('forms-pro::messages.kit_instructions')"
             :delete-heading="__('Delete Kit Subscription')"
             :delete-description="__('forms-pro::messages.kit_delete_confirmation')"
+            :always-label="__('Always subscribe')"
+            :if-label="__('Subscribe if...')"
             @update:model-value="$emit('update:modelValue', $event)"
         >
             <template #header="{ item: subscription, collapsed }">
@@ -56,33 +51,6 @@ const kitFormName = (subscription: { form?: number }): string => {
                     {{ kitFormName(subscription) ?? __('Subscription') }}
                 </Badge>
                 <ConnectionSummary v-show="collapsed" :conditions="subscription.conditions" />
-            </template>
-
-            <template #default="{ item: subscription, errors }">
-                <ConnectionRules
-                    v-model:conditions="subscription.conditions"
-                    :always-label="__('Always subscribe')"
-                    :if-label="__('Subscribe if...')"
-                >
-                    <template #then>
-                        <div
-                            class="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
-                        >
-                            <PublishContainer
-                                :errors
-                                :blueprint
-                                :model-value="subscription"
-                                :meta="meta[subscription.id] ?? defaults.meta"
-                                :name="`kit-connection-${subscription.id}`"
-                                :track-dirty-state="false"
-                            >
-                                <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
-                                    <PublishFields />
-                                </PublishFieldsProvider>
-                            </PublishContainer>
-                        </div>
-                    </template>
-                </ConnectionRules>
             </template>
         </ConnectionList>
     </div>

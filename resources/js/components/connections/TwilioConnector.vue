@@ -1,17 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ConnectionList, ConnectionRules, ConnectionSummary } from '@statamic/cms';
-import {
-    Alert,
-    Badge,
-    Description,
-    Heading,
-    Icon,
-    Label,
-    PublishContainer,
-    PublishFields,
-    PublishFieldsProvider,
-} from '@statamic/cms/ui';
+import { ConnectionList, ConnectionSummary } from '@statamic/cms';
+import { Alert, Badge, Description, Heading, Icon, Label } from '@statamic/cms/ui';
 import TwilioSetupInstructions from './TwilioSetupInstructions.vue';
 
 defineEmits(['update:modelValue']);
@@ -51,10 +41,15 @@ const recipientLabel = (notification: { to?: string }): string => {
             :model-value="modelValue"
             :errors
             :defaults
+            :blueprint
+            :meta
+            name="twilio-connection"
             :add-label="__('Add Notification')"
             :description="__('forms-pro::messages.twilio_instructions')"
             :delete-heading="__('Delete Twilio Notification')"
             :delete-description="__('forms-pro::messages.twilio_delete_confirmation')"
+            :always-label="__('Always send')"
+            :if-label="__('Send if...')"
             @update:model-value="$emit('update:modelValue', $event)"
         >
             <template #header="{ item: notification, collapsed }">
@@ -67,33 +62,6 @@ const recipientLabel = (notification: { to?: string }): string => {
                     :conditions="notification.conditions"
                     :fallback="notification.body"
                 />
-            </template>
-
-            <template #default="{ item: notification, errors }">
-                <ConnectionRules
-                    v-model:conditions="notification.conditions"
-                    :always-label="__('Always send')"
-                    :if-label="__('Send if...')"
-                >
-                    <template #then>
-                        <div
-                            class="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
-                        >
-                            <PublishContainer
-                                :errors
-                                :blueprint
-                                :model-value="notification"
-                                :meta="meta[notification.id] ?? defaults.meta"
-                                :name="`twilio-connection-${notification.id}`"
-                                :track-dirty-state="false"
-                            >
-                                <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
-                                    <PublishFields />
-                                </PublishFieldsProvider>
-                            </PublishContainer>
-                        </div>
-                    </template>
-                </ConnectionRules>
             </template>
         </ConnectionList>
     </div>

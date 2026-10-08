@@ -1,17 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ConnectionList, ConnectionRules, ConnectionSummary } from '@statamic/cms';
-import {
-    Alert,
-    Badge,
-    Description,
-    Heading,
-    Icon,
-    Label,
-    PublishContainer,
-    PublishFields,
-    PublishFieldsProvider,
-} from '@statamic/cms/ui';
+import { ConnectionFields, ConnectionList, ConnectionRules, ConnectionSummary } from '@statamic/cms';
+import { Alert, Badge, Description, Heading, Icon, Label } from '@statamic/cms/ui';
 import HubSpotSetupInstructions from './HubSpotSetupInstructions.vue';
 
 type Submission = {
@@ -92,6 +82,9 @@ const warnings = (submission: Submission): string[] => {
             :model-value="modelValue"
             :errors
             :defaults
+            :blueprint
+            :meta
+            name="hubspot-connection"
             :add-label="__('Add HubSpot Form')"
             :description="__('forms-pro::messages.hubspot_instructions')"
             :delete-heading="__('Delete HubSpot Form')"
@@ -106,40 +99,26 @@ const warnings = (submission: Submission): string[] => {
                 <ConnectionSummary v-show="collapsed" :conditions="submission.conditions" />
             </template>
 
-            <template #default="{ item: submission, errors }">
+            <template #default="{ item: submission }">
                 <ConnectionRules
                     v-model:conditions="submission.conditions"
                     :always-label="__('Always send')"
                     :if-label="__('Send if...')"
                 >
                     <template #then>
-                        <Alert
-                            v-for="warning in warnings(submission)"
-                            :key="warning"
-                            variant="warning"
-                            icon="alert-warning-exclamation-mark"
-                            class="mb-4"
-                        >
-                            <Description :text="__(warning)" />
-                        </Alert>
-
-                        <div
-                            class="rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900"
-                        >
-                            <PublishContainer
-                                :errors
-                                :blueprint
-                                :model-value="submission"
-                                :meta="meta[submission.id] ?? defaults.meta"
-                                :extra-values="extraValues[submission.id]"
-                                :name="`hubspot-connection-${submission.id}`"
-                                :track-dirty-state="false"
-                            >
-                                <PublishFieldsProvider :fields="blueprint.tabs[0].sections[0].fields">
-                                    <PublishFields />
-                                </PublishFieldsProvider>
-                            </PublishContainer>
-                        </div>
+                        <ConnectionFields :extra-values="extraValues[submission.id]">
+                            <template #before>
+                                <Alert
+                                    v-for="warning in warnings(submission)"
+                                    :key="warning"
+                                    variant="warning"
+                                    icon="alert-warning-exclamation-mark"
+                                    class="mb-4"
+                                >
+                                    <Description :text="__(warning)" />
+                                </Alert>
+                            </template>
+                        </ConnectionFields>
                     </template>
                 </ConnectionRules>
             </template>
