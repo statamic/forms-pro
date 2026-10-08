@@ -45,7 +45,11 @@ class MessageBuilder
     private function heading(): string
     {
         if ($heading = Arr::get($this->config, 'heading')) {
-            return (string) Antlers::parse(Parse::config($heading), $this->submission->toAugmentedArray());
+            $heading = trim((string) Antlers::parse(Parse::config($heading), $this->submission->toAugmentedArray()));
+
+            if ($heading !== '') {
+                return $heading;
+            }
         }
 
         return __('forms-pro::messages.slack_heading', [

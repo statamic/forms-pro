@@ -67,6 +67,17 @@ class SendSlackMessageTest extends TestCase
     }
 
     #[Test]
+    public function it_falls_back_to_the_default_heading_when_the_configured_heading_renders_blank()
+    {
+        Http::fake(['slack.com/*' => Http::response(['ok' => true])]);
+
+        $this->send($this->form(), ['name' => ' '], ['heading' => '{{ name }}']);
+
+        Http::assertSent(fn (Request $request) => $request['text'] === 'New Contact Us submission'
+            && $request['blocks'][0]['text']['text'] === 'New Contact Us submission');
+    }
+
+    #[Test]
     public function it_truncates_a_heading_to_slacks_limit()
     {
         $blocks = $this->blocksForForm($this->form(), ['name' => str_repeat('a', 300)], [
