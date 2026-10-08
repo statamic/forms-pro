@@ -69,7 +69,7 @@ class SubmitToHubSpot implements ShouldQueue
             ->map(fn (array $property): array => [
                 'objectTypeId' => $objectTypes->get($property['key'], self::CONTACT_OBJECT_TYPE),
                 'name' => $property['key'],
-                'value' => $this->value($submission, $property['value'] ?? null),
+                'value' => $this->propertyValue($submission, $property['value'] ?? null),
             ])
             ->prepend([
                 'objectTypeId' => self::CONTACT_OBJECT_TYPE,
@@ -79,6 +79,17 @@ class SubmitToHubSpot implements ShouldQueue
             ->reject(fn (array $field): bool => blank($field['value']))
             ->values()
             ->all();
+    }
+
+    private function propertyValue(Submission $submission, ?string $handle): ?string
+    {
+        $value = $handle ? $submission->get($handle) : null;
+
+        return match (true) {
+            is_bool($value) => $value ? 'true' : 'false',
+            is_array($value) => implode(';', Arr::flatten($value)) ?: null,
+            default => $this->value($submission, $handle),
+        };
     }
 
     private function submittedAt(Submission $submission): ?string

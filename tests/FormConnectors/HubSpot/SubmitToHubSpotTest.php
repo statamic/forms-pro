@@ -101,6 +101,37 @@ class SubmitToHubSpotTest extends TestCase
     }
 
     #[Test]
+    public function it_joins_array_values_with_semicolons()
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'interests' => ['coding', 'music']],
+            ['properties' => [['key' => 'interests', 'value' => 'interests']]],
+        );
+
+        $this->assertEquals('coding;music', $payload['fields'][1]['value']);
+    }
+
+    #[Test]
+    #[DataProvider('booleanProvider')]
+    public function it_sends_booleans_as_strings($value, $expected)
+    {
+        $payload = $this->payload(
+            ['email' => 'jack@example.com', 'subscribe' => $value],
+            ['properties' => [['key' => 'subscribe', 'value' => 'subscribe']]],
+        );
+
+        $this->assertEquals($expected, $payload['fields'][1]['value']);
+    }
+
+    public static function booleanProvider(): array
+    {
+        return [
+            'true' => [true, 'true'],
+            'false' => [false, 'false'],
+        ];
+    }
+
+    #[Test]
     public function it_sends_properties_whose_value_is_zero()
     {
         $payload = $this->payload(
