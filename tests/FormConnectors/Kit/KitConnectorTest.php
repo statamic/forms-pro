@@ -63,32 +63,34 @@ class KitConnectorTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('consentProvider')]
-    public function it_only_subscribes_when_consent_has_been_given($value, bool $shouldSubscribe)
+    #[DataProvider('consentConditionProvider')]
+    public function it_only_subscribes_when_the_consent_condition_passes(string $field, string $operator, string $condition, $value, bool $shouldSubscribe)
     {
-        $form = $this->form([['id' => 'abc', 'email_field' => 'email', 'consent_field' => 'consent']]);
+        $form = $this->form([[
+            'id' => 'abc',
+            'email_field' => 'email',
+            'conditions' => [['field' => $field, 'operator' => $operator, 'value' => $condition]],
+        ]]);
 
         $jobs = $this->finalized($form->makeSubmission()->data([
             'email' => 'jack@example.com',
-            'consent' => $value,
+            $field => $value,
         ]));
 
         $this->assertCount($shouldSubscribe ? 1 : 0, $jobs);
     }
 
-    public static function consentProvider(): array
+    public static function consentConditionProvider(): array
     {
         return [
-            'checked toggle' => [true, true],
-            'unchecked toggle' => [false, false],
-            'missing value' => [null, false],
-            'empty string' => ['', false],
-            'checked checkbox' => [['newsletter'], true],
-            'unchecked checkbox' => [[], false],
-            'yes' => ['yes', true],
-            'no' => ['no', false],
-            'zero' => ['0', false],
-            'one' => ['1', true],
+            'checked toggle' => ['consent', 'equals', 'true', true, true],
+            'unchecked toggle' => ['consent', 'equals', 'true', false, false],
+            'missing toggle' => ['consent', 'equals', 'true', null, false],
+            'checked checkbox' => ['newsletter', 'contains', 'yes', ['yes'], true],
+            'unchecked checkbox' => ['newsletter', 'contains', 'yes', [], false],
+            'missing checkbox' => ['newsletter', 'contains', 'yes', null, false],
+            'yes radio' => ['subscribe', 'equals', 'yes', 'yes', true],
+            'no radio' => ['subscribe', 'equals', 'yes', 'no', false],
         ];
     }
 
@@ -206,7 +208,6 @@ class KitConnectorTest extends TestCase
             'form' => self::FORM,
             'email_field' => 'email',
             'first_name_field' => 'name',
-            'consent_field' => 'consent',
             'tags' => [22367468, 22367469],
             'custom_fields' => [['key' => 'last_name', 'value' => 'name']],
         ]], (new Kit)->setForm($this->form())->rules());
@@ -238,7 +239,6 @@ class KitConnectorTest extends TestCase
                 ['email_field' => 'email', 'tags' => [22367468, 22367468]],
                 ['tags.0', 'tags.1'],
             ],
-            'unknown consent field' => [['email_field' => 'email', 'consent_field' => 'nope'], ['consent_field']],
             'custom field without a key' => [
                 ['email_field' => 'email', 'custom_fields' => [['value' => 'name']]],
                 ['custom_fields.0.key'],
@@ -269,7 +269,6 @@ class KitConnectorTest extends TestCase
             'form' => self::FORM,
             'email_field' => 'email',
             'first_name_field' => 'name',
-            'consent_field' => 'consent',
             'tags' => [22367468, 22367469],
             'custom_fields' => [['key' => 'last_name', 'value' => 'name']],
         ];
@@ -285,7 +284,6 @@ class KitConnectorTest extends TestCase
             'form' => null,
             'email_field' => 'email',
             'first_name_field' => null,
-            'consent_field' => null,
             'tags' => [],
             'custom_fields' => [],
         ]]));
@@ -315,6 +313,8 @@ class KitConnectorTest extends TestCase
                 ['handle' => 'name', 'field' => ['type' => 'text']],
                 ['handle' => 'email', 'field' => ['type' => 'text']],
                 ['handle' => 'consent', 'field' => ['type' => 'toggle']],
+                ['handle' => 'newsletter', 'field' => ['type' => 'checkboxes', 'options' => ['yes' => 'Yes']]],
+                ['handle' => 'subscribe', 'field' => ['type' => 'radio', 'options' => ['yes' => 'Yes', 'no' => 'No']]],
             ],
         ]);
 

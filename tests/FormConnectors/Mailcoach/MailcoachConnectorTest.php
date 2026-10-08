@@ -77,41 +77,6 @@ class MailcoachConnectorTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('consentProvider')]
-    public function it_only_subscribes_when_consent_has_been_given($value, bool $shouldSubscribe)
-    {
-        $form = $this->form([[
-            'id' => 'abc',
-            'list' => self::LIST,
-            'email_field' => 'email',
-            'consent_field' => 'consent',
-        ]]);
-
-        $jobs = $this->finalized($form->makeSubmission()->data([
-            'email' => 'jack@example.com',
-            'consent' => $value,
-        ]));
-
-        $this->assertCount($shouldSubscribe ? 1 : 0, $jobs);
-    }
-
-    public static function consentProvider(): array
-    {
-        return [
-            'checked toggle' => [true, true],
-            'unchecked toggle' => [false, false],
-            'missing value' => [null, false],
-            'empty string' => ['', false],
-            'checked checkbox' => [['newsletter'], true],
-            'unchecked checkbox' => [[], false],
-            'yes' => ['yes', true],
-            'no' => ['no', false],
-            'zero' => ['0', false],
-            'one' => ['1', true],
-        ];
-    }
-
-    #[Test]
     public function it_renders_the_connection_with_the_available_lists()
     {
         $this->fakeHttp(['acme.mailcoach.app/*' => Http::response(['data' => [
@@ -243,7 +208,6 @@ class MailcoachConnectorTest extends TestCase
             'list' => self::LIST,
             'email_field' => 'email',
             'first_name_field' => 'name',
-            'consent_field' => 'consent',
             'tags' => ['newsletter'],
             'attributes' => [['key' => 'full_name', 'value' => 'name']],
             'skip_confirmation' => true,
@@ -272,7 +236,6 @@ class MailcoachConnectorTest extends TestCase
             'list that isnt a uuid' => [['list' => 'newsletter', 'email_field' => 'email'], ['list']],
             'missing email field' => [['list' => self::LIST], ['email_field']],
             'unknown email field' => [['list' => self::LIST, 'email_field' => 'nope'], ['email_field']],
-            'unknown consent field' => [['list' => self::LIST, 'email_field' => 'email', 'consent_field' => 'nope'], ['consent_field']],
             'attribute without a key' => [
                 ['list' => self::LIST, 'email_field' => 'email', 'attributes' => [['value' => 'name']]],
                 ['attributes.0.key'],
@@ -303,7 +266,6 @@ class MailcoachConnectorTest extends TestCase
             'list' => self::LIST,
             'email_field' => 'email',
             'first_name_field' => 'name',
-            'consent_field' => 'consent',
             'tags' => ['newsletter'],
             'attributes' => [['key' => 'full_name', 'value' => 'name']],
             'skip_confirmation' => true,
@@ -326,7 +288,6 @@ class MailcoachConnectorTest extends TestCase
             'email_field' => 'email',
             'first_name_field' => null,
             'last_name_field' => null,
-            'consent_field' => null,
             'tags' => [],
             'attributes' => [],
             'skip_confirmation' => false,

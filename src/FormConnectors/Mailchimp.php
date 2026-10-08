@@ -12,7 +12,6 @@ use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connectors\Connector;
 use Statamic\FormsPro\Fieldtypes\MailchimpGroupOption;
-use Statamic\FormsPro\FormConnectors\Concerns\ReadsSubmissionValues;
 use Statamic\FormsPro\FormConnectors\Mailchimp\MailchimpClient;
 use Statamic\FormsPro\FormConnectors\Mailchimp\MailchimpException;
 use Statamic\FormsPro\FormConnectors\Mailchimp\SubscribeToMailchimp;
@@ -26,8 +25,6 @@ use function Statamic\trans as __;
 
 class Mailchimp extends Connector
 {
-    use ReadsSubmissionValues;
-
     public const array DEDICATED_MERGE_TAGS = ['FNAME', 'LNAME'];
 
     protected $developer = 'Statamic';
@@ -57,17 +54,11 @@ class Mailchimp extends Connector
             return null;
         }
 
-        if (! $submission->get($connection['email_field']) || ! $this->hasConsent($submission, $connection)) {
+        if (! $submission->get($connection['email_field'])) {
             return null;
         }
 
         return new SubscribeToMailchimp($submission, $connection);
-    }
-
-    private function hasConsent(Submission $submission, array $connection): bool
-    {
-        return blank($handle = Arr::get($connection, 'consent_field'))
-            || $this->isChecked($submission, $handle);
     }
 
     public function render(): VueComponent
@@ -109,7 +100,6 @@ class Mailchimp extends Connector
             'email_field' => [$isFormField],
             'first_name_field' => [$isFormField],
             'last_name_field' => [$isFormField],
-            'consent_field' => [$isFormField],
             'tags' => ['array'],
             'tags.*' => ['string'],
             'merge_fields' => ['array'],
@@ -304,25 +294,12 @@ class Mailchimp extends Connector
                                     ],
                                 ],
                                 [
-                                    'handle' => 'consent_field',
-                                    'field' => [
-                                        'type' => 'form_fields',
-                                        'display' => __('Only Subscribe When'),
-                                        'instructions' => __('forms-pro::messages.mailchimp_consent_field_instructions'),
-                                        'form' => $this->form()->handle(),
-                                        'categories' => ['choice', 'other'],
-                                        'clearable' => true,
-                                        'width' => 50,
-                                    ],
-                                ],
-                                [
                                     'handle' => 'skip_confirmation',
                                     'field' => [
                                         'type' => 'toggle',
                                         'display' => __('Skip Confirmation Email'),
                                         'instructions' => __('forms-pro::messages.mailchimp_skip_confirmation_instructions'),
                                         'default' => false,
-                                        'width' => 50,
                                     ],
                                 ],
                             ],

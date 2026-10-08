@@ -9,7 +9,6 @@ use Illuminate\Validation\Rule;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connectors\Connector;
-use Statamic\FormsPro\FormConnectors\Concerns\ReadsSubmissionValues;
 use Statamic\FormsPro\FormConnectors\Kit\KitClient;
 use Statamic\FormsPro\FormConnectors\Kit\KitException;
 use Statamic\FormsPro\FormConnectors\Kit\SubscribeToKit;
@@ -20,8 +19,6 @@ use function Statamic\trans as __;
 
 class Kit extends Connector
 {
-    use ReadsSubmissionValues;
-
     protected $developer = 'Statamic';
 
     private ?array $account = null;
@@ -49,17 +46,11 @@ class Kit extends Connector
             return null;
         }
 
-        if (! $submission->get($connection['email_field']) || ! $this->hasConsent($submission, $connection)) {
+        if (! $submission->get($connection['email_field'])) {
             return null;
         }
 
         return new SubscribeToKit($submission, $connection);
-    }
-
-    private function hasConsent(Submission $submission, array $connection): bool
-    {
-        return blank($handle = Arr::get($connection, 'consent_field'))
-            || $this->isChecked($submission, $handle);
     }
 
     public function render(): VueComponent
@@ -100,7 +91,6 @@ class Kit extends Connector
             'form' => ['integer'],
             'email_field' => [$isFormField],
             'first_name_field' => [$isFormField],
-            'consent_field' => [$isFormField],
             'tags' => ['array'],
             'tags.*' => ['integer', 'distinct'],
             'custom_fields' => ['array'],
@@ -200,18 +190,6 @@ class Kit extends Connector
                                     ],
                                 ],
                                 [
-                                    'handle' => 'consent_field',
-                                    'field' => [
-                                        'type' => 'form_fields',
-                                        'display' => __('Only Subscribe When'),
-                                        'instructions' => __('forms-pro::messages.kit_consent_field_instructions'),
-                                        'form' => $this->form()->handle(),
-                                        'categories' => ['choice', 'other'],
-                                        'clearable' => true,
-                                        'width' => 50,
-                                    ],
-                                ],
-                                [
                                     'handle' => 'form',
                                     'field' => [
                                         'type' => 'select',
@@ -220,7 +198,6 @@ class Kit extends Connector
                                         'options' => $forms,
                                         'clearable' => true,
                                         'searchable' => true,
-                                        'width' => 50,
                                     ],
                                 ],
                             ],

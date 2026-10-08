@@ -147,38 +147,6 @@ class MailchimpConnectorTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('consentProvider')]
-    public function it_only_subscribes_when_consent_has_been_given($value, bool $shouldSubscribe)
-    {
-        $form = $this->form([[
-            'id' => 'abc',
-            'list' => self::AUDIENCE,
-            'email_field' => 'email',
-            'consent_field' => 'consent',
-        ]]);
-
-        $jobs = $this->finalized($form->makeSubmission()->data([
-            'email' => 'jack@example.com',
-            'consent' => $value,
-        ]));
-
-        $this->assertCount($shouldSubscribe ? 1 : 0, $jobs);
-    }
-
-    public static function consentProvider(): array
-    {
-        return [
-            'checked toggle' => [true, true],
-            'unchecked toggle' => [false, false],
-            'missing value' => [null, false],
-            'checked checkbox' => [['newsletter'], true],
-            'unchecked checkbox' => [[], false],
-            'yes' => ['yes', true],
-            'no' => ['no', false],
-        ];
-    }
-
-    #[Test]
     public function it_renders_the_connection_with_the_available_audiences()
     {
         $this->fakeHttp(['us14.api.mailchimp.com/*' => Http::response(['lists' => [
@@ -307,7 +275,6 @@ class MailchimpConnectorTest extends TestCase
             'list' => self::AUDIENCE,
             'email_field' => 'email',
             'first_name_field' => 'name',
-            'consent_field' => 'consent',
             'tags' => ['newsletter'],
             'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
             'groups' => [['group' => '4e4b2bc6ae', 'field' => 'consent', 'option' => 'news']],
@@ -339,7 +306,6 @@ class MailchimpConnectorTest extends TestCase
             'audience with a query string' => [['list' => 'a1b2c3d4e5?count=1000', 'email_field' => 'email'], ['list']],
             'missing email field' => [['list' => self::AUDIENCE], ['email_field']],
             'unknown email field' => [['list' => self::AUDIENCE, 'email_field' => 'nope'], ['email_field']],
-            'unknown consent field' => [['list' => self::AUDIENCE, 'email_field' => 'email', 'consent_field' => 'nope'], ['consent_field']],
             'merge field without a key' => [
                 ['list' => self::AUDIENCE, 'email_field' => 'email', 'merge_fields' => [['value' => 'name']]],
                 ['merge_fields.0.key'],
@@ -412,7 +378,6 @@ class MailchimpConnectorTest extends TestCase
             'list' => self::AUDIENCE,
             'email_field' => 'email',
             'first_name_field' => 'name',
-            'consent_field' => 'consent',
             'tags' => ['newsletter'],
             'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
             'groups' => [['group' => '4e4b2bc6ae', 'field' => 'consent', 'option' => 'news']],
@@ -423,7 +388,6 @@ class MailchimpConnectorTest extends TestCase
             'list' => self::AUDIENCE,
             'email_field' => 'email',
             'first_name_field' => 'name',
-            'consent_field' => 'consent',
             'tags' => ['newsletter'],
             'merge_fields' => [['key' => 'COMPANY', 'value' => 'name']],
             'groups' => [['group' => '4e4b2bc6ae', 'field' => 'consent', 'option' => 'news']],
@@ -446,7 +410,6 @@ class MailchimpConnectorTest extends TestCase
             'email_field' => 'email',
             'first_name_field' => null,
             'last_name_field' => null,
-            'consent_field' => null,
             'tags' => [],
             'merge_fields' => [],
             'marketing_permissions' => [],

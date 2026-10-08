@@ -63,7 +63,6 @@ return [
     'hubspot_subscription_placeholder' => 'Choose a subscription',
     'hubspot_communications_instructions' => 'Fields left empty are recorded as declined.',
     'hubspot_communications_placeholder' => 'Not recorded',
-    'hubspot_consent_field_instructions' => 'Leave empty to send every submission.',
     'hubspot_no_form' => 'Choose a HubSpot form first.',
     'hubspot_no_forms' => 'This HubSpot account doesn\'t have any forms yet. Create one in HubSpot, then reload this page.',
     'hubspot_no_consent' => 'This form doesn\'t have any consent checkboxes to map.',
@@ -89,7 +88,6 @@ return [
     'kit_first_name_field_instructions' => 'Kit only stores a first name. Map last name as a custom field below.',
     'kit_tags_instructions' => 'Applied to every subscriber. Existing tags are kept. Create tags in Kit first.',
     'kit_custom_fields_instructions' => 'Store extra values on the subscriber. Custom fields are defined on your account in Kit.',
-    'kit_consent_field_instructions' => 'Leave empty to subscribe on every submission.',
     'kit_form_instructions' => 'Subscribers are attributed to this form in Kit, triggering any automations linked to it. If the form sends a confirmation email, everyone who submits gets one — they\'re subscribed either way.',
     'kit_api_error' => 'Couldn\'t connect to Kit.',
 
@@ -121,7 +119,6 @@ return [
     'mailchimp_marketing_permissions_not_enabled' => 'This audience doesn\'t have GDPR fields enabled, so there are no permissions to record.',
     'mailchimp_marketing_permissions_no_contacts' => 'This audience has no contacts yet, so Mailchimp won\'t tell us its permissions. Submit this form once, then reload.',
     'mailchimp_marketing_permissions_placeholder' => 'Choose a field',
-    'mailchimp_consent_field_instructions' => 'Only subscribe when this field is checked. Leave empty to subscribe on every submission.',
     'mailchimp_skip_confirmation_instructions' => 'Subscribe people immediately. Otherwise they\'re added as pending, and won\'t receive anything until they confirm by email.',
     'mailchimp_api_error' => 'Couldn\'t connect to Mailchimp.',
 
@@ -138,7 +135,6 @@ return [
     'mailcoach_email_field_instructions' => 'Submissions without an email address are ignored.',
     'mailcoach_tags_instructions' => 'Applied to every subscriber. Existing tags are replaced.',
     'mailcoach_attributes_instructions' => 'Store extra values on the subscriber.',
-    'mailcoach_consent_field_instructions' => 'Only subscribe when this field is checked. Leave empty to subscribe on every submission.',
     'mailcoach_skip_confirmation_instructions' => 'Subscribe people immediately, without asking them to confirm. Only applies to lists using double opt-in.',
     'mailcoach_api_error' => 'Couldn\'t connect to Mailcoach.',
 

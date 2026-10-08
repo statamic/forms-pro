@@ -9,7 +9,6 @@ use Illuminate\Validation\Rule;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connectors\Connector;
-use Statamic\FormsPro\FormConnectors\Concerns\ReadsSubmissionValues;
 use Statamic\FormsPro\FormConnectors\HubSpot\HubSpotClient;
 use Statamic\FormsPro\FormConnectors\HubSpot\HubSpotException;
 use Statamic\FormsPro\FormConnectors\HubSpot\SubmitToHubSpot;
@@ -20,8 +19,6 @@ use function Statamic\trans as __;
 
 class HubSpot extends Connector
 {
-    use ReadsSubmissionValues;
-
     protected static $handle = 'hubspot';
 
     protected static $title = 'HubSpot';
@@ -53,17 +50,11 @@ class HubSpot extends Connector
             return null;
         }
 
-        if (! $submission->get($connection['email_field']) || ! $this->hasConsent($submission, $connection)) {
+        if (! $submission->get($connection['email_field'])) {
             return null;
         }
 
         return new SubmitToHubSpot($submission, $connection, $this->context());
-    }
-
-    private function hasConsent(Submission $submission, array $connection): bool
-    {
-        return blank($handle = Arr::get($connection, 'consent_field'))
-            || $this->isChecked($submission, $handle);
     }
 
     private function context(): array
@@ -126,7 +117,6 @@ class HubSpot extends Connector
         return [
             'form' => ['uuid'],
             'email_field' => [$isFormField],
-            'consent_field' => [$isFormField],
             'consent_to_process_field' => [$isFormField],
             'legitimate_interest_subscription' => ['integer'],
             'properties' => ['array'],
@@ -214,17 +204,6 @@ class HubSpot extends Connector
                                         'forms' => $forms,
                                         'subscriptions' => $subscriptions,
                                         'if' => ['consent_type' => 'contains consent_to_process'],
-                                    ],
-                                ],
-                                [
-                                    'handle' => 'consent_field',
-                                    'field' => [
-                                        'type' => 'form_fields',
-                                        'display' => __('Only Submit When'),
-                                        'instructions' => __('forms-pro::messages.hubspot_consent_field_instructions'),
-                                        'form' => $this->form()->handle(),
-                                        'categories' => ['choice', 'other'],
-                                        'clearable' => true,
                                     ],
                                 ],
                             ],

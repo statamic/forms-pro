@@ -9,7 +9,6 @@ use Illuminate\Validation\Rule;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Blueprint;
 use Statamic\Forms\Connectors\Connector;
-use Statamic\FormsPro\FormConnectors\Concerns\ReadsSubmissionValues;
 use Statamic\FormsPro\FormConnectors\Mailcoach\MailcoachClient;
 use Statamic\FormsPro\FormConnectors\Mailcoach\MailcoachException;
 use Statamic\FormsPro\FormConnectors\Mailcoach\SubscribeToMailcoach;
@@ -20,8 +19,6 @@ use function Statamic\trans as __;
 
 class Mailcoach extends Connector
 {
-    use ReadsSubmissionValues;
-
     protected $developer = 'Statamic';
 
     private ?array $lists = null;
@@ -50,17 +47,11 @@ class Mailcoach extends Connector
             return null;
         }
 
-        if (! $submission->get($connection['email_field']) || ! $this->hasConsent($submission, $connection)) {
+        if (! $submission->get($connection['email_field'])) {
             return null;
         }
 
         return new SubscribeToMailcoach($submission, $connection);
-    }
-
-    private function hasConsent(Submission $submission, array $connection): bool
-    {
-        return blank($handle = Arr::get($connection, 'consent_field'))
-            || $this->isChecked($submission, $handle);
     }
 
     public function render(): VueComponent
@@ -102,7 +93,6 @@ class Mailcoach extends Connector
             'email_field' => [$isFormField],
             'first_name_field' => [$isFormField],
             'last_name_field' => [$isFormField],
-            'consent_field' => [$isFormField],
             'tags' => ['array'],
             'tags.*' => ['string'],
             'attributes' => ['array'],
@@ -220,25 +210,12 @@ class Mailcoach extends Connector
                                     ],
                                 ],
                                 [
-                                    'handle' => 'consent_field',
-                                    'field' => [
-                                        'type' => 'form_fields',
-                                        'display' => __('Only Subscribe When'),
-                                        'instructions' => __('forms-pro::messages.mailcoach_consent_field_instructions'),
-                                        'form' => $this->form()->handle(),
-                                        'categories' => ['choice', 'other'],
-                                        'clearable' => true,
-                                        'width' => 50,
-                                    ],
-                                ],
-                                [
                                     'handle' => 'skip_confirmation',
                                     'field' => [
                                         'type' => 'toggle',
                                         'display' => __('Skip Confirmation Email'),
                                         'instructions' => __('forms-pro::messages.mailcoach_skip_confirmation_instructions'),
                                         'default' => false,
-                                        'width' => 50,
                                     ],
                                 ],
                             ],

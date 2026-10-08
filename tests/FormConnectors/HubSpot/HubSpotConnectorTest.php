@@ -70,31 +70,6 @@ class HubSpotConnectorTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('consentProvider')]
-    public function it_only_submits_when_consent_has_been_given(mixed $value, bool $expected)
-    {
-        $jobs = $this->finalized(
-            $this->submission(['email' => 'jack@example.com', 'marketing' => $value], ['consent_field' => 'marketing'])
-        );
-
-        $this->assertCount($expected ? 1 : 0, $jobs);
-    }
-
-    public static function consentProvider(): array
-    {
-        return [
-            'true' => [true, true],
-            'array' => [['news'], true],
-            'string' => ['yes', true],
-            'false' => [false, false],
-            'zero' => ['0', false],
-            'no' => ['no', false],
-            'empty array' => [[], false],
-            'null' => [null, false],
-        ];
-    }
-
-    #[Test]
     public function it_captures_the_tracking_context_from_the_request()
     {
         $hutk = str_repeat('a', 32);
@@ -291,7 +266,6 @@ class HubSpotConnectorTest extends TestCase
         $validator = Validator::make([[
             'form' => self::FORM,
             'email_field' => 'email',
-            'consent_field' => 'marketing',
             'consent_to_process_field' => 'marketing',
             'legitimate_interest_subscription' => 3314676590,
             'properties' => [['key' => 'firstname', 'value' => 'first_name']],
@@ -321,10 +295,6 @@ class HubSpotConnectorTest extends TestCase
             'form that isnt a uuid' => [['form' => 'contact-us', 'email_field' => 'email'], ['form']],
             'missing email field' => [['form' => self::FORM], ['email_field']],
             'unknown email field' => [['form' => self::FORM, 'email_field' => 'nope'], ['email_field']],
-            'unknown consent field' => [
-                ['form' => self::FORM, 'email_field' => 'email', 'consent_field' => 'nope'],
-                ['consent_field'],
-            ],
             'email as a property' => [
                 ['form' => self::FORM, 'email_field' => 'email', 'properties' => [['key' => 'email', 'value' => 'first_name']]],
                 ['properties.0.key'],
@@ -369,7 +339,6 @@ class HubSpotConnectorTest extends TestCase
             'id' => 'abc',
             'form' => self::FORM,
             'email_field' => 'email',
-            'consent_field' => 'marketing',
             'consent_to_process_field' => 'marketing',
             'legitimate_interest_subscription' => 3314676590,
             'properties' => [['key' => 'firstname', 'value' => 'first_name']],
@@ -390,7 +359,6 @@ class HubSpotConnectorTest extends TestCase
             'id' => 'abc',
             'form' => self::FORM,
             'email_field' => 'email',
-            'consent_field' => null,
             'consent_to_process_field' => null,
             'legitimate_interest_subscription' => null,
             'properties' => [],
