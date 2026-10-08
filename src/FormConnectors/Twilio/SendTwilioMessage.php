@@ -84,11 +84,19 @@ class SendTwilioMessage implements ShouldQueue
         $number = match (true) {
             Str::startsWith($value, '+') => '+'.$digits,
             Str::startsWith($digits, '00') => '+'.substr($digits, 2),
+            filled($countryCode) && $this->includesCountryCode($digits, $countryCode) => '+'.$digits,
             filled($countryCode) => $countryCode.ltrim($digits, '0'),
             default => $digits,
         };
 
         return preg_match('/^\+[1-9]\d{1,14}$/', $number) ? $number : null;
+    }
+
+    private function includesCountryCode(string $digits, string $countryCode): bool
+    {
+        return ! Str::startsWith($digits, '0')
+            && Str::startsWith($digits, ltrim($countryCode, '+'))
+            && strlen($digits) > 10;
     }
 
     private function body(Submission $submission): ?string
