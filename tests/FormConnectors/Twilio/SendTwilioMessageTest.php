@@ -75,6 +75,17 @@ class SendTwilioMessageTest extends TestCase
     }
 
     #[Test]
+    public function it_truncates_the_body_to_the_twilio_limit()
+    {
+        Http::fake(['api.twilio.com/*' => Http::response(['sid' => 'SM123', 'status' => 'queued'], 201)]);
+
+        $this->send($this->form(), ['name' => str_repeat('a', 2000)], ['body' => 'Enquiry: {{ name }}']);
+
+        Http::assertSent(fn (Request $request) => mb_strlen($request['Body']) === 1600
+            && str_ends_with($request['Body'], '…'));
+    }
+
+    #[Test]
     public function it_texts_the_number_from_a_form_field()
     {
         Http::fake(['api.twilio.com/*' => Http::response(['sid' => 'SM123'], 201)]);

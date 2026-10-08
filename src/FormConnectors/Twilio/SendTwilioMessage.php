@@ -98,7 +98,7 @@ class SendTwilioMessage implements ShouldQueue
             $submission->toAugmentedArray()
         );
 
-        return trim((string) $body) ?: null;
+        return Str::limit(trim((string) $body), 1599, '…') ?: null;
     }
 
     private function sender(): array
