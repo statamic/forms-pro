@@ -2,6 +2,7 @@
 
 namespace Tests\FormConnectors\GoogleSheets;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -303,6 +304,23 @@ class GoogleSheetsConnectorTest extends TestCase
         } catch (ValidationException $e) {
             $this->assertEquals(["Couldn't open that spreadsheet. Check the address and make sure it's shared with "
                 .self::SERVICE_ACCOUNT.' as an Editor.'], $e->errors()['0.spreadsheet']);
+        }
+    }
+
+    #[Test]
+    public function it_rejects_a_spreadsheet_when_google_is_unreachable()
+    {
+        $this->fake(['*' => fn () => throw new ConnectionException('Could not resolve host')]);
+
+        try {
+            Validator::make([[
+                'spreadsheet' => self::SPREADSHEET_URL,
+                'tab' => 0,
+            ]], (new GoogleSheets)->setForm($this->form())->rules())->validate();
+
+            $this->fail('A validation exception was not thrown.');
+        } catch (ValidationException $e) {
+            $this->assertEquals(['Could not resolve host'], $e->errors()['0.spreadsheet']);
         }
     }
 

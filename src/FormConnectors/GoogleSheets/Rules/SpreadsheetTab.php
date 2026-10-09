@@ -5,6 +5,7 @@ namespace Statamic\FormsPro\FormConnectors\GoogleSheets\Rules;
 use Closure;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Validation\ValidationException;
 use Statamic\FormsPro\FormConnectors\GoogleSheets;
 use Statamic\FormsPro\FormConnectors\GoogleSheets\GoogleSheetsException;
@@ -34,7 +35,7 @@ class SpreadsheetTab implements DataAwareRule, ValidationRule
 
         try {
             $tabs = GoogleSheets::tabs($spreadsheet);
-        } catch (GoogleSheetsException $e) {
+        } catch (ConnectionException|GoogleSheetsException $e) {
             throw ValidationException::withMessages([$prefix.'spreadsheet' => $e->getMessage()]);
         }
 
