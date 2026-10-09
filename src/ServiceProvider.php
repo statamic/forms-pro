@@ -58,6 +58,7 @@ class ServiceProvider extends AddonServiceProvider
         Form::appendConfigFields(
             handles: '*',
             display: 'Automagic Forms',
+            afterSection: 'name',
             fields: [
                 'automagic_form' => [
                     'type' => 'toggle',
