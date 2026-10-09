@@ -7,7 +7,6 @@ use Illuminate\Support\Collection;
 use Statamic\Contracts\Assets\Asset;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Antlers;
-use Statamic\Facades\Parse;
 use Statamic\Fields\Value;
 use Statamic\Sites\Site;
 use Statamic\Support\Arr;
@@ -45,7 +44,7 @@ class MessageBuilder
     private function heading(): string
     {
         if ($heading = Arr::get($this->config, 'heading')) {
-            $heading = trim((string) Antlers::parse(Parse::config($heading), $this->submission->toAugmentedArray()));
+            $heading = trim((string) Antlers::parse($heading, $this->submission->toAugmentedArray()));
 
             if ($heading !== '') {
                 return $heading;

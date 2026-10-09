@@ -10,7 +10,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Antlers;
-use Statamic\Facades\Parse;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
 
@@ -101,10 +100,7 @@ class SendTwilioMessage implements ShouldQueue
 
     private function body(Submission $submission): ?string
     {
-        $body = Antlers::parse(
-            Parse::config($this->config['body']),
-            $submission->toAugmentedArray()
-        );
+        $body = Antlers::parse($this->config['body'], $submission->toAugmentedArray());
 
         return Str::limit(trim((string) $body), 1599, '…') ?: null;
     }
