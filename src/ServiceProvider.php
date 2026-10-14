@@ -64,6 +64,7 @@ class ServiceProvider extends AddonServiceProvider
                     'type' => 'toggle',
                     'display' => __('forms-pro::messages.enable_automagic_form'),
                     'instructions' => __('forms-pro::messages.enable_automagic_form_instructions'),
+                    'validate' => ['new \\Statamic\\FormsPro\\Rules\\NotWithUniqueInstances'],
                 ],
                 'automagic_form_url' => [
                     'type' => 'automagic_form_url',

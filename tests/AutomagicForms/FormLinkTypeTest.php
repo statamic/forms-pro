@@ -22,12 +22,20 @@ class FormLinkTypeTest extends TestCase
     #[Test]
     public function it_resolves_a_form_to_its_automagic_form_url()
     {
-        Facades\Form::make('contact')->title('Contact')->save();
+        Facades\Form::make('contact')->title('Contact')->set('automagic_form', true)->save();
 
         $this->assertEquals(
             route('statamic.forms-pro.form.default.index', ['form' => 'contact'], absolute: false),
             (new FormLinkType)->resolve('contact')
         );
+    }
+
+    #[Test]
+    public function it_resolves_nothing_when_the_form_has_unique_instances()
+    {
+        Facades\Form::make('contact')->title('Contact')->set('automagic_form', true)->set('unique_instances', true)->save();
+
+        $this->assertNull((new FormLinkType)->resolve('contact'));
     }
 
     #[Test]

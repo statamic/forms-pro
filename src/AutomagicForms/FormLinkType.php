@@ -15,7 +15,7 @@ class FormLinkType extends LinkType
 
     public function resolve(string $id, $parent = null, bool $localize = false): mixed
     {
-        if (! $form = Form::find($id)) {
+        if (! ($form = Form::find($id)) || ! AutomagicForms::availableFor($form)) {
             return null;
         }
 

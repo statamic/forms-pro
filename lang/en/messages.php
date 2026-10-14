@@ -12,6 +12,7 @@ return [
     'automagic_forms' => 'Automagic Forms',
     'enable_automagic_form' => 'Enable Automagic Form',
     'enable_automagic_form_instructions' => "Generates a shareable URL for this form, so you don't need to build a page for it.",
+    'automagic_form_unique_instances' => "Automagic Forms can't be used with Unique Instances.",
     'automagic_form_url' => 'Automagic Form URL',
     'automagic_form_url_instructions' => "The URL for this form. Share it with anyone you'd like to fill it out.",
     'automagic_form_success_heading' => 'Success Heading',

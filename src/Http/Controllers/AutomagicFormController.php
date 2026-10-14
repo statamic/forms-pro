@@ -25,7 +25,7 @@ class AutomagicFormController extends Controller
         throw_unless(AutomagicForms::enabled(), NotFoundHttpException::class);
         throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
         throw_unless($currentPage = $this->currentPage($form, $page), NotFoundHttpException::class);
-        throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
+        throw_unless(AutomagicForms::availableFor($form), NotFoundHttpException::class);
 
         if ($form->restricted()) {
             return redirect(AutomagicForms::route('restricted', ['form' => $form->handle()]));
@@ -71,7 +71,7 @@ class AutomagicFormController extends Controller
         throw_unless(AutomagicForms::enabled(), NotFoundHttpException::class);
         throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
         throw_unless($currentPage = $this->currentPage($form, $page), NotFoundHttpException::class);
-        throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
+        throw_unless(AutomagicForms::availableFor($form), NotFoundHttpException::class);
 
         if ($form->restricted()) {
             return response()->json([
@@ -137,7 +137,7 @@ class AutomagicFormController extends Controller
     {
         throw_unless(AutomagicForms::enabled(), NotFoundHttpException::class);
         throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
-        throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
+        throw_unless(AutomagicForms::availableFor($form), NotFoundHttpException::class);
 
         if (! $form->restricted()) {
             return redirect(AutomagicForms::route('index', ['form' => $form->handle()]));
@@ -153,7 +153,7 @@ class AutomagicFormController extends Controller
     {
         throw_unless(AutomagicForms::enabled(), NotFoundHttpException::class);
         throw_unless($form = Facades\Form::find($form), NotFoundHttpException::class);
-        throw_unless($form->get('automagic_form'), NotFoundHttpException::class);
+        throw_unless(AutomagicForms::availableFor($form), NotFoundHttpException::class);
 
         if (! $request->session()->get("form.{$form->handle()}.submitted")) {
             return redirect(AutomagicForms::route('index', ['form' => $form->handle()]));
