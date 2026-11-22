@@ -63,4 +63,22 @@ return [
 
     ],
 
+    'turnstile' => [
+
+        /*
+        |----------------------------------------------------------------------
+        | Cloudflare Turnstile
+        |----------------------------------------------------------------------
+        |
+        | Forms Pro can protect your forms from spam using Cloudflare
+        | Turnstile. Once configured, every submission will need to pass
+        | a CAPTCHA challenge.
+        |
+        */
+
+        'site_key' => env('FORMS_PRO_TURNSTILE_SITE_KEY'),
+        'secret_key' => env('FORMS_PRO_TURNSTILE_SECRET_KEY'),
+
+    ],
+
 ];
