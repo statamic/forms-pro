@@ -2,6 +2,7 @@
 
 namespace Tests\Fieldtypes;
 
+use Faker\Factory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Facades\Form;
@@ -282,7 +283,7 @@ class AddressTest extends TestCase
     #[Test]
     public function it_generates_a_fake_value()
     {
-        $value = $this->fieldtype(['default_country' => 'GB'])->fakeValue();
+        $value = $this->fieldtype(['default_country' => 'GB'])->fakeValue(Factory::create());
 
         $this->assertIsString($value['line_1']);
         $this->assertNotEmpty($value['line_1']);

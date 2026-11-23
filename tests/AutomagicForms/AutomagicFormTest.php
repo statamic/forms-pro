@@ -505,7 +505,7 @@ class AutomagicFormTest extends TestCase
             ->assertSessionHas('form.contact.submitted', true)
             ->assertSessionMissing('form.contact.partial_submission');
 
-        $this->assertNull($form->submissions()->first(fn ($submission) => ! $submission->isPartial()));
+        $this->assertNull($form->submissions()->first());
     }
 
     #[Test]
@@ -631,7 +631,7 @@ class AutomagicFormTest extends TestCase
             ->assertForbidden()
             ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.index', ['form' => 'contact']));
 
-        $this->assertNull($form->submissions()->first());
+        $this->assertNull($form->querySubmissions()->first());
     }
 
     #[Test]
@@ -646,7 +646,7 @@ class AutomagicFormTest extends TestCase
             ->assertOk()
             ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.index', ['form' => 'contact', 'page' => 'page_2']));
 
-        $submission = $form->submissions()->first();
+        $submission = $form->querySubmissions()->first();
 
         $this->assertNotNull($submission);
         $this->assertTrue($submission->isPartial());
