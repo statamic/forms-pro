@@ -133,9 +133,9 @@ return [
     'mailcoach_delete_confirmation' => 'Are you sure you want to delete this Mailcoach subscription?',
     'mailcoach_list_instructions' => 'Where subscribers are added.',
     'mailcoach_email_field_instructions' => 'Submissions without an email address are ignored.',
-    'mailcoach_tags_instructions' => 'Applied to every subscriber. Existing tags are replaced.',
+    'mailcoach_tags_instructions' => 'Added to every subscriber. Existing tags are kept.',
     'mailcoach_attributes_instructions' => 'Store extra values on the subscriber.',
-    'mailcoach_skip_confirmation_instructions' => 'Subscribe people immediately, without asking them to confirm. Only applies to lists using double opt-in.',
+    'mailcoach_skip_confirmation_instructions' => 'Subscribe people immediately, without asking them to confirm. Only applies to lists using double opt-in. People who have unsubscribed are never resubscribed.',
     'mailcoach_api_error' => 'Couldn\'t connect to Mailcoach.',
 
     'mailcoach_setup_heading' => 'Connect your Mailcoach account',

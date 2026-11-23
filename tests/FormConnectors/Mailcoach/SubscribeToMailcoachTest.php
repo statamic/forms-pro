@@ -6,6 +6,7 @@ use Illuminate\Contracts\Queue\Job;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,6 +25,8 @@ class SubscribeToMailcoachTest extends TestCase
 
     private const string LIST = '9dcbb6dc-1b47-4d2e-9d3f-8dbf1a92a5f1';
 
+    private const string LOOKUP = 'acme.mailcoach.app/api/email-lists/*/subscribers?*';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -37,7 +40,10 @@ class SubscribeToMailcoachTest extends TestCase
     #[Test]
     public function it_subscribes_the_submitter_to_the_list()
     {
-        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => []])]);
+        Http::fake([
+            self::LOOKUP => Http::response(['data' => []]),
+            'acme.mailcoach.app/*' => Http::response(['data' => []]),
+        ]);
 
         $this->subscribe(['email' => 'jack@example.com']);
 
@@ -46,6 +52,69 @@ class SubscribeToMailcoachTest extends TestCase
                 && $request->hasHeader('Authorization', 'Bearer mailcoach-token')
                 && $request['email'] === 'jack@example.com';
         });
+    }
+
+    #[Test]
+    public function it_looks_up_whether_the_submitter_has_unsubscribed()
+    {
+        Http::fake([
+            self::LOOKUP => Http::response(['data' => []]),
+            'acme.mailcoach.app/*' => Http::response(['data' => []]),
+        ]);
+
+        $this->subscribe(['email' => 'jack@example.com']);
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'GET'
+            && str_starts_with($request->url(), 'https://acme.mailcoach.app/api/email-lists/'.self::LIST.'/subscribers?')
+            && $request['filter'] === ['email' => 'jack@example.com', 'status' => 'unsubscribed']);
+    }
+
+    #[Test]
+    public function it_doesnt_resubscribe_someone_who_has_unsubscribed()
+    {
+        Log::spy();
+
+        Http::fake([
+            self::LOOKUP => Http::response(['data' => [['uuid' => 'subscriber-uuid', 'email' => 'Jack@Example.com']]]),
+            'acme.mailcoach.app/*' => Http::response(['data' => ['uuid' => 'subscriber-uuid']]),
+        ]);
+
+        $this->subscribe(['email' => 'jack@example.com'], ['skip_confirmation' => true, 'tags' => ['newsletter']]);
+
+        Http::assertSentCount(1);
+        Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
+        Log::shouldHaveReceived('info')->once()->with(Mockery::pattern('/Skipped subscribing \\[jack@example.com\\] to Mailcoach/'));
+    }
+
+    #[Test]
+    public function it_still_updates_existing_subscribers_who_havent_unsubscribed()
+    {
+        Http::fake([
+            self::LOOKUP => Http::response(['data' => []]),
+            'acme.mailcoach.app/api/email-lists/*' => Http::response(['data' => ['uuid' => 'subscriber-uuid']]),
+            'acme.mailcoach.app/api/subscribers/*' => Http::response(['data' => []]),
+        ]);
+
+        $this->subscribe(['email' => 'jack@example.com', 'first_name' => 'Jack'], ['first_name_field' => 'first_name', 'tags' => ['newsletter']]);
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST'
+            && $request->url() === 'https://acme.mailcoach.app/api/email-lists/'.self::LIST.'/subscribers'
+            && $request['first_name'] === 'Jack');
+        Http::assertSent(fn (Request $request) => $request->url() === 'https://acme.mailcoach.app/api/subscribers/subscriber-uuid/tags');
+    }
+
+    #[Test]
+    public function it_ignores_unsubscribed_matches_for_a_different_email()
+    {
+        Http::fake([
+            self::LOOKUP => Http::response(['data' => [['uuid' => 'other-uuid', 'email' => 'jack@example.com.au']]]),
+            'acme.mailcoach.app/*' => Http::response(['data' => []]),
+        ]);
+
+        $this->subscribe(['email' => 'jack@example.com']);
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST'
+            && $request->url() === 'https://acme.mailcoach.app/api/email-lists/'.self::LIST.'/subscribers');
     }
 
     #[Test]
@@ -82,14 +151,15 @@ class SubscribeToMailcoachTest extends TestCase
     public function it_adds_the_configured_tags_without_replacing_existing_ones()
     {
         Http::fake([
+            self::LOOKUP => Http::response(['data' => []]),
             'acme.mailcoach.app/api/email-lists/*' => Http::response(['data' => ['uuid' => 'subscriber-uuid']]),
             'acme.mailcoach.app/api/subscribers/*' => Http::response(['data' => []]),
         ]);
 
         $this->subscribe(['email' => 'jack@example.com'], ['tags' => ['newsletter', 'website']]);
 
-        Http::assertSentCount(2);
-        Http::assertSent(fn (Request $request) => str_contains($request->url(), '/email-lists/') && ! isset($request['tags']));
+        Http::assertSentCount(3);
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST' && str_contains($request->url(), '/email-lists/') && ! isset($request['tags']));
         Http::assertSent(fn (Request $request) => $request->url() === 'https://acme.mailcoach.app/api/subscribers/subscriber-uuid/tags'
             && $request['tags'] === ['newsletter', 'website']);
     }
@@ -97,11 +167,14 @@ class SubscribeToMailcoachTest extends TestCase
     #[Test]
     public function it_doesnt_add_tags_when_none_are_configured()
     {
-        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => ['uuid' => 'subscriber-uuid']])]);
+        Http::fake([
+            self::LOOKUP => Http::response(['data' => []]),
+            'acme.mailcoach.app/*' => Http::response(['data' => ['uuid' => 'subscriber-uuid']]),
+        ]);
 
         $this->subscribe(['email' => 'jack@example.com']);
 
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
     }
 
     #[Test]
@@ -201,11 +274,14 @@ class SubscribeToMailcoachTest extends TestCase
     #[DataProvider('fatalResponseProvider')]
     public function it_fails_the_job_on_fatal_errors(int $status, ?array $body, string $message)
     {
-        Http::fake(['acme.mailcoach.app/*' => Http::response($body, $status)]);
+        Http::fake([
+            self::LOOKUP => Http::response(['data' => []]),
+            'acme.mailcoach.app/*' => Http::response($body, $status),
+        ]);
 
         $this->assertJobFails($this->job(['email' => 'jack@example.com']), $message);
 
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
     }
 
     public static function fatalResponseProvider(): array
@@ -258,10 +334,13 @@ class SubscribeToMailcoachTest extends TestCase
 
     private function payload(array $data, array $config = []): array
     {
-        Http::fake(['acme.mailcoach.app/*' => Http::response(['data' => []])]);
+        Http::fake([
+            self::LOOKUP => Http::response(['data' => []]),
+            'acme.mailcoach.app/*' => Http::response(['data' => []]),
+        ]);
 
         $this->subscribe($data, $config);
 
-        return Http::recorded()->first()[0]->data();
+        return Http::recorded(fn (Request $request) => $request->method() === 'POST')->first()[0]->data();
     }
 }

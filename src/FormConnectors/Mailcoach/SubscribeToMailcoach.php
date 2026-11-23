@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\FormsPro\FormConnectors\Concerns\ReadsSubmissionValues;
 use Statamic\Support\Arr;
@@ -33,6 +34,12 @@ class SubscribeToMailcoach implements ShouldQueue
         }
 
         try {
+            if ($mailcoach->isUnsubscribed($this->config['list'], $email)) {
+                Log::info("Skipped subscribing [{$email}] to Mailcoach: they have unsubscribed from the list.");
+
+                return;
+            }
+
             $subscriber = $mailcoach->subscribe($this->config['list'], $this->subscriber($submission, $email));
 
             if (($tags = Arr::get($this->config, 'tags')) && $uuid = Arr::get($subscriber, 'uuid')) {

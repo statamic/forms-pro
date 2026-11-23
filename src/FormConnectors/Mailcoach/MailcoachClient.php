@@ -45,6 +45,16 @@ class MailcoachClient
         return $this->handle($this->request()->post("email-lists/{$list}/subscribers", $subscriber))['data'] ?? [];
     }
 
+    public function isUnsubscribed(string $list, string $email): bool
+    {
+        $response = $this->handle($this->request()->get("email-lists/{$list}/subscribers", [
+            'filter' => ['email' => $email, 'status' => 'unsubscribed'],
+        ]));
+
+        return collect($response['data'] ?? [])
+            ->contains(fn (array $subscriber): bool => Str::lower($subscriber['email'] ?? '') === Str::lower($email));
+    }
+
     public function addTags(string $subscriber, array $tags): void
     {
         $this->handle($this->request()->post("subscribers/{$subscriber}/tags", ['tags' => $tags]));
