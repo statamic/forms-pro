@@ -180,7 +180,7 @@ class ListGoogleSheetsTabsTest extends TestCase
 
     private function userWithPermission()
     {
-        $this->setTestRoles(['test' => ['access cp', 'edit forms']]);
+        $this->setTestRoles(['test' => ['access cp', 'edit forms', 'view form submissions']]);
 
         return tap(User::make()->assignRole('test'))->save();
     }
