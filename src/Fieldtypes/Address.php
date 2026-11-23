@@ -2,7 +2,7 @@
 
 namespace Statamic\FormsPro\Fieldtypes;
 
-use Faker\Factory;
+use Faker\Generator;
 use Illuminate\Support\Collection;
 use Statamic\Dictionaries\Countries;
 use Statamic\Dictionaries\Item;
@@ -122,19 +122,28 @@ class Address extends Fieldtype
         }
     }
 
-    public function fakeValue(): mixed
+    public function previewValue(): mixed
     {
-        $faker = class_exists(Factory::class) ? Factory::create() : null;
-        $countries = array_keys(static::countryOptions());
-
         return [
-            'line_1' => $faker?->streetAddress() ?? '123 Fake Street',
+            'line_1' => '123 Main Street',
             'line_2' => null,
-            'city' => $faker?->city() ?? 'Faketown',
-            'region' => $faker?->state() ?? 'CA',
-            'postcode' => $faker?->postcode() ?? '90210',
+            'city' => 'Springfield',
+            'region' => 'Oregon',
+            'postcode' => '97477',
+            'country' => $this->config('default_country') ?? 'US',
+        ];
+    }
+
+    public function fakeValue(Generator $faker): mixed
+    {
+        return [
+            'line_1' => $faker->streetAddress(),
+            'line_2' => null,
+            'city' => $faker->city(),
+            'region' => $faker->state(),
+            'postcode' => $faker->postcode(),
             'country' => $this->config('default_country')
-                ?? ($countries[array_rand($countries)] ?? 'US'),
+                ?? $faker->randomElement(array_keys(static::countryOptions())),
         ];
     }
 
