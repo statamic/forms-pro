@@ -171,12 +171,12 @@ class SendSlackMessageTest extends TestCase
     public function it_renders_a_group_as_a_line_per_child()
     {
         $blocks = $this->blocksForForm($this->groupForm(), [
-            'address' => ['street' => '1 <Main> St', 'city' => null, 'country' => 'nz', 'po_box' => false],
+            'address' => ['street' => '1 <Main> St', 'city' => null, 'country' => 'nz', 'po_box' => false, 'residential' => 'no'],
         ]);
 
         $this->assertEquals([
             'type' => 'mrkdwn',
-            'text' => "*Address*\nStreet: 1 &lt;Main&gt; St\nCountry: New Zealand\nPO Box: No",
+            'text' => "*Address*\nStreet: 1 &lt;Main&gt; St\nCountry: New Zealand\nPO Box: No\nResidential: No",
         ], $blocks[1]['text']);
     }
 
@@ -268,6 +268,12 @@ class SendSlackMessageTest extends TestCase
             'multiple select' => [['type' => 'select', 'multiple' => true, 'options' => $options], ['sales', 'support'], 'Sales Enquiry, Support Request'],
             'checkboxes' => [['type' => 'checkboxes', 'options' => $options], ['sales'], 'Sales Enquiry'],
             'zero' => [['type' => 'radio', 'options' => ['0' => '0', '5' => '5']], '0', '0'],
+            'yes_no' => [['type' => 'yes_no'], 'yes', 'Yes'],
+            'image_choice' => [['type' => 'image_choice', 'options' => [['key' => 'spring', 'label' => 'Spring'], ['key' => 'summer', 'label' => 'Summer']]], 'summer', 'Summer'],
+            'multiple image_choice' => [['type' => 'image_choice', 'multiple' => true, 'options' => [['key' => 'spring', 'label' => 'Spring'], ['key' => 'summer', 'label' => 'Summer']]], ['summer', 'spring'], 'Summer, Spring'],
+            'image_choice without a label' => [['type' => 'image_choice', 'options' => [['key' => 'spring']]], 'spring', 'spring'],
+            'ranking' => [['type' => 'ranking', 'options' => $options], ['support', 'sales'], 'Support Request, Sales Enquiry'],
+            'ranking without a label' => [['type' => 'ranking', 'options' => ['sales' => null]], ['sales'], 'sales'],
         ];
     }
 
@@ -464,6 +470,7 @@ class SendSlackMessageTest extends TestCase
                 ['handle' => 'city', 'field' => ['type' => 'text', 'display' => 'City']],
                 ['handle' => 'country', 'field' => ['type' => 'select', 'display' => 'Country', 'options' => ['nz' => 'New Zealand']]],
                 ['handle' => 'po_box', 'field' => ['type' => 'toggle', 'display' => 'PO Box']],
+                ['handle' => 'residential', 'field' => ['type' => 'yes_no', 'display' => 'Residential']],
             ]]],
         ]);
     }

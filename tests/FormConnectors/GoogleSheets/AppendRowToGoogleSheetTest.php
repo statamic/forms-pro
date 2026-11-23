@@ -70,6 +70,12 @@ class AppendRowToGoogleSheetTest extends TestCase
             'select without a label' => [['type' => 'select', 'options' => ['sales' => null]], 'sales', 'sales'],
             'multiple select' => [['type' => 'select', 'multiple' => true, 'options' => $options], ['sales', 'support'], 'Sales Enquiry, Support Request'],
             'checkboxes' => [['type' => 'checkboxes', 'options' => $options], ['sales'], 'Sales Enquiry'],
+            'yes_no' => [['type' => 'yes_no'], 'yes', 'Yes'],
+            'image_choice' => [['type' => 'image_choice', 'options' => [['key' => 'spring', 'label' => 'Spring'], ['key' => 'summer', 'label' => 'Summer']]], 'summer', 'Summer'],
+            'multiple image_choice' => [['type' => 'image_choice', 'multiple' => true, 'options' => [['key' => 'spring', 'label' => 'Spring'], ['key' => 'summer', 'label' => 'Summer']]], ['summer', 'spring'], 'Summer, Spring'],
+            'image_choice without a label' => [['type' => 'image_choice', 'options' => [['key' => 'spring']]], 'spring', 'spring'],
+            'ranking' => [['type' => 'ranking', 'options' => $options], ['support', 'sales'], 'Support Request, Sales Enquiry'],
+            'ranking without a label' => [['type' => 'ranking', 'options' => ['sales' => null]], ['sales'], 'sales'],
             'array' => [['type' => 'array'], ['one' => 'two'], '{"one":"two"}'],
             'unstored upload' => [['type' => 'form_upload'], ['1785861616.23/cv/cv.pdf'], 'cv.pdf'],
         ];
@@ -155,16 +161,17 @@ class AppendRowToGoogleSheetTest extends TestCase
                 ['handle' => 'city', 'field' => ['type' => 'text', 'display' => 'City']],
                 ['handle' => 'country', 'field' => ['type' => 'select', 'display' => 'Country', 'options' => ['nz' => 'New Zealand']]],
                 ['handle' => 'po_box', 'field' => ['type' => 'toggle', 'display' => 'PO Box']],
+                ['handle' => 'residential', 'field' => ['type' => 'yes_no', 'display' => 'Residential']],
             ]]],
         ]);
 
         $row = $this->append($form, [
             'name' => 'Jack Black',
-            'address' => ['street' => '=1+1', 'city' => null, 'country' => 'nz', 'po_box' => false],
+            'address' => ['street' => '=1+1', 'city' => null, 'country' => 'nz', 'po_box' => false, 'residential' => 'yes'],
         ], ['fields' => ['name', 'address']]);
 
         $this->assertEquals(['name', 'address'], $this->headersWritten());
-        $this->assertSame(['Jack Black', "Street: =1+1\nCountry: New Zealand\nPO Box: No"], $row);
+        $this->assertSame(['Jack Black', "Street: =1+1\nCountry: New Zealand\nPO Box: No\nResidential: Yes"], $row);
     }
 
     #[Test]

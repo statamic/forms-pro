@@ -7,6 +7,7 @@ use Illuminate\Support\Collection;
 use Statamic\Contracts\Assets\Asset;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Antlers;
+use Statamic\Fields\Field;
 use Statamic\Fields\Value;
 use Statamic\Fields\Values;
 use Statamic\Sites\Site;
@@ -133,7 +134,8 @@ class MessageBuilder
         return match (true) {
             $type === 'assets', $type === 'form_upload' && $field->get('store') => $this->renderAssets($value),
             in_array($type, ['files', 'form_upload']) => $this->renderFilenames($value),
-            in_array($type, ['select', 'radio', 'checkboxes', 'dictionary']) => $this->renderOptions($value),
+            in_array($type, ['select', 'radio', 'checkboxes', 'dictionary', 'yes_no']) => $this->renderOptions($value),
+            in_array($type, ['image_choice', 'ranking']) => $this->renderOptions($this->optionLabels($field, $value)),
             $value instanceof Values => $this->renderGroup($value),
             is_bool($value) => $value ? __('Yes') : __('No'),
             is_iterable($value) => $this->renderJson($value),
@@ -178,6 +180,15 @@ class MessageBuilder
             ->map(fn ($option) => $this->escape($this->optionLabel($option)))
             ->reject(fn (string $label) => $label === '')
             ->implode(', ');
+    }
+
+    private function optionLabels(Field $field, mixed $keys): array
+    {
+        $labels = collect($field->get('options'))->mapWithKeys(fn ($option, $key) => is_array($option)
+            ? [$option['key'] ?? $key => $option['label'] ?? null]
+            : [$key => $option]);
+
+        return collect(Arr::wrap($keys))->map(fn ($key) => $labels->get($key) ?? $key)->all();
     }
 
     private function optionLabel(mixed $option): string
