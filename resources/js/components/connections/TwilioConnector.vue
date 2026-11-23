@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ConnectionList, ConnectionSummary } from '@statamic/cms';
+import { ConnectionFields, ConnectionList, ConnectionRules, ConnectionSummary } from '@statamic/cms';
 import { Alert, Badge, Description, Heading, Icon, Label } from '@statamic/cms/ui';
 import TwilioSetupInstructions from './TwilioSetupInstructions.vue';
 
@@ -48,8 +48,6 @@ const recipientLabel = (notification: { to?: string }): string => {
             :description="__('forms-pro::messages.twilio_instructions')"
             :delete-heading="__('Delete Twilio Notification')"
             :delete-description="__('forms-pro::messages.twilio_delete_confirmation')"
-            :always-label="__('Always send')"
-            :if-label="__('Send if...')"
             @update:model-value="$emit('update:modelValue', $event)"
         >
             <template #header="{ item: notification, collapsed }">
@@ -62,6 +60,29 @@ const recipientLabel = (notification: { to?: string }): string => {
                     :conditions="notification.conditions"
                     :fallback="notification.body"
                 />
+            </template>
+
+            <template #default="{ item: notification }">
+                <ConnectionRules
+                    v-model:conditions="notification.conditions"
+                    :always-label="__('Always send')"
+                    :if-label="__('Send if...')"
+                >
+                    <template #then>
+                        <ConnectionFields>
+                            <template #before>
+                                <Alert
+                                    v-if="notification.to?.startsWith('field:')"
+                                    variant="warning"
+                                    icon="alert-warning-exclamation-mark"
+                                    class="mb-4"
+                                >
+                                    <Description :text="__('forms-pro::messages.twilio_to_field_warning')" />
+                                </Alert>
+                            </template>
+                        </ConnectionFields>
+                    </template>
+                </ConnectionRules>
             </template>
         </ConnectionList>
     </div>
