@@ -131,6 +131,57 @@ class AppendRowToGoogleSheetTest extends TestCase
     }
 
     #[Test]
+    public function it_excludes_display_only_fields()
+    {
+        $form = $this->form([
+            ['handle' => 'intro', 'field' => ['type' => 'paragraph', 'display' => 'Intro']],
+            ['handle' => 'notice', 'field' => ['type' => 'banner', 'display' => 'Notice']],
+            ['handle' => 'gap', 'field' => ['type' => 'spacer', 'display' => 'Gap']],
+            ['handle' => 'name', 'field' => ['type' => 'text']],
+        ]);
+
+        $this->append($form, ['intro' => 'Intro', 'notice' => 'Notice', 'gap' => 'Gap', 'name' => 'Jack Black']);
+
+        $this->assertEquals(['name', 'submitted_at', 'submission_id'], $this->headersWritten());
+    }
+
+    #[Test]
+    public function it_writes_a_group_into_one_column_with_a_line_per_child()
+    {
+        $form = $this->form([
+            ['handle' => 'name', 'field' => ['type' => 'text']],
+            ['handle' => 'address', 'field' => ['type' => 'group', 'display' => 'Address', 'fields' => [
+                ['handle' => 'street', 'field' => ['type' => 'text', 'display' => 'Street']],
+                ['handle' => 'city', 'field' => ['type' => 'text', 'display' => 'City']],
+                ['handle' => 'country', 'field' => ['type' => 'select', 'display' => 'Country', 'options' => ['nz' => 'New Zealand']]],
+                ['handle' => 'po_box', 'field' => ['type' => 'toggle', 'display' => 'PO Box']],
+            ]]],
+        ]);
+
+        $row = $this->append($form, [
+            'name' => 'Jack Black',
+            'address' => ['street' => '=1+1', 'city' => null, 'country' => 'nz', 'po_box' => false],
+        ], ['fields' => ['name', 'address']]);
+
+        $this->assertEquals(['name', 'address'], $this->headersWritten());
+        $this->assertSame(['Jack Black', "Street: =1+1\nCountry: New Zealand\nPO Box: No"], $row);
+    }
+
+    #[Test]
+    public function it_writes_toggles_as_booleans()
+    {
+        $form = $this->form([
+            ['handle' => 'subscribe', 'field' => ['type' => 'toggle']],
+            ['handle' => 'agree', 'field' => ['type' => 'toggle']],
+        ]);
+
+        $row = $this->append($form, ['subscribe' => true, 'agree' => false], ['fields' => ['subscribe', 'agree']]);
+
+        $this->assertSame([true, false], $row);
+        $this->assertStringContainsString('"values":[[true,false]]', $this->requestsTo(':append')->first()->body());
+    }
+
+    #[Test]
     public function it_only_includes_the_selected_columns()
     {
         $this->append($this->form(), ['name' => 'Jack Black', 'email' => 'jack@example.com'], ['fields' => ['email', 'submitted_at']]);

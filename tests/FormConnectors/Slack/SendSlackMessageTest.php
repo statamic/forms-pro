@@ -153,6 +153,78 @@ class SendSlackMessageTest extends TestCase
     }
 
     #[Test]
+    public function it_excludes_display_only_fields()
+    {
+        $form = $this->form([
+            ['handle' => 'intro', 'field' => ['type' => 'paragraph', 'display' => 'Intro']],
+            ['handle' => 'notice', 'field' => ['type' => 'banner', 'display' => 'Notice']],
+            ['handle' => 'gap', 'field' => ['type' => 'spacer', 'display' => 'Gap']],
+            ['handle' => 'name', 'field' => ['type' => 'text']],
+        ]);
+
+        $blocks = $this->blocksForForm($form, ['intro' => 'Intro', 'notice' => 'Notice', 'gap' => 'Gap', 'name' => 'Jack Black']);
+
+        $this->assertEquals([['type' => 'mrkdwn', 'text' => "*Name*\nJack Black"]], $blocks[1]['fields']);
+    }
+
+    #[Test]
+    public function it_renders_a_group_as_a_line_per_child()
+    {
+        $blocks = $this->blocksForForm($this->groupForm(), [
+            'address' => ['street' => '1 <Main> St', 'city' => null, 'country' => 'nz', 'po_box' => false],
+        ]);
+
+        $this->assertEquals([
+            'type' => 'mrkdwn',
+            'text' => "*Address*\nStreet: 1 &lt;Main&gt; St\nCountry: New Zealand\nPO Box: No",
+        ], $blocks[1]['text']);
+    }
+
+    #[Test]
+    public function it_includes_a_selected_group()
+    {
+        $blocks = $this->blocksForForm($this->groupForm(), [
+            'name' => 'Jack Black',
+            'address' => ['street' => '1 Main St', 'country' => 'nz', 'po_box' => true],
+        ], ['fields' => ['address']]);
+
+        $this->assertCount(4, $blocks);
+        $this->assertEquals("*Address*\nStreet: 1 Main St\nCountry: New Zealand\nPO Box: Yes", $blocks[1]['text']['text']);
+    }
+
+    #[Test]
+    public function it_skips_a_group_with_no_answers()
+    {
+        $form = $this->form([
+            ['handle' => 'name', 'field' => ['type' => 'text']],
+            ['handle' => 'address', 'field' => ['type' => 'group', 'display' => 'Address', 'fields' => [
+                ['handle' => 'street', 'field' => ['type' => 'text', 'display' => 'Street']],
+            ]]],
+        ]);
+
+        $blocks = $this->blocksForForm($form, ['name' => 'Jack Black']);
+
+        $this->assertEquals([['type' => 'mrkdwn', 'text' => "*Name*\nJack Black"]], $blocks[1]['fields']);
+        $this->assertEquals('actions', $blocks[2]['type']);
+    }
+
+    #[Test]
+    public function it_renders_toggles_as_yes_or_no()
+    {
+        $form = $this->form([
+            ['handle' => 'subscribe', 'field' => ['type' => 'toggle', 'display' => 'Subscribe']],
+            ['handle' => 'agree', 'field' => ['type' => 'toggle', 'display' => 'Agree']],
+        ]);
+
+        $blocks = $this->blocksForForm($form, ['subscribe' => true, 'agree' => false]);
+
+        $this->assertEquals([
+            ['type' => 'mrkdwn', 'text' => "*Subscribe*\nYes"],
+            ['type' => 'mrkdwn', 'text' => "*Agree*\nNo"],
+        ], $blocks[1]['fields']);
+    }
+
+    #[Test]
     public function it_skips_blank_values()
     {
         $blocks = $this->blocksForForm($this->form(), ['name' => 'Jack Black', 'email' => null]);
@@ -381,6 +453,19 @@ class SendSlackMessageTest extends TestCase
                 ['handle' => 'email', 'field' => ['type' => 'text']],
             ],
         ]))->save();
+    }
+
+    private function groupForm(): FormContract
+    {
+        return $this->form([
+            ['handle' => 'name', 'field' => ['type' => 'text']],
+            ['handle' => 'address', 'field' => ['type' => 'group', 'display' => 'Address', 'fields' => [
+                ['handle' => 'street', 'field' => ['type' => 'text', 'display' => 'Street']],
+                ['handle' => 'city', 'field' => ['type' => 'text', 'display' => 'City']],
+                ['handle' => 'country', 'field' => ['type' => 'select', 'display' => 'Country', 'options' => ['nz' => 'New Zealand']]],
+                ['handle' => 'po_box', 'field' => ['type' => 'toggle', 'display' => 'PO Box']],
+            ]]],
+        ]);
     }
 
     private function submission(FormContract $form, array $data): Submission

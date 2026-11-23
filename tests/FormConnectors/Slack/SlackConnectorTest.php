@@ -129,6 +129,28 @@ class SlackConnectorTest extends TestCase
     }
 
     #[Test]
+    public function it_offers_fields_that_collect_values_including_groups()
+    {
+        $this->fakeHttp(['slack.com/*' => Http::response(['ok' => true, 'channels' => []])]);
+
+        $form = tap(Form::make('test')->formFields([
+            'fields' => [
+                ['handle' => 'name', 'field' => ['type' => 'text', 'display' => 'Full Name']],
+                ['handle' => 'about_you', 'field' => ['type' => 'heading', 'display' => 'About You']],
+                ['handle' => 'gap', 'field' => ['type' => 'spacer', 'display' => 'Gap']],
+                ['handle' => 'address', 'field' => ['type' => 'group', 'display' => 'Address', 'fields' => [
+                    ['handle' => 'street', 'field' => ['type' => 'text', 'display' => 'Street']],
+                ]]],
+            ],
+        ]))->save();
+
+        $this->assertEquals(
+            ['name' => 'Full Name', 'address' => 'Address'],
+            (new Slack)->forForm($form)->blueprint()->field('fields')->get('options'),
+        );
+    }
+
+    #[Test]
     public function it_only_asks_slack_for_channels_once_per_instance_even_when_it_fails()
     {
         $this->fakeHttp(['slack.com/*' => Http::response(['ok' => false, 'error' => 'invalid_auth'])]);

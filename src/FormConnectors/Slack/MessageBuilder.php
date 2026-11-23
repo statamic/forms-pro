@@ -8,6 +8,7 @@ use Statamic\Contracts\Assets\Asset;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Facades\Antlers;
 use Statamic\Fields\Value;
+use Statamic\Fields\Values;
 use Statamic\Sites\Site;
 use Statamic\Support\Arr;
 use Statamic\Support\Str;
@@ -108,7 +109,7 @@ class MessageBuilder
     {
         $selected = Arr::get($this->config, 'fields');
         $excluded = $this->submission->form()->formFields()->fields()
-            ->filter(fn ($field) => array_intersect($field->fieldtype()->categories(), ['information', 'structure']))
+            ->reject(fn ($field) => $field->fieldtype()->collectsValue())
             ->keys();
 
         return collect(Arr::except($this->submission->toAugmentedArray(), ['id', 'date', 'form']))
@@ -133,9 +134,21 @@ class MessageBuilder
             $type === 'assets', $type === 'form_upload' && $field->get('store') => $this->renderAssets($value),
             in_array($type, ['files', 'form_upload']) => $this->renderFilenames($value),
             in_array($type, ['select', 'radio', 'checkboxes', 'dictionary']) => $this->renderOptions($value),
+            $value instanceof Values => $this->renderGroup($value),
+            is_bool($value) => $value ? __('Yes') : __('No'),
             is_iterable($value) => $this->renderJson($value),
             default => $this->escape((string) $value),
         };
+    }
+
+    private function renderGroup(Values $values): string
+    {
+        return collect($values->all())
+            ->filter(fn ($value) => $value instanceof Value)
+            ->map(fn (Value $value) => [$value->field()->display(), $this->renderValue($value)])
+            ->reject(fn (array $child) => blank($child[1]))
+            ->map(fn (array $child) => $this->escape(__($child[0])).': '.$child[1])
+            ->implode("\n");
     }
 
     private function renderAssets(mixed $value): string

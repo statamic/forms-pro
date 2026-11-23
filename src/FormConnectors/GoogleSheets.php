@@ -196,7 +196,7 @@ class GoogleSheets extends Connector
     public static function columns(Form $form): array
     {
         return $form->formFields()->fields()
-            ->reject(fn ($field) => array_intersect($field->fieldtype()->categories(), ['information', 'structure']))
+            ->filter(fn ($field) => $field->fieldtype()->collectsValue())
             ->mapWithKeys(fn ($field) => [$field->handle() => __($field->display())])
             ->merge(static::metaColumns())
             ->all();

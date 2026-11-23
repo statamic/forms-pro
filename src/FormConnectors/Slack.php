@@ -152,7 +152,7 @@ class Slack extends Connector
                                         'display' => __('Fields to Include'),
                                         'instructions' => __('forms-pro::messages.slack_fields_instructions'),
                                         'options' => $this->form()->formFields()->fields()
-                                            ->reject(fn ($field) => array_intersect($field->fieldtype()->categories(), ['information', 'structure']))
+                                            ->filter(fn ($field) => $field->fieldtype()->collectsValue())
                                             ->mapWithKeys(fn ($field) => [$field->handle() => __($field->display())])
                                             ->all(),
                                         'if' => ['include_fields' => true],

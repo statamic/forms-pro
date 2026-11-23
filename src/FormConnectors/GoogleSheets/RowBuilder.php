@@ -7,7 +7,10 @@ use Illuminate\Support\Collection;
 use Statamic\Contracts\Assets\Asset;
 use Statamic\Contracts\Forms\Submission;
 use Statamic\Fields\Value;
+use Statamic\Fields\Values;
 use Statamic\Support\Arr;
+
+use function Statamic\trans as __;
 
 class RowBuilder
 {
@@ -30,7 +33,7 @@ class RowBuilder
     private function fields(): Collection
     {
         $excluded = $this->submission->form()->formFields()->fields()
-            ->filter(fn ($field) => array_intersect($field->fieldtype()->categories(), ['information', 'structure']))
+            ->reject(fn ($field) => $field->fieldtype()->collectsValue())
             ->keys();
 
         return collect(Arr::except($this->submission->toAugmentedArray(), ['id', 'date', 'form']))
@@ -47,7 +50,7 @@ class RowBuilder
         ];
     }
 
-    private function renderValue(Value $value): string
+    private function renderValue(Value $value): string|bool
     {
         $field = $value->field();
         $type = $field->type();
@@ -57,9 +60,28 @@ class RowBuilder
             $type === 'assets', $type === 'form_upload' && $field->get('store') => $this->renderAssets($value),
             in_array($type, ['files', 'form_upload']) => $this->renderFilenames($value),
             in_array($type, ['select', 'radio', 'checkboxes', 'dictionary']) => $this->renderOptions($value),
+            $value instanceof Values => $this->renderGroup($value),
+            is_bool($value) => $value,
             is_iterable($value) => $this->renderJson($value),
             default => (string) $value,
         };
+    }
+
+    private function renderGroup(Values $values): string
+    {
+        return collect($values->all())
+            ->filter(fn ($value) => $value instanceof Value)
+            ->map(fn (Value $value) => [$value->field()->display(), $this->renderText($value)])
+            ->reject(fn (array $child) => blank($child[1]))
+            ->map(fn (array $child) => __($child[0]).': '.$child[1])
+            ->implode("\n");
+    }
+
+    private function renderText(Value $value): string
+    {
+        $rendered = $this->renderValue($value);
+
+        return is_bool($rendered) ? ($rendered ? __('Yes') : __('No')) : $rendered;
     }
 
     private function renderAssets(mixed $value): string

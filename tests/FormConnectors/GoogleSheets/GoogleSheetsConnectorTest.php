@@ -142,12 +142,17 @@ class GoogleSheetsConnectorTest extends TestCase
         $form = $this->form(fields: [
             ['handle' => 'about_you', 'field' => ['type' => 'heading', 'display' => 'About You']],
             ['handle' => 'name', 'field' => ['type' => 'text', 'display' => 'Name']],
+            ['handle' => 'gap', 'field' => ['type' => 'spacer', 'display' => 'Gap']],
+            ['handle' => 'address', 'field' => ['type' => 'group', 'display' => 'Address', 'fields' => [
+                ['handle' => 'street', 'field' => ['type' => 'text', 'display' => 'Street']],
+            ]]],
         ]);
 
         $props = (new GoogleSheets)->forForm($form)->render()->toArray()['props'];
 
         $this->assertEquals([
             'name' => 'Name',
+            'address' => 'Address',
             'submitted_at' => 'Submitted At',
             'submission_id' => 'Submission ID',
         ], collect($props['defaults']['meta']['fields']['options'])->pluck('label', 'value')->all());
