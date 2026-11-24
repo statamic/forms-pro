@@ -1,0 +1,68 @@
+{
+  "resources/css/cp.css": {
+    "file": "assets/cp-BoXk_Kaf.css",
+    "name": "cp",
+    "names": [
+      "cp.css"
+    ],
+    "src": "resources/css/cp.css",
+    "isEntry": true
+  },
+  "resources/js/cp.js": {
+    "file": "assets/cp-DiSZUA-j.js",
+    "name": "cp",
+    "src": "resources/js/cp.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/svg/google-sheets.svg?raw",
+      "resources/svg/hubspot.svg?raw",
+      "resources/svg/kit.svg?raw",
+      "resources/svg/mailchimp.svg?raw",
+      "resources/svg/mailcoach.svg?raw",
+      "resources/svg/slack.svg?raw",
+      "resources/svg/twilio.svg?raw"
+    ]
+  },
+  "resources/svg/google-sheets.svg?raw": {
+    "file": "assets/google-sheets-Bj4aoUUM.js",
+    "name": "google-sheets",
+    "src": "resources/svg/google-sheets.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/hubspot.svg?raw": {
+    "file": "assets/hubspot-DcLazpZn.js",
+    "name": "hubspot",
+    "src": "resources/svg/hubspot.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/kit.svg?raw": {
+    "file": "assets/kit-CxOuGgoH.js",
+    "name": "kit",
+    "src": "resources/svg/kit.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/mailchimp.svg?raw": {
+    "file": "assets/mailchimp-CpTnpN3x.js",
+    "name": "mailchimp",
+    "src": "resources/svg/mailchimp.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/mailcoach.svg?raw": {
+    "file": "assets/mailcoach-CPAVMqoi.js",
+    "name": "mailcoach",
+    "src": "resources/svg/mailcoach.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/slack.svg?raw": {
+    "file": "assets/slack-B52yeGm2.js",
+    "name": "slack",
+    "src": "resources/svg/slack.svg?raw",
+    "isDynamicEntry": true
+  },
+  "resources/svg/twilio.svg?raw": {
+    "file": "assets/twilio-BkxW8Pgf.js",
+    "name": "twilio",
+    "src": "resources/svg/twilio.svg?raw",
+    "isDynamicEntry": true
+  }
+}
