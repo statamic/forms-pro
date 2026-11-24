@@ -11,8 +11,7 @@ on:
     paths:
       - ".github/**.yml"
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
