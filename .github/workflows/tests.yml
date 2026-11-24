@@ -29,8 +29,7 @@ on: # zizmor: ignore[concurrency-limits]
       - ".github/workflows/tests.yml"
       - "**.php"
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   php_tests:
