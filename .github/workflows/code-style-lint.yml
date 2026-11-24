@@ -4,7 +4,6 @@ on: # zizmor: ignore[concurrency-limits]
   pull_request:
 
 permissions:
-  contents: read
   pull-requests: read # required by tj-actions/changed-files when use_rest_api: true
 
 jobs:
