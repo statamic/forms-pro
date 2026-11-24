@@ -2,10 +2,18 @@
 
 namespace Statamic\FormsPro;
 
+use Illuminate\Cookie\Middleware\EncryptCookies;
 use Statamic\Facades\Form;
 use Statamic\Fieldtypes\Link;
 use Statamic\FormsPro\AutomagicForms\AutomagicForms;
 use Statamic\FormsPro\AutomagicForms\FormLinkType;
+use Statamic\FormsPro\FormConnectors\GoogleSheets\GoogleSheetsClient;
+use Statamic\FormsPro\FormConnectors\HubSpot\HubSpotClient;
+use Statamic\FormsPro\FormConnectors\Kit\KitClient;
+use Statamic\FormsPro\FormConnectors\Mailchimp\MailchimpClient;
+use Statamic\FormsPro\FormConnectors\Mailcoach\MailcoachClient;
+use Statamic\FormsPro\FormConnectors\Slack\SlackClient;
+use Statamic\FormsPro\FormConnectors\Twilio\TwilioClient;
 use Statamic\Providers\AddonServiceProvider;
 
 class ServiceProvider extends AddonServiceProvider
@@ -46,11 +54,49 @@ class ServiceProvider extends AddonServiceProvider
             $stubsSource => resource_path('views/vendor/forms-pro/forms'),
         ], 'forms-pro-fields');
 
+        $this->bootConnections();
+
         if (AutomagicForms::enabled()) {
             $this->registerSettingsBlueprint(fn () => Settings::blueprint());
 
             $this->bootAutomagicForms();
         }
+    }
+
+    private function bootConnections(): void
+    {
+        $this->app->bind(GoogleSheetsClient::class, fn () => new GoogleSheetsClient(
+            config('statamic.forms-pro.connections.google_sheets.credentials')
+        ));
+
+        EncryptCookies::except('hubspotutk');
+
+        $this->app->bind(HubSpotClient::class, fn () => new HubSpotClient(
+            config('statamic.forms-pro.connections.hubspot.access_token')
+        ));
+
+        $this->app->bind(KitClient::class, fn () => new KitClient(
+            config('statamic.forms-pro.connections.kit.api_key')
+        ));
+
+        $this->app->bind(MailchimpClient::class, fn () => new MailchimpClient(
+            config('statamic.forms-pro.connections.mailchimp.api_key')
+        ));
+
+        $this->app->bind(MailcoachClient::class, fn () => new MailcoachClient(
+            apiUrl: config('statamic.forms-pro.connections.mailcoach.api_url'),
+            token: config('statamic.forms-pro.connections.mailcoach.token'),
+        ));
+
+        $this->app->bind(SlackClient::class, fn () => new SlackClient(
+            config('statamic.forms-pro.connections.slack.token')
+        ));
+
+        $this->app->bind(TwilioClient::class, fn () => new TwilioClient(
+            accountSid: config('statamic.forms-pro.connections.twilio.account_sid'),
+            apiKey: config('statamic.forms-pro.connections.twilio.api_key'),
+            apiSecret: config('statamic.forms-pro.connections.twilio.api_secret'),
+        ));
     }
 
     private function bootAutomagicForms(): void
