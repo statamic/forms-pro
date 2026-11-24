@@ -5,7 +5,29 @@ on: # zizmor: ignore[concurrency-limits]
     branches:
       - main
       - "*.x"
+    paths:
+      - "config/**"
+      - "lang/**"
+      - "resources/views/**"
+      - "routes/**"
+      - "src/**"
+      - "tests/**"
+      - "composer.json"
+      - "phpunit.xml"
+      - ".github/workflows/tests.yml"
+      - "**.php"
   pull_request:
+    paths:
+      - "config/**"
+      - "lang/**"
+      - "resources/views/**"
+      - "routes/**"
+      - "src/**"
+      - "tests/**"
+      - "composer.json"
+      - "phpunit.xml"
+      - ".github/workflows/tests.yml"
+      - "**.php"
 
 permissions: {}
 
