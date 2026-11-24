@@ -9,7 +9,7 @@ Build polished multi-page experiences, publish branded forms without creating a 
 - **See what people are telling you.** Turn responses into customizable [charts and insights](https://statamic.dev/frontend/forms-pro#form-summaries) inside the Control Panel.
 - **Put submissions to work.** Send them directly to [Google Sheets, HubSpot, Mailchimp, Slack, and more](https://statamic.dev/frontend/forms-pro#connections).
 - **Reuse one form across many entries.** Give every event, listing, or entry [its own submissions, limits, and notifications](https://statamic.dev/frontend/forms-pro#unique-instances).
-- **Collect better data.** Add [address autocomplete](https://statamic.dev/frontend/forms-pro#address-fieldtype), additional fieldtypes, and [Cloudflare Turnstile](https://statamic.dev/frontend/forms-pro#cloudflare-turnstile) protection.
+- **Collect better data.** Add [address autocomplete](https://statamic.dev/frontend/forms-pro#address-fieldtype) and additional fieldtypes.
 
 You can try every Forms Pro feature locally for free. When you're ready, installation takes two commands.
 
