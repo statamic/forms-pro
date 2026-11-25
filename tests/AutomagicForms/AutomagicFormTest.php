@@ -75,6 +75,20 @@ class AutomagicFormTest extends TestCase
     }
 
     #[Test]
+    public function it_404s_every_action_when_the_form_has_unique_instances()
+    {
+        $this->createForm()->set('unique_instances', true)->save();
+
+        $this->get(route('statamic.forms-pro.form.default.index', ['form' => 'contact']))->assertNotFound();
+        $this->postJson(route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'main']), [
+            'name' => 'Han Solo',
+            'email' => 'han@example.com',
+        ])->assertNotFound();
+        $this->get(route('statamic.forms-pro.form.default.restricted', ['form' => 'contact']))->assertNotFound();
+        $this->get(route('statamic.forms-pro.form.default.success', ['form' => 'contact']))->assertNotFound();
+    }
+
+    #[Test]
     public function it_404s_when_the_form_does_not_exist()
     {
         $this
