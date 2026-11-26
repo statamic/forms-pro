@@ -215,7 +215,7 @@ class HubSpotConnectorTest extends TestCase
      * @see https://github.com/statamic/forms-pro/issues/38
      */
     #[Test]
-    public function it_falls_back_to_the_property_name_when_a_field_has_no_label()
+    public function it_excludes_hidden_properties_from_the_summary()
     {
         $definition = $this->definition();
         $definition['fieldGroups'][0]['fields'][] = [
@@ -229,10 +229,7 @@ class HubSpotConnectorTest extends TestCase
 
         $properties = (new HubSpot)->forForm($this->form())->render()->toArray()['props']['hubspotForms'][self::FORM]['properties'];
 
-        $this->assertContains(
-            ['name' => 'lead_source', 'label' => 'lead_source', 'object_type_id' => '0-1', 'required' => false],
-            $properties,
-        );
+        $this->assertNotContains('lead_source', array_column($properties, 'name'));
     }
 
     #[Test]
