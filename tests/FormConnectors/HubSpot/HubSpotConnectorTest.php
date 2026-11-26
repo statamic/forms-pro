@@ -211,6 +211,30 @@ class HubSpotConnectorTest extends TestCase
         $this->assertNotContains('email', array_column($properties, 'name'));
     }
 
+    /**
+     * @see https://github.com/statamic/forms-pro/issues/38
+     */
+    #[Test]
+    public function it_falls_back_to_the_property_name_when_a_field_has_no_label()
+    {
+        $definition = $this->definition();
+        $definition['fieldGroups'][0]['fields'][] = [
+            'objectTypeId' => '0-1', 'name' => 'lead_source', 'required' => false, 'hidden' => true,
+        ];
+
+        $this->fakeHttp([
+            'api.hubapi.com/marketing/v3/forms*' => Http::response(['results' => [$definition]]),
+            'api.hubapi.com/communication-preferences/*' => Http::response(['subscriptionDefinitions' => []]),
+        ]);
+
+        $properties = (new HubSpot)->forForm($this->form())->render()->toArray()['props']['hubspotForms'][self::FORM]['properties'];
+
+        $this->assertContains(
+            ['name' => 'lead_source', 'label' => 'lead_source', 'object_type_id' => '0-1', 'required' => false],
+            $properties,
+        );
+    }
+
     #[Test]
     public function it_still_renders_the_forms_when_the_subscription_lookup_fails()
     {

@@ -87,7 +87,7 @@ class HubSpotClient
                 ->reject(fn (array $field): bool => $field['name'] === 'email')
                 ->map(fn (array $field): array => Arr::removeNullValues([
                     'name' => $field['name'],
-                    'label' => $field['label'],
+                    'label' => $field['label'] ?? $field['name'],
                     'object_type_id' => $field['objectTypeId'],
                     'required' => (bool) ($field['required'] ?? false),
                 ]))
