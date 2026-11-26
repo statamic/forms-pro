@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Statamic\Contracts\Forms\Form;
 use Statamic\Events\SubmissionFinalized;
+use Statamic\Events\SubmissionFinalizing;
 use Statamic\Facades;
 use Statamic\Facades\Addon;
 use Statamic\Testing\Concerns\PreventsSavingStacheItemsToDisk;
@@ -678,6 +679,52 @@ class AutomagicFormTest extends TestCase
         $this->assertEquals('han@example.com', $submission->get('email'));
 
         Event::assertDispatched(SubmissionFinalized::class);
+    }
+
+    #[Test]
+    public function it_redirects_without_finalizing_when_a_finalizing_listener_returns_a_redirect()
+    {
+        $form = $this->createMultiPageForm();
+
+        $submission = $form->makeSubmission();
+        $submission->data(['name' => 'Han Solo'])->asPartial()->save();
+
+        Event::listen(SubmissionFinalizing::class, fn () => redirect('https://checkout.example.com/pay'));
+
+        $this
+            ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
+            ->postJson(route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'page_2']), [
+                'email' => 'han@example.com',
+            ])
+            ->assertOk()
+            ->assertJsonPath('redirect', 'https://checkout.example.com/pay')
+            ->assertSessionMissing('form.contact.partial_submission')
+            ->assertSessionMissing('form.contact.submitted');
+
+        $this->assertTrue($form->submission($submission->id())->isPartial());
+    }
+
+    #[Test]
+    public function it_shows_the_success_page_without_finalizing_when_a_finalizing_listener_returns_false()
+    {
+        $form = $this->createMultiPageForm();
+
+        $submission = $form->makeSubmission();
+        $submission->data(['name' => 'Han Solo'])->asPartial()->save();
+
+        Event::listen(SubmissionFinalizing::class, fn () => false);
+
+        $this
+            ->withSession(["form.{$form->handle()}.partial_submission" => $submission->id()])
+            ->postJson(route('statamic.forms-pro.form.default.store', ['form' => 'contact', 'page' => 'page_2']), [
+                'email' => 'han@example.com',
+            ])
+            ->assertOk()
+            ->assertJsonPath('redirect', route('statamic.forms-pro.form.default.success', ['form' => 'contact']))
+            ->assertSessionHas('form.contact.submitted', true)
+            ->assertSessionMissing('form.contact.partial_submission');
+
+        $this->assertTrue($form->submission($submission->id())->isPartial());
     }
 
     #[Test]

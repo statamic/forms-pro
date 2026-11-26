@@ -75,6 +75,15 @@ const toFormData = (values: object): FormData => {
     return formData;
 };
 
+const visit = (url: string): void => {
+    if (new URL(url, window.location.href).origin !== window.location.origin) {
+        window.location.href = url;
+        return;
+    }
+
+    router.visit(url);
+};
+
 const submit = () => {
     loading.value = true;
 
@@ -82,7 +91,7 @@ const submit = () => {
         .post(props.action, toFormData(values.value))
         .then((response) => {
             container.value.clearDirtyState();
-            nextTick(() => router.visit(response.data.redirect));
+            nextTick(() => visit(response.data.redirect));
         })
         .catch((error) => {
             const status = error.response?.status;
