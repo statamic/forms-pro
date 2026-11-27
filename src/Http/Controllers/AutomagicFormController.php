@@ -113,23 +113,29 @@ class AutomagicFormController extends Controller
             ];
         }
 
-        $result->isFinalized()
-            ? $this->forgetPartialSubmission($form)
-            : $this->setPartialSubmission($form, $result->submission);
+        $result->nextPage
+            ? $this->setPartialSubmission($form, $result->submission)
+            : $this->forgetPartialSubmission($form);
 
-        if ($result->isFinalized()) {
-            $request->session()->flash("form.{$form->handle()}.submitted", true);
-
+        if ($result->redirect) {
             return [
-                'redirect' => AutomagicForms::route('success', ['form' => $form->handle()]),
+                'redirect' => $result->redirect->getTargetUrl(),
             ];
         }
 
+        if ($result->nextPage) {
+            return [
+                'redirect' => AutomagicForms::route('index', [
+                    'form' => $form->handle(),
+                    'page' => $result->nextPage,
+                ]),
+            ];
+        }
+
+        $request->session()->flash("form.{$form->handle()}.submitted", true);
+
         return [
-            'redirect' => AutomagicForms::route('index', [
-                'form' => $form->handle(),
-                'page' => $result->nextPage,
-            ]),
+            'redirect' => AutomagicForms::route('success', ['form' => $form->handle()]),
         ];
     }
 
